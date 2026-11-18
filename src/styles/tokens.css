@@ -1,0 +1,31 @@
+/* Paleta global del proyecto - estetica Slack, color principal #481A54 */
+:root {
+  /* Color principal y derivados */
+  --primary: #481a54;
+  --primary-dark: #3a1444;
+  --primary-halo: rgba(72, 26, 84, 0.15);
+
+  /* Texto y superficies */
+  --text: #181818;
+  --text-muted: #616061;
+  --surface: #ffffff;
+  --border: #d5cfe0;
+
+  /* Mensajes del servidor */
+  --error: #b42318;
+  --error-bg: #fdefef;
+  --error-border: #f3b5ad;
+
+  --success: #0f6e4c;
+  --success-bg: #e9f7f0;
+  --success-border: #aee0c6;
+
+  /* Medidas: radios estilo Pinterest y sombra suave */
+  --radius-input: 16px;
+  --radius-pill: 24px;
+  --radius-alert: 12px;
+
+  /* Tipografia: Open Sans + system font stack de respaldo, sin librerias */
+  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+}

@@ -1,0 +1,26 @@
+/* Mensajes inline del servidor, sin modal: se muestran abajo del formulario. */
+/* Mensajes inline del servidor, sin modal: se muestran abajo del formulario.
+   Burbujas compactas para no agrandar el alto de la pantalla. */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid;
+  border-radius: var(--radius-alert);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.alert--error {
+  color: var(--error);
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+}
+
+.alert--success {
+  color: var(--success);
+  background-color: var(--success-bg);
+  border-color: var(--success-border);
+}

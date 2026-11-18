@@ -1,0 +1,73 @@
+/* Pantalla de autenticacion adaptable, estilo Slack: fondo blanco, logo de
+   Slack centrado y el titulo de 28px escrito a lo largo en PC (se apila solo
+   en moviles si no entra). El resto del contenido compacto y centrado.
+   En moviles la columna ocupa el ancho disponible con margenes de 16px. */
+.auth-layout {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 2rem);
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+.auth-content {
+  width: min(360px, 100%);
+  display: grid;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+/* El logo queda centrado en PC y moviles, independiente del alineamiento
+   del bloque de contenido. */
+.auth-content__logo {
+  display: block;
+  height: 26px;
+  width: auto;
+  margin: 0.25rem auto 0;
+}
+
+.auth-content__title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.auth-content__subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.auth-content__footer {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.auth-content__footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.auth-content__footer a:hover {
+  text-decoration: none;
+}
+
+/* Movil: el titulo va al lado izquierdo y se apila en lineas (se encime)
+   cuando no entra; el resto del bloque se compacta. El logo sigue centrado. */
+@media (max-width: 767px) {
+  .auth-content {
+    text-align: left;
+    gap: 1rem;
+  }
+
+  .auth-content__footer {
+    text-align: center;
+  }
+}
