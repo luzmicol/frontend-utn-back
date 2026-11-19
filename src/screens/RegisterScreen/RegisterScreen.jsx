@@ -16,7 +16,6 @@ function RegisterScreen() {
     sendRequest(
       () => register(formState.name, formState.email, formState.password)
     )
-    console.log('Usuario intenta registrarse', formState)
   }
 
   return (

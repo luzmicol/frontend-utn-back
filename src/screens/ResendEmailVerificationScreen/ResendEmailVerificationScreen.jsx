@@ -16,7 +16,6 @@ function ResendEmailVerificationScreen() {
     sendRequest(
       () => resendVerificationEmail(formState.email)
     )
-    console.log('Usuario solicita reenviar el email de verificacion', formState)
   }
 
   return (

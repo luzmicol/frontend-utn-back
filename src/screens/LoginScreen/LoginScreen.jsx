@@ -19,7 +19,6 @@ function LoginScreen() {
     sendRequest(
       () => login(formState.email, formState.password)
     )
-    console.log('Usuario intenta iniciar sesion', formState)
   }
 
   // Redirección y guardado de token automática al recibir éxito del backend
