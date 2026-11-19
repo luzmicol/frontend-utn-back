@@ -1,6 +1,6 @@
 import React from 'react'
 import { Route, Routes } from 'react-router'
-import HomeScreen from './screens/HomeScreen/HomeScreeen'
+import HomeScreeen from './screens/HomeScreen/HomeScreeen'
 import LoginScreen from './screens/LoginScreen/LoginScreen'
 import RegisterScreen from './screens/RegisterScreen/RegisterScreen'
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen/ForgotPasswordScreen'
