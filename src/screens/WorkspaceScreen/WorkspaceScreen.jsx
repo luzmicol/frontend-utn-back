@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import useWorkspaceList from '../../hooks/useWorkspaceList'
+
+import { useWorkspace } from '../../context/WorkspaceContext'
 
 function WorkspaceScreen() {
   const {
@@ -9,28 +9,54 @@ function WorkspaceScreen() {
     members_response,
     members_error,
     members_loading
-  } = useWorkspaceList()
+  } = useWorkspace()
 
-  useEffect(() => {
-    console.log('[WorkspaceScreen] estado del espacio de trabajo:', {
-      loading: workspace_loading,
-      response: workspace_response,
-      error: workspace_error
-    })
-  }, [workspace_loading, workspace_response, workspace_error])
+  // Datos que devuelve el backend
+  const workspace = workspace_response?.data?.workspace_selected
+  const members = members_response?.data?.members || []
 
-  useEffect(() => {
-    console.log('[WorkspaceScreen] estado de las membresias:', {
-      loading: members_loading,
-      response: members_response,
-      error: members_error
-    })
-  }, [members_loading, members_response, members_error])
+  if (workspace_loading || members_loading) {
+    return <p>Cargando espacio de trabajo...</p>
+  }
+
+  if (workspace_error) {
+    return <p>Error al cargar el espacio: {workspace_error}</p>
+  }
+
+  if (!workspace) {
+    return <p>No se encontró el espacio de trabajo.</p>
+  }
 
   return (
-    <div>
-      <h1>Workspace cargado correctamente</h1>
-    </div>
+    <main className="workspace-screen">
+      <header className="workspace-header">
+        <h1>{workspace.nombre}</h1>
+        <p>{workspace.description || 'Sin descripción'}</p>
+      </header>
+
+      <section className="workspace-members">
+        <h2>Miembros</h2>
+
+        {members_loading && <p>Cargando miembros...</p>}
+
+        {members_error && (
+          <p>Error al cargar los miembros: {members_error}</p>
+        )}
+
+        {!members_loading && members.length === 0 && (
+          <p>Todavía no hay miembros para mostrar.</p>
+        )}
+
+        <ul>
+          {members.map((member, index) => (
+            <li key={member._id || index}>
+              {member.nombre || member.fk_id_usuario?.nombre || 'Usuario'}
+              {member.rol && ` - ${member.rol}`}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
   )
 }
 
