@@ -10,7 +10,7 @@ import ResendEmailVerificationScreen from './screens/ResendEmailVerificationScre
 import CreateWorkspaceScreen from './screens/CreateWorkspaceScreen/CreateWorkspaceScreen'
 import WorkspaceScreen from './screens/WorkspaceScreen/WorkspaceScreen'
 import WorkspaceProvider from './context/WorkspaceContext'
-import AuthMiddleware from './middleware/AuthMiddleware'
+import AuthMiddleware from './Middleware/AuthMiddleware'
 
 const App = () => {
   return (
