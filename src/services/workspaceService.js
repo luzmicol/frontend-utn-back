@@ -106,3 +106,31 @@ export async function deleteWorkspace(workspace_id) {
 
     return response_body
 }
+
+
+export async function updateWorkspace(workspace_id, name, description) {
+    const auth_token = localStorage.getItem('auth_token')
+
+    const response_http = await fetch(
+        API_URL + '/api/workspaces/' + workspace_id,
+        {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${auth_token}`
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description
+            })
+        }
+    )
+
+    const response_body = await response_http.json()
+
+    if (!response_body.ok) {
+        throw new Error(response_body.message)
+    }
+
+    return response_body
+}
