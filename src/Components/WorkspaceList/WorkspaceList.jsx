@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import useWorkspaceList from '../../hooks/useWorkspaceList'
 import { deleteWorkspace } from '../../services/workspaceService'
+import './WorkspaceList.css'
 
 export default function WorkspaceList() {
 
@@ -14,21 +15,17 @@ export default function WorkspaceList() {
     } = useWorkspaceList()
 
     const [deleting, setDeleting] = useState(null)
+    const [workspaceToDelete, setWorkspaceToDelete] = useState(null)
     const [deleteError, setDeleteError] = useState('')
 
-    async function handleDelete(workspace_id) {
-        const confirmDelete = window.confirm(
-            '¿Estás seguro de que querés eliminar este espacio de trabajo?'
-        )
-
-        if (!confirmDelete) return
-
+    async function handleDelete() {
         try {
-            setDeleting(workspace_id)
+            setDeleting(workspaceToDelete._id)
             setDeleteError('')
 
-            await deleteWorkspace(workspace_id)
+            await deleteWorkspace(workspaceToDelete._id)
 
+            setWorkspaceToDelete(null)
             reloadWorkspaces()
 
         } catch (error) {
@@ -66,32 +63,62 @@ export default function WorkspaceList() {
 
     const workspaces = workspaces_response.data.workspaces
 
-    if (workspaces.length === 0) {
-        return <p>Aún no creaste ningún espacio de trabajo</p>
-    }
-
     return (
         <div>
             {deleteError && (
                 <p className='error-text'>{deleteError}</p>
             )}
 
-            {workspaces.map((workspace) => (
-                <div key={workspace._id}>
-                    <Link to={`/workspace/${workspace._id}`}>
-                        {workspace.nombre}
-                    </Link>
+            {workspaces.length === 0 ? (
+                <p>Aún no creaste ningún espacio de trabajo</p>
+            ) : (
+                workspaces.map((workspace) => (
+                    <div key={workspace._id}>
+                        <Link to={`/workspace/${workspace._id}`}>
+                            {workspace.nombre}
+                        </Link>
 
-                    <button
-                        onClick={() => handleDelete(workspace._id)}
-                        disabled={deleting === workspace._id}
-                    >
-                        {deleting === workspace._id
-                            ? 'Eliminando...'
-                            : 'Eliminar'}
-                    </button>
+                        <button
+                            onClick={() => setWorkspaceToDelete(workspace)}
+                        >
+                            Eliminar
+                        </button>
+                    </div>
+                ))
+            )}
+
+            {workspaceToDelete && (
+                <div className="delete-overlay">
+                    <div className="delete-modal">
+                        <h2>Eliminar espacio</h2>
+
+                        <p>
+                            ¿Estás seguro de que querés eliminar
+                            <strong> {workspaceToDelete.nombre}</strong>?
+                        </p>
+
+                        <p>Esta acción no se puede deshacer.</p>
+
+                        <div className="delete-actions">
+                            <button
+                                onClick={() => setWorkspaceToDelete(null)}
+                                disabled={deleting !== null}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting !== null}
+                            >
+                                {deleting !== null
+                                    ? 'Eliminando...'
+                                    : 'Eliminar'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            ))}
+            )}
         </div>
     )
 }
