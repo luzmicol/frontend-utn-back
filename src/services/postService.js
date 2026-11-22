@@ -6,10 +6,15 @@ export async function getPosts() {
   })
 }
 
-export async function createPost(contenido) {
+export async function createPost(contenido, fk_id_comunidad = null) {
+  const body = { contenido }
+  if (fk_id_comunidad) {
+    body.fk_id_comunidad = fk_id_comunidad
+  }
+
   return await apiRequest('/api/posts', {
     method: 'POST',
-    body: { contenido }
+    body
   })
 }
 

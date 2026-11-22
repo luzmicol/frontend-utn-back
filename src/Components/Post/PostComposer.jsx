@@ -6,7 +6,7 @@ import './PostComposer.css'
 
 const MAX_LENGTH = 2000
 
-export default function PostComposer({ onPostCreated }) {
+export default function PostComposer({ onPostCreated, communityId = null, placeholder = '¿Que esta pasando en LOOP?' }) {
   const [contenido, setContenido] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -25,7 +25,7 @@ export default function PostComposer({ onPostCreated }) {
     try {
       setLoading(true)
       setError(null)
-      const response = await createPost(trimmed)
+      const response = await createPost(trimmed, communityId)
       const created = response.data?.post
       setContenido('')
       if (created && onPostCreated) {
@@ -42,7 +42,7 @@ export default function PostComposer({ onPostCreated }) {
     <form className='post-composer' onSubmit={handleSubmit}>
       <textarea
         className='post-composer__textarea'
-        placeholder='¿Que esta pasando en LOOP?'
+        placeholder={placeholder}
         value={contenido}
         onChange={(e) => {
           setContenido(e.target.value)

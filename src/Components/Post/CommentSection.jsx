@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getPostComments, createComment, deleteComment } from '../../services/postService'
@@ -122,9 +123,17 @@ export default function CommentSection({ postId, onCountChange }) {
               <li key={comment._id} className='comment-item'>
                 <div className='comment-item__header'>
                   <div className='comment-item__meta'>
-                    <span className='comment-item__author'>
-                      {comment.fk_id_usuario?.nombre || 'Usuario'}
-                    </span>
+                    {comment.fk_id_usuario?._id ? (
+                      <Link
+                        to={isOwner ? '/profile' : `/users/${comment.fk_id_usuario._id}`}
+                        className='comment-item__author'
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {comment.fk_id_usuario.nombre || 'Usuario'}
+                      </Link>
+                    ) : (
+                      <span className='comment-item__author'>Usuario</span>
+                    )}
                     <time className='comment-item__date' dateTime={comment.fecha_creacion}>
                       {formatCommentDate(comment.fecha_creacion)}
                     </time>

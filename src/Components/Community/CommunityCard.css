@@ -1,0 +1,125 @@
+.community-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.community-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.community-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.community-card__link {
+  text-decoration: none;
+  flex: 1;
+}
+
+.community-card__link:hover .community-card__name {
+  color: var(--primary-soft);
+}
+
+.community-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.community-card__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: var(--surface-elevated);
+  color: var(--primary-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.community-card__name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.community-card__creator {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.community-card__description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.community-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.community-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--primary-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.community-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.community-card__btn--primary {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+.community-card__btn--primary:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.community-card__btn--danger {
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.community-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

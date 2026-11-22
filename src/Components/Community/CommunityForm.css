@@ -1,0 +1,130 @@
+.community-form {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.community-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.community-form__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.community-form__close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.community-form__close:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.community-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.community-form__label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.community-form__input {
+  width: 100%;
+  background-color: var(--surface-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  outline: none;
+}
+
+.community-form__textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.community-form__input::placeholder {
+  color: var(--text-muted);
+}
+
+.community-form__input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-halo);
+}
+
+.community-form__counter {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: flex-end;
+}
+
+.community-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.community-form__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.community-form__btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.community-form__btn--ghost:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface-elevated);
+}
+
+.community-form__btn--primary {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+.community-form__btn--primary:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.community-form__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

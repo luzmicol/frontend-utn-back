@@ -9,6 +9,7 @@ import ResendEmailVerificationScreen from './screens/ResendEmailVerificationScre
 import FeedScreen from './screens/FeedScreen/FeedScreen'
 import ExploreScreen from './screens/ExploreScreen/ExploreScreen'
 import CommunitiesScreen from './screens/CommunitiesScreen/CommunitiesScreen'
+import CommunityDetailScreen from './screens/CommunityDetailScreen/CommunityDetailScreen'
 import ProfileScreen from './screens/ProfileScreen/ProfileScreen'
 import NotFoundScreen from './screens/NotFoundScreen/NotFoundScreen'
 import AppLayout from './Components/Layout/AppLayout'
@@ -22,7 +23,9 @@ const App = () => {
           <Route path='/' element={<FeedScreen />} />
           <Route path='/explore' element={<ExploreScreen />} />
           <Route path='/communities' element={<CommunitiesScreen />} />
+          <Route path='/communities/:community_id' element={<CommunityDetailScreen />} />
           <Route path='/profile' element={<ProfileScreen />} />
+          <Route path='/users/:user_id' element={<ProfileScreen />} />
         </Route>
       </Route>
 

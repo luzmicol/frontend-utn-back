@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Pencil, Trash2, Users, Check, X, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
@@ -75,9 +76,16 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
     <article className='post-card'>
       <header className='post-card__header'>
         <div className='post-card__meta'>
-          <span className='post-card__author'>
-            {post.fk_id_usuario?.nombre || 'Usuario'}
-          </span>
+          {post.fk_id_usuario?._id ? (
+            <Link
+              to={isAuthor ? '/profile' : `/users/${post.fk_id_usuario._id}`}
+              className='post-card__author post-card__author-link'
+            >
+              {post.fk_id_usuario.nombre || 'Usuario'}
+            </Link>
+          ) : (
+            <span className='post-card__author'>Usuario</span>
+          )}
           <time className='post-card__date' dateTime={post.fecha_creacion}>
             {formatDate(post.fecha_creacion)}
           </time>
