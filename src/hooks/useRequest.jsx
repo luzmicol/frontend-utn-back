@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 
 /* 
@@ -17,7 +17,7 @@ function useRequest (){
     const [errorCode, setErrorCode] = useState(null)
 
 
-    async function sendRequest (requestFn) {
+    const sendRequest = useCallback(async (requestFn) => {
         try{
             setLoading(true)
             const response = await requestFn()
@@ -33,7 +33,7 @@ function useRequest (){
         finally{
             setLoading(false)
         }
-    }
+    }, [])
 
     return {
         loading,

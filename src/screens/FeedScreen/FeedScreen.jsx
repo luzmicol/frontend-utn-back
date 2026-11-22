@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import { getPosts } from '../../services/postService'
 import PostComposer from '../../Components/Post/PostComposer'
@@ -6,6 +7,7 @@ import PostCard from '../../Components/Post/PostCard'
 import Alert from '../../Components/Alert/Alert'
 
 export default function FeedScreen() {
+  const location = useLocation()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -60,7 +62,10 @@ export default function FeedScreen() {
         <p className='loop-page__subtitle'>Publicaciones recientes de LOOP</p>
       </header>
 
-      <PostComposer onPostCreated={handlePostCreated} />
+      <PostComposer
+        onPostCreated={handlePostCreated}
+        autoFocusTrigger={location.state?.focusComposer}
+      />
 
       {loading && (
         <div className='loop-empty'>

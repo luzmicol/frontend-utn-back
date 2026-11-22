@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 import { createPost } from '../../services/postService'
 import Alert from '../Alert/Alert'
@@ -6,10 +6,23 @@ import './PostComposer.css'
 
 const MAX_LENGTH = 2000
 
-export default function PostComposer({ onPostCreated, communityId = null, placeholder = '¿Que esta pasando en LOOP?' }) {
+export default function PostComposer({
+  onPostCreated,
+  communityId = null,
+  placeholder = '¿Que esta pasando en LOOP?',
+  autoFocusTrigger = null
+}) {
+  const textareaRef = useRef(null)
   const [contenido, setContenido] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (autoFocusTrigger && textareaRef.current) {
+      textareaRef.current.focus()
+      textareaRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [autoFocusTrigger])
 
   const trimmed = contenido.trim()
   const remaining = MAX_LENGTH - contenido.length
@@ -41,6 +54,7 @@ export default function PostComposer({ onPostCreated, communityId = null, placeh
   return (
     <form className='post-composer' onSubmit={handleSubmit}>
       <textarea
+        ref={textareaRef}
         className='post-composer__textarea'
         placeholder={placeholder}
         value={contenido}

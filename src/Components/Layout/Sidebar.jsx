@@ -1,17 +1,16 @@
-import { NavLink } from 'react-router-dom'
-import { Home, Compass, Users, User, PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
-
-export const NAV_ITEMS = [
-  { to: '/', label: 'Feed', icon: Home, end: true },
-  { to: '/explore', label: 'Explorar', icon: Compass },
-  { to: '/communities', label: 'Comunidades', icon: Users },
-  { to: '/profile', label: 'Perfil', icon: User }
-]
 
 export default function Sidebar() {
   const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleCreatePostClick() {
+    navigate('/', { state: { focusComposer: Date.now() } })
+  }
 
   return (
     <aside className='sidebar' aria-label='Navegacion principal'>
@@ -39,7 +38,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <button type='button' className='sidebar__cta'>
+        <button type='button' className='sidebar__cta' onClick={handleCreatePostClick}>
           <PenSquare size={18} strokeWidth={2} />
           <span>Crear publicacion</span>
         </button>

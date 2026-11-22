@@ -1,11 +1,17 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { Infinity as InfinityIcon, LogOut } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import Sidebar, { NAV_ITEMS } from './Sidebar'
+import Sidebar from './Sidebar'
+import { NAV_ITEMS } from './navItems'
 import './AppLayout.css'
 
 export default function AppLayout() {
   const { logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleCreatePostClick() {
+    navigate('/', { state: { focusComposer: Date.now() } })
+  }
 
   return (
     <div className='app-layout'>
@@ -19,14 +25,25 @@ export default function AppLayout() {
           <span className='mobile-header__name'>LOOP</span>
         </div>
 
-        <button
-          type='button'
-          className='mobile-header__logout'
-          onClick={logout}
-          aria-label='Cerrar sesion'
-        >
-          <LogOut size={18} strokeWidth={2} />
-        </button>
+        <div className='mobile-header__actions'>
+          <button
+            type='button'
+            className='mobile-header__create'
+            onClick={handleCreatePostClick}
+            aria-label='Crear publicacion'
+          >
+            <PenSquare size={17} strokeWidth={2} />
+          </button>
+
+          <button
+            type='button'
+            className='mobile-header__logout'
+            onClick={logout}
+            aria-label='Cerrar sesion'
+          >
+            <LogOut size={18} strokeWidth={2} />
+          </button>
+        </div>
       </header>
 
       <main className='app-layout__main'>
