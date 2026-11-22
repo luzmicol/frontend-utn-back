@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import useForm from '../../hooks/useForm'
 import useRequest from '../../hooks/useRequest'
-import { login } from '../../services/authService'
+import { useAuth } from '../../context/AuthContext'
 import AuthLayout from '../../Components/AuthLayout/AuthLayout'
 import Alert from '../../Components/Alert/Alert'
 import { Form, FormField, FormButton } from '../../Components/Form/Form'
@@ -11,6 +11,7 @@ function LoginScreen() {
   const initial_state = { email: '', password: '' }
   const { formState, handleChangeInput } = useForm(initial_state)
   const { loading, response, error, sendRequest } = useRequest()
+  const { login } = useAuth()
   
   const navigate = useNavigate()
 
@@ -21,17 +22,9 @@ function LoginScreen() {
     )
   }
 
-  // Redirección y guardado de token automática al recibir éxito del backend
   useEffect(() => {
     if (response && !loading) {
-      // Ajustamos para capturar el token de tu backend (authentication_token)
-      const token = response.authentication_token || response.data?.authentication_token;
-      
-      if (token) {
-        localStorage.setItem('auth_token', token);
-      }
-
-      navigate('/'); 
+      navigate('/')
     }
   }, [response, loading, navigate])
 

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect } from 'react'
-import { Outlet, useParams } from 'react-router'
+import { Outlet, useParams } from 'react-router-dom'
 import useRequest from '../hooks/useRequest'
 import { getWorkspace, getWorkspaceMembers } from '../services/workspaceService'
 

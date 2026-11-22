@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import useWorkspaceList from '../../hooks/useWorkspaceList'
 import { deleteWorkspace } from '../../services/workspaceService'
 import './WorkspaceList.css'

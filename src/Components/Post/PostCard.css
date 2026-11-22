@@ -1,0 +1,238 @@
+.post-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.post-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.post-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.post-card__author {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.post-card__date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.post-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.post-card__icon-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.post-card__icon-btn:hover {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+}
+
+.post-card__icon-btn--danger:hover {
+  color: var(--error);
+  border-color: var(--error-border);
+}
+
+.post-card__community {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background-color: var(--surface-elevated);
+  color: var(--primary-soft);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.post-card__content {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.post-card__edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.post-card__edit-textarea {
+  width: 100%;
+  resize: vertical;
+  background-color: var(--surface-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.post-card__edit-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-halo);
+}
+
+.post-card__edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.post-card__counter {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.post-card__edit-buttons,
+.post-card__confirm-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-card__confirm {
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-alert);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.post-card__confirm-text {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.post-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.post-card__btn--ghost {
+  background-color: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.post-card__btn--ghost:hover:not(:disabled) {
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+.post-card__btn--primary {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+.post-card__btn--primary:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+}
+
+.post-card__btn--danger {
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.post-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.post-card__interactions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.post-card__action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.post-card__action-pill:hover:not(:disabled) {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+}
+
+.post-card__action-pill--liked {
+  color: var(--primary-soft);
+  border-color: var(--primary);
+  background-color: var(--primary-halo);
+}
+
+.post-card__action-pill--active {
+  color: var(--primary-soft);
+  background-color: var(--surface-elevated);
+}
+
+.post-card__action-pill:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

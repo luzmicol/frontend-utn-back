@@ -1,31 +1,68 @@
-/* Paleta global del proyecto - estetica Slack, color principal #481A54 */
+/* Paleta global de LOOP - estetica oscura, moderna y minimalista */
 :root {
-  /* Color principal y derivados */
-  --primary: #481a54;
-  --primary-dark: #3a1444;
-  --primary-halo: rgba(72, 26, 84, 0.15);
+  /* Superficies */
+  --bg: #0b0b10;
+  --surface: #14141c;
+  --surface-elevated: #1c1b27;
 
-  /* Texto y superficies */
-  --text: #181818;
-  --text-muted: #616061;
-  --surface: #ffffff;
-  --border: #d5cfe0;
+  /* Acentos violeta y lavanda */
+  --primary: #8b5cf6;
+  --primary-dark: #7c3aed;
+  --primary-soft: #b9a3ff;
+  --primary-halo: rgba(139, 92, 246, 0.22);
+
+  /* Texto y bordes */
+  --text: #f5f3ff;
+  --text-muted: #a19eb5;
+  --border: #262536;
 
   /* Mensajes del servidor */
-  --error: #b42318;
-  --error-bg: #fdefef;
-  --error-border: #f3b5ad;
+  --error: #f87171;
+  --error-bg: rgba(248, 113, 113, 0.12);
+  --error-border: rgba(248, 113, 113, 0.35);
 
-  --success: #0f6e4c;
-  --success-bg: #e9f7f0;
-  --success-border: #aee0c6;
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.35);
 
-  /* Medidas: radios estilo Pinterest y sombra suave */
-  --radius-input: 16px;
-  --radius-pill: 24px;
+  /* Radios y espaciado */
+  --radius-sm: 8px;
   --radius-alert: 12px;
+  --radius-input: 14px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
 
-  /* Tipografia: Open Sans + system font stack de respaldo, sin librerias */
-  --font-sans: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+  /* Layout */
+  --sidebar-width: 248px;
+  --mobile-header-height: 56px;
+  --mobile-nav-height: 64px;
+
+  /* Tipografia */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
 }

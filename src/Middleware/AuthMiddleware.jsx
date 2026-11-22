@@ -1,19 +1,17 @@
 import React from 'react'
-import { Outlet, Navigate} from 'react-router'
+import { Outlet, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthMiddleware() {
-    const auth_token = localStorage.getItem('auth_token')
-    /* 
-    Obtengo el token de auth
-    Si existe sigue su ruta normal
-    Sino redirecciona a login
-    */
+    const { user, loading } = useAuth()
 
-    if(auth_token){
-        return <Outlet/>
-    }
-    else{
-        return <Navigate to={'/login'}/>
+    if (loading) {
+        return <p>Verificando sesion...</p>
     }
 
+    if (user) {
+        return <Outlet />
+    }
+
+    return <Navigate to={'/login'} replace />
 }

@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react'
+import { Heart } from 'lucide-react'
+import { getPostLikes, likePost, unlikePost } from '../../services/postService'
+
+export default function LikeButton({ postId }) {
+  const [likesCount, setLikesCount] = useState(0)
+  const [likedByMe, setLikedByMe] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadLikes() {
+      try {
+        const response = await getPostLikes(postId)
+        if (isMounted && response.data) {
+          setLikesCount(response.data.likes_count ?? 0)
+          setLikedByMe(Boolean(response.data.liked_by_me))
+        }
+      } catch {
+        // Silencioso en carga inicial para no saturar la card
+      }
+    }
+
+    loadLikes()
+
+    return () => {
+      isMounted = false
+    }
+  }, [postId])
+
+  async function handleToggle() {
+    if (busy) return
+
+    const prevLiked = likedByMe
+    const prevCount = likesCount
+    const nextLiked = !prevLiked
+    const nextCount = nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1)
+
+    setLikedByMe(nextLiked)
+    setLikesCount(nextCount)
+    setBusy(true)
+
+    try {
+      const response = nextLiked ? await likePost(postId) : await unlikePost(postId)
+      if (response.data) {
+        setLikesCount(response.data.likes_count ?? nextCount)
+        setLikedByMe(Boolean(response.data.liked_by_me))
+      }
+    } catch {
+      setLikedByMe(prevLiked)
+      setLikesCount(prevCount)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <button
+      type='button'
+      className={`post-card__action-pill${likedByMe ? ' post-card__action-pill--liked' : ''}`}
+      onClick={handleToggle}
+      disabled={busy}
+      aria-pressed={likedByMe}
+      aria-label={likedByMe ? 'Quitar like' : 'Dar like'}
+    >
+      <Heart
+        size={16}
+        strokeWidth={2}
+        fill={likedByMe ? 'currentColor' : 'none'}
+      />
+      <span>{likesCount}</span>
+    </button>
+  )
+}
