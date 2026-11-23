@@ -69,7 +69,8 @@ export default function CommunityDetailScreen() {
         const [commRes, myCommsRes, postsRes] = await Promise.all([
           getCommunityById(community_id),
           getMyCommunities(),
-          getPosts()
+          getPosts(),
+          loadMembers()
         ])
 
         if (!isMounted) return
@@ -83,8 +84,6 @@ export default function CommunityDetailScreen() {
 
         const allPosts = postsRes.data?.posts ?? []
         setPosts(allPosts.filter((p) => p.fk_id_comunidad?._id === community_id))
-
-        await loadMembers()
       } catch (err) {
         if (isMounted) {
           setError(err.message || 'No se pudo cargar la comunidad.')

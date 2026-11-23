@@ -8,7 +8,6 @@ import {
   getFollowers,
   getFollowing,
   getFollowStatus,
-  getMyProfile,
   getUserById,
   unfollowUser,
   updateMyProfile,
@@ -36,25 +35,26 @@ export default function ProfileScreen() {
   const isOwnRoute = !user_id
   const targetUserId = isOwnRoute ? currentUser?._id : user_id
 
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState(() => (isOwnRoute ? currentUser : null))
   const [posts, setPosts] = useState([])
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
   const [isFollowing, setIsFollowing] = useState(false)
 
   const [activeTab, setActiveTab] = useState('posts')
-  const [loading, setLoading] = useState(true)
+  const [loadingProfile, setLoadingProfile] = useState(!isOwnRoute)
+  const [loadingPosts, setLoadingPosts] = useState(true)
   const [error, setError] = useState(null)
   const [followBusy, setFollowBusy] = useState(false)
   const [followError, setFollowError] = useState(null)
 
-  // Estados de edicion de perfil propio
+  // Estados de edicion de perfil propio (ningun cambio impacta en backend hasta "Guardar")
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [removeAvatarPending, setRemoveAvatarPending] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
-  const [removingAvatar, setRemovingAvatar] = useState(false)
   const [editError, setEditError] = useState(null)
   const [editSuccess, setEditSuccess] = useState(null)
 
@@ -71,61 +71,84 @@ export default function ProfileScreen() {
 
     let isMounted = true
 
-    async function loadProfileData() {
-      try {
-        setLoading(true)
-        setError(null)
-        setFollowError(null)
-        setActiveTab('posts')
-        setIsEditing(false)
-        setEditSuccess(null)
+    async function loadProfile() {
+      setError(null)
+      setFollowError(null)
+      setActiveTab('posts')
+      setIsEditing(false)
+      setEditSuccess(null)
+      setLoadingPosts(true)
 
-        const requests = [
-          isOwnRoute ? getMyProfile() : getUserById(targetUserId),
-          getFollowers(targetUserId),
-          getFollowing(targetUserId),
-          getPosts()
-        ]
-
-        if (!isOwnRoute) {
-          requests.push(getFollowStatus(targetUserId))
-        }
-
-        const [profileRes, followersRes, followingRes, postsRes, statusRes] =
-          await Promise.all(requests)
-
-        if (!isMounted) return
-
-        const loadedProfile = profileRes.data?.user ?? null
-        setProfile(loadedProfile)
-        setFollowers(followersRes.data?.followers ?? [])
-        setFollowing(followingRes.data?.following ?? [])
-
-        const allPosts = postsRes.data?.posts ?? []
-        setPosts(allPosts.filter((p) => p.fk_id_usuario?._id === targetUserId))
-
-        if (!isOwnRoute && statusRes) {
-          setIsFollowing(Boolean(statusRes.data?.is_following))
-        } else {
-          setIsFollowing(false)
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err.message || 'No se pudo cargar el perfil.')
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
+      if (isOwnRoute) {
+        setProfile(currentUser)
+        setLoadingProfile(false)
+      } else {
+        setProfile(null)
+        setLoadingProfile(true)
+        getUserById(targetUserId)
+          .then((res) => {
+            if (isMounted) {
+              setProfile(res.data?.user ?? null)
+            }
+          })
+          .catch((err) => {
+            if (isMounted) {
+              setError(err.message || 'No se pudo cargar el perfil.')
+            }
+          })
+          .finally(() => {
+            if (isMounted) {
+              setLoadingProfile(false)
+            }
+          })
       }
+
+      getPosts()
+        .then((postsRes) => {
+          if (isMounted) {
+            const allPosts = postsRes.data?.posts ?? []
+            setPosts(allPosts.filter((p) => p.fk_id_usuario?._id === targetUserId))
+          }
+        })
+        .catch(() => {
+          if (isMounted) setPosts([])
+        })
+        .finally(() => {
+          if (isMounted) setLoadingPosts(false)
+        })
+
+      const followRequests = [
+        getFollowers(targetUserId),
+        getFollowing(targetUserId)
+      ]
+      if (!isOwnRoute) {
+        followRequests.push(getFollowStatus(targetUserId))
+      }
+
+      Promise.all(followRequests)
+        .then(([followersRes, followingRes, statusRes]) => {
+          if (!isMounted) return
+          setFollowers(followersRes.data?.followers ?? [])
+          setFollowing(followingRes.data?.following ?? [])
+          if (!isOwnRoute && statusRes) {
+            setIsFollowing(Boolean(statusRes.data?.is_following))
+          } else {
+            setIsFollowing(false)
+          }
+        })
+        .catch(() => {
+          if (!isMounted) return
+          setFollowers([])
+          setFollowing([])
+        })
     }
 
-    loadProfileData()
+    loadProfile()
 
     return () => {
       isMounted = false
     }
-  }, [targetUserId, isOwnRoute])
+  }, [targetUserId, isOwnRoute, currentUser])
 
   if (user_id && currentUser?._id && user_id === currentUser._id) {
     return <Navigate to='/profile' replace />
@@ -156,17 +179,20 @@ export default function ProfileScreen() {
     setSelectedFile(null)
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl('')
+    setRemoveAvatarPending(false)
     setEditError(null)
     setEditSuccess(null)
     setIsEditing(true)
   }
 
   function closeEditForm() {
-    if (savingProfile || removingAvatar) return
+    if (savingProfile) return
     setIsEditing(false)
+    setEditName(profile?.nombre || '')
     setSelectedFile(null)
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl('')
+    setRemoveAvatarPending(false)
     setEditError(null)
   }
 
@@ -189,31 +215,44 @@ export default function ProfileScreen() {
 
     setSelectedFile(file)
     setPreviewUrl(URL.createObjectURL(file))
+    setRemoveAvatarPending(false)
+  }
+
+  function handleMarkRemoveAvatar() {
+    if (savingProfile) return
+    setEditError(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setSelectedFile(null)
+    setPreviewUrl('')
+    setRemoveAvatarPending(true)
   }
 
   async function handleSaveProfile(event) {
     event.preventDefault()
-    if (savingProfile || removingAvatar || !profile) return
+    if (savingProfile || !profile) return
 
     const trimmedName = editName.trim()
     const nameChanged = trimmedName !== (profile.nombre || '').trim()
+    const shouldDeleteAvatar = removeAvatarPending && Boolean(profile.avatar_url)
 
     if (trimmedName.length < 2 || trimmedName.length > 50) {
       setEditError('El nombre debe tener entre 2 y 50 caracteres.')
       return
     }
 
-    if (!nameChanged && !selectedFile) {
+    if (!nameChanged && !selectedFile && !shouldDeleteAvatar) {
       setEditError('No realizaste ningun cambio para guardar.')
       return
     }
+
+    let latestUser = profile
 
     try {
       setSavingProfile(true)
       setEditError(null)
       setEditSuccess(null)
-
-      let latestUser = profile
 
       if (nameChanged) {
         const nameRes = await updateMyProfile({ nombre: trimmedName })
@@ -228,40 +267,27 @@ export default function ProfileScreen() {
         if (avatarRes.data?.user) {
           latestUser = avatarRes.data.user
         }
+      } else if (shouldDeleteAvatar) {
+        const deleteRes = await deleteMyAvatar()
+        if (deleteRes.data?.user) {
+          latestUser = deleteRes.data.user
+        }
       }
 
       syncUpdatedUser(latestUser)
       setSelectedFile(null)
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl('')
+      setRemoveAvatarPending(false)
       setIsEditing(false)
       setEditSuccess('Perfil actualizado correctamente.')
     } catch (err) {
+      if (latestUser !== profile) {
+        syncUpdatedUser(latestUser)
+      }
       setEditError(err.message || 'No se pudieron guardar los cambios.')
     } finally {
       setSavingProfile(false)
-    }
-  }
-
-  async function handleRemoveAvatar() {
-    if (savingProfile || removingAvatar || !profile?.avatar_url) return
-
-    try {
-      setRemovingAvatar(true)
-      setEditError(null)
-      setEditSuccess(null)
-      const res = await deleteMyAvatar()
-      if (res.data?.user) {
-        syncUpdatedUser(res.data.user)
-      }
-      setSelectedFile(null)
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
-      setPreviewUrl('')
-      setEditSuccess('Foto de perfil eliminada.')
-    } catch (err) {
-      setEditError(err.message || 'No se pudo eliminar la foto de perfil.')
-    } finally {
-      setRemovingAvatar(false)
     }
   }
 
@@ -313,17 +339,22 @@ export default function ProfileScreen() {
     return currentUser?._id === id ? '/profile' : `/users/${id}`
   }
 
+  const editPreviewUrl = removeAvatarPending
+    ? ''
+    : previewUrl || profile?.avatar_url || ''
+  const canShowRemoveBtn = Boolean(previewUrl || (profile?.avatar_url && !removeAvatarPending))
+
   return (
     <section className='loop-page'>
-      {loading && (
+      {loadingProfile && (
         <div className='loop-empty'>
           <p className='loop-empty__text'>Cargando perfil...</p>
         </div>
       )}
 
-      {!loading && error && <Alert variant='error'>{error}</Alert>}
+      {!loadingProfile && error && <Alert variant='error'>{error}</Alert>}
 
-      {!loading && !error && profile && (
+      {!loadingProfile && !error && profile && (
         <>
           <header className='profile-hero'>
             <div className='profile-hero__top'>
@@ -385,7 +416,7 @@ export default function ProfileScreen() {
                     type='button'
                     className='profile-edit-form__close'
                     onClick={closeEditForm}
-                    disabled={savingProfile || removingAvatar}
+                    disabled={savingProfile}
                     aria-label='Cerrar edicion'
                   >
                     <X size={16} />
@@ -395,7 +426,7 @@ export default function ProfileScreen() {
                 <div className='profile-edit-form__avatar-row'>
                   <Avatar
                     name={editName || profile.nombre}
-                    avatarUrl={previewUrl || profile.avatar_url}
+                    avatarUrl={editPreviewUrl}
                     size='lg'
                   />
 
@@ -407,20 +438,20 @@ export default function ProfileScreen() {
                         type='file'
                         accept='image/jpeg,image/png,image/webp'
                         onChange={handleFileChange}
-                        disabled={savingProfile || removingAvatar}
+                        disabled={savingProfile}
                         hidden
                       />
                     </label>
 
-                    {profile.avatar_url && (
+                    {canShowRemoveBtn && (
                       <button
                         type='button'
                         className='profile-edit-form__remove-btn'
-                        onClick={handleRemoveAvatar}
-                        disabled={savingProfile || removingAvatar}
+                        onClick={handleMarkRemoveAvatar}
+                        disabled={savingProfile}
                       >
                         <Trash2 size={14} />
-                        <span>{removingAvatar ? 'Quitando...' : 'Quitar foto'}</span>
+                        <span>Quitar foto</span>
                       </button>
                     )}
                   </div>
@@ -441,7 +472,7 @@ export default function ProfileScreen() {
                     }}
                     minLength={2}
                     maxLength={50}
-                    disabled={savingProfile || removingAvatar}
+                    disabled={savingProfile}
                     required
                   />
                 </div>
@@ -453,14 +484,14 @@ export default function ProfileScreen() {
                     type='button'
                     className='profile-edit-form__btn profile-edit-form__btn--ghost'
                     onClick={closeEditForm}
-                    disabled={savingProfile || removingAvatar}
+                    disabled={savingProfile}
                   >
                     Cancelar
                   </button>
                   <button
                     type='submit'
                     className='profile-edit-form__btn profile-edit-form__btn--primary'
-                    disabled={savingProfile || removingAvatar}
+                    disabled={savingProfile}
                   >
                     {savingProfile ? 'Guardando...' : 'Guardar cambios'}
                   </button>
@@ -497,7 +528,11 @@ export default function ProfileScreen() {
           </header>
 
           {activeTab === 'posts' && (
-            posts.length === 0 ? (
+            loadingPosts ? (
+              <div className='loop-empty'>
+                <p className='loop-empty__text'>Cargando publicaciones...</p>
+              </div>
+            ) : posts.length === 0 ? (
               <div className='loop-empty'>
                 <p className='loop-empty__text'>
                   {isOwnRoute
