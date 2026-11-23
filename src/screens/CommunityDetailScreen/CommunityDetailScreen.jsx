@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Trash2, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Pencil, Trash2, UserPlus, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
   deleteCommunity,
@@ -10,6 +10,7 @@ import {
   getMyCommunities,
   joinCommunity,
   leaveCommunity,
+  updateCommunity,
   updateCommunityImage
 } from '../../services/communityService'
 import { getPosts } from '../../services/postService'
@@ -60,6 +61,12 @@ export default function CommunityDetailScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingCommunity, setDeletingCommunity] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+
+  const [editingDetails, setEditingDetails] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [editDetailsError, setEditDetailsError] = useState(null)
 
   useEffect(() => {
     return () => {
@@ -269,6 +276,57 @@ export default function CommunityDetailScreen() {
     }
   }
 
+  function openDetailsEditor() {
+    if (!community) return
+    setEditName(community.nombre || '')
+    setEditDescription(community.descripcion || '')
+    setEditDetailsError(null)
+    setEditingDetails(true)
+  }
+
+  function closeDetailsEditor() {
+    setEditingDetails(false)
+    setEditDetailsError(null)
+  }
+
+  async function handleSaveDetails(event) {
+    event.preventDefault()
+    if (savingDetails || !community?._id) return
+
+    const trimmedName = editName.trim()
+    const trimmedDescription = editDescription.trim()
+
+    if (!trimmedName) {
+      setEditDetailsError('El nombre de la comunidad es obligatorio.')
+      return
+    }
+    if (trimmedName.length > 50) {
+      setEditDetailsError('El nombre no puede superar los 50 caracteres.')
+      return
+    }
+    if (trimmedDescription.length > 1000) {
+      setEditDetailsError('La descripcion no puede superar los 1000 caracteres.')
+      return
+    }
+
+    try {
+      setSavingDetails(true)
+      setEditDetailsError(null)
+      const res = await updateCommunity(community._id, {
+        nombre: trimmedName,
+        descripcion: trimmedDescription
+      })
+      if (res.data?.community) {
+        setCommunity(res.data.community)
+      }
+      setEditingDetails(false)
+    } catch (err) {
+      setEditDetailsError(err.message || 'No se pudo actualizar la comunidad.')
+    } finally {
+      setSavingDetails(false)
+    }
+  }
+
   async function handleConfirmDeleteCommunity() {
     if (deletingCommunity || !community?._id) return
 
@@ -333,8 +391,16 @@ export default function CommunityDetailScreen() {
               </div>
 
               <div className='community-hero__actions'>
-                {isOwner && !editingImage && (
+                {isOwner && !editingImage && !editingDetails && (
                   <>
+                    <button
+                      type='button'
+                      className='community-card__btn'
+                      onClick={openDetailsEditor}
+                    >
+                      <Pencil size={14} />
+                      <span>Editar</span>
+                    </button>
                     <button
                       type='button'
                       className='community-card__btn'
@@ -386,8 +452,65 @@ export default function CommunityDetailScreen() {
               </div>
             </div>
 
-            {community.descripcion && (
+            {community.descripcion && !editingDetails && (
               <p className='community-hero__description'>{community.descripcion}</p>
+            )}
+
+            {isOwner && editingDetails && (
+              <form className='community-edit-form' onSubmit={handleSaveDetails}>
+                <div className='community-edit-form__field'>
+                  <label htmlFor='edit-community-name' className='community-edit-form__label'>
+                    Nombre
+                  </label>
+                  <input
+                    id='edit-community-name'
+                    type='text'
+                    className='community-edit-form__input'
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    maxLength={50}
+                    required
+                    disabled={savingDetails}
+                  />
+                </div>
+
+                <div className='community-edit-form__field'>
+                  <label htmlFor='edit-community-desc' className='community-edit-form__label'>
+                    Descripcion
+                  </label>
+                  <textarea
+                    id='edit-community-desc'
+                    className='community-edit-form__textarea'
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    maxLength={1000}
+                    rows={3}
+                    disabled={savingDetails}
+                  />
+                </div>
+
+                {editDetailsError && <Alert variant='error'>{editDetailsError}</Alert>}
+
+                <div className='community-edit-form__actions'>
+                  <button
+                    type='button'
+                    className='community-card__btn'
+                    onClick={closeDetailsEditor}
+                    disabled={savingDetails}
+                  >
+                    <X size={14} />
+                    <span>Cancelar</span>
+                  </button>
+                  <button
+                    type='submit'
+                    className='community-card__btn community-card__btn--primary'
+                    disabled={savingDetails}
+                  >
+                    <Check size={14} />
+                    <span>{savingDetails ? 'Guardando...' : 'Guardar cambios'}</span>
+                  </button>
+                </div>
+              </form>
             )}
 
             {isOwner && editingImage && (

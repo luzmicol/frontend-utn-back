@@ -31,6 +31,13 @@ export async function createCommunity(nombre, descripcion) {
   })
 }
 
+export async function updateCommunity(community_id, { nombre, descripcion }) {
+  return await apiRequest('/api/communities/' + community_id, {
+    method: 'PUT',
+    body: { nombre, descripcion }
+  })
+}
+
 export async function joinCommunity(community_id) {
   return await apiRequest('/api/communities/' + community_id + '/members', {
     method: 'POST'
