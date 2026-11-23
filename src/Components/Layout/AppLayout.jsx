@@ -18,6 +18,7 @@ export default function AppLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isMessagesRoute = location.pathname.startsWith('/messages')
+  const isFeedRoute = location.pathname === '/'
   const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
   const messagesBadgeText =
     unreadMessagesCount > 99 ? '99+' : String(unreadMessagesCount)
@@ -82,7 +83,15 @@ export default function AppLayout() {
       </header>
 
       <main className={`app-layout__main${isMessagesRoute ? ' app-layout__main--messages' : ''}`}>
-        <div className={`app-layout__container${isMessagesRoute ? ' app-layout__container--wide' : ''}`}>
+        <div
+          className={`app-layout__container${
+            isMessagesRoute
+              ? ' app-layout__container--wide'
+              : isFeedRoute
+                ? ' app-layout__container--feed'
+                : ''
+          }`}
+        >
           <Outlet />
         </div>
       </main>

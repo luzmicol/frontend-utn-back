@@ -3,7 +3,7 @@
   min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .mobile-header {
@@ -136,6 +136,12 @@
 .app-layout__container--wide {
   max-width: 100%;
   height: 100%;
+}
+
+@media (min-width: 1200px) {
+  .app-layout__container--feed {
+    max-width: 984px;
+  }
 }
 
 .mobile-nav {

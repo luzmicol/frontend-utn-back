@@ -1,3 +1,20 @@
+.feed-layout {
+  display: block;
+}
+
+.feed-layout__main {
+  min-width: 0;
+}
+
+@media (min-width: 1200px) {
+  .feed-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 680px) 280px;
+    gap: 24px;
+    align-items: start;
+  }
+}
+
 .feed-post-highlight {
   border-radius: var(--radius-lg, 16px);
   box-shadow: 0 0 0 2px var(--color-accent, #a78bfa), 0 0 24px rgba(167, 139, 250, 0.25);

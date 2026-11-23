@@ -4,6 +4,7 @@ import { Home } from 'lucide-react'
 import { getPosts } from '../../services/postService'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
+import FeedSuggestionsSidebar from '../../Components/Feed/FeedSuggestionsSidebar'
 import Alert from '../../Components/Alert/Alert'
 import './FeedScreen.css'
 
@@ -124,11 +125,12 @@ export default function FeedScreen() {
   }
 
   return (
-    <section className='loop-page'>
-      <header className='loop-page__header'>
-        <h1 className='loop-page__title'>Feed</h1>
-        <p className='loop-page__subtitle'>Publicaciones recientes de LOOP</p>
-      </header>
+    <div className='feed-layout'>
+      <section className='loop-page feed-layout__main'>
+        <header className='loop-page__header'>
+          <h1 className='loop-page__title'>Feed</h1>
+          <p className='loop-page__subtitle'>Publicaciones recientes de LOOP</p>
+        </header>
 
       <PostComposer
         onPostCreated={handlePostCreated}
@@ -187,6 +189,9 @@ export default function FeedScreen() {
           )}
         </div>
       )}
-    </section>
+      </section>
+
+      <FeedSuggestionsSidebar />
+    </div>
   )
 }
