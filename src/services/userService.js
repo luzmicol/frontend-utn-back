@@ -70,3 +70,9 @@ export async function getFollowing(user_id) {
     method: 'GET'
   })
 }
+
+export async function getUserReposts(user_id) {
+  return await apiRequest('/api/users/' + user_id + '/reposts', {
+    method: 'GET'
+  })
+}

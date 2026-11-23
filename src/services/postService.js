@@ -67,3 +67,21 @@ export async function deleteComment(post_id, comment_id) {
     method: 'DELETE'
   })
 }
+
+export async function getPostReposts(post_id) {
+  return await apiRequest('/api/posts/' + post_id + '/reposts', {
+    method: 'GET'
+  })
+}
+
+export async function repostPost(post_id) {
+  return await apiRequest('/api/posts/' + post_id + '/reposts', {
+    method: 'POST'
+  })
+}
+
+export async function unrepostPost(post_id) {
+  return await apiRequest('/api/posts/' + post_id + '/reposts', {
+    method: 'DELETE'
+  })
+}

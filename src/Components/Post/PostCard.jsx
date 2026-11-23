@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Trash2, Users, Check, X, MessageCircle } from 'lucide-react'
+import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
 import LikeButton from './LikeButton'
+import RepostButton from './RepostButton'
 import CommentSection from './CommentSection'
 import './PostCard.css'
 
@@ -23,7 +24,13 @@ function formatDate(dateString) {
   })
 }
 
-export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
+export default function PostCard({
+  post,
+  onPostUpdated,
+  onPostDeleted,
+  repostedByLabel = null,
+  onUnreposted = null
+}) {
   const { user } = useAuth()
   const isAuthor = Boolean(user?._id && post.fk_id_usuario?._id === user._id)
 
@@ -32,8 +39,17 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [commentsCount, setCommentsCount] = useState(null)
+  const [repostInfo, setRepostInfo] = useState({
+    reposts_count: 0,
+    reposted_by_me: false,
+    latest_repost_by: null
+  })
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
+
+  const handleRepostInfoChange = useCallback((info) => {
+    setRepostInfo(info)
+  }, [])
 
   async function handleSaveEdit(event) {
     event.preventDefault()
@@ -73,8 +89,24 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
     }
   }
 
+  const feedRepostLabel =
+    !repostedByLabel && repostInfo.reposts_count > 0 && repostInfo.latest_repost_by?.nombre
+      ? repostInfo.reposts_count === 1
+        ? `${repostInfo.latest_repost_by.nombre} reposteo`
+        : `${repostInfo.latest_repost_by.nombre} y ${repostInfo.reposts_count - 1} mas repostearon`
+      : null
+
+  const activeRepostLabel = repostedByLabel || feedRepostLabel
+
   return (
     <article className='post-card'>
+      {activeRepostLabel && (
+        <div className='post-card__repost-banner'>
+          <Repeat2 size={14} strokeWidth={2} />
+          <span>{activeRepostLabel}</span>
+        </div>
+      )}
+
       <header className='post-card__header'>
         <div className='post-card__author-row'>
           <Avatar
@@ -207,6 +239,13 @@ export default function PostCard({ post, onPostUpdated, onPostDeleted }) {
 
       <footer className='post-card__interactions'>
         <LikeButton postId={post._id} />
+
+        <RepostButton
+          postId={post._id}
+          onRepostInfoChange={handleRepostInfoChange}
+          onUnreposted={onUnreposted}
+          onError={setActionError}
+        />
 
         <button
           type='button'

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { Calendar, Camera, Pencil, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -9,6 +9,7 @@ import {
   getFollowing,
   getFollowStatus,
   getUserById,
+  getUserReposts,
   unfollowUser,
   updateMyProfile,
   uploadMyAvatar
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
 
   const [profile, setProfile] = useState(() => (isOwnRoute ? currentUser : null))
   const [posts, setPosts] = useState([])
+  const [reposts, setReposts] = useState([])
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
   const [isFollowing, setIsFollowing] = useState(false)
@@ -103,15 +105,17 @@ export default function ProfileScreen() {
           })
       }
 
-      getPosts()
-        .then((postsRes) => {
-          if (isMounted) {
-            const allPosts = postsRes.data?.posts ?? []
-            setPosts(allPosts.filter((p) => p.fk_id_usuario?._id === targetUserId))
-          }
+      Promise.all([getPosts(), getUserReposts(targetUserId)])
+        .then(([postsRes, repostsRes]) => {
+          if (!isMounted) return
+          const allPosts = postsRes.data?.posts ?? []
+          setPosts(allPosts.filter((p) => p.fk_id_usuario?._id === targetUserId))
+          setReposts(repostsRes.data?.reposts ?? [])
         })
         .catch(() => {
-          if (isMounted) setPosts([])
+          if (!isMounted) return
+          setPosts([])
+          setReposts([])
         })
         .finally(() => {
           if (isMounted) setLoadingPosts(false)
@@ -149,6 +153,26 @@ export default function ProfileScreen() {
       isMounted = false
     }
   }, [targetUserId, isOwnRoute, currentUser])
+
+  const timelineItems = useMemo(() => {
+    const ownItems = posts.map((post) => ({
+      key: `post-${post._id}`,
+      post,
+      sortTime: new Date(post.fecha_creacion).getTime(),
+      isRepost: false
+    }))
+
+    const repostItems = reposts
+      .filter((item) => item.post)
+      .map((item) => ({
+        key: `repost-${item._id}`,
+        post: item.post,
+        sortTime: new Date(item.fecha_repost).getTime(),
+        isRepost: true
+      }))
+
+    return [...ownItems, ...repostItems].sort((a, b) => b.sortTime - a.sortTime)
+  }, [posts, reposts])
 
   if (user_id && currentUser?._id && user_id === currentUser._id) {
     return <Navigate to='/profile' replace />
@@ -329,10 +353,22 @@ export default function ProfileScreen() {
     setPosts((prev) =>
       prev.map((item) => (item._id === updatedPost._id ? updatedPost : item))
     )
+    setReposts((prev) =>
+      prev.map((item) =>
+        item.post?._id === updatedPost._id ? { ...item, post: updatedPost } : item
+      )
+    )
   }
 
   function handlePostDeleted(deletedPostId) {
     setPosts((prev) => prev.filter((item) => item._id !== deletedPostId))
+    setReposts((prev) => prev.filter((item) => item.post?._id !== deletedPostId))
+  }
+
+  function handleUnrepostedFromProfile(postId) {
+    if (isOwnRoute) {
+      setReposts((prev) => prev.filter((item) => item.post?._id !== postId))
+    }
   }
 
   function getProfileLink(id) {
@@ -505,7 +541,7 @@ export default function ProfileScreen() {
                 className={`profile-stat${activeTab === 'posts' ? ' profile-stat--active' : ''}`}
                 onClick={() => setActiveTab('posts')}
               >
-                <strong>{posts.length}</strong>
+                <strong>{timelineItems.length}</strong>
                 <span>Publicaciones</span>
               </button>
               <button
@@ -532,7 +568,7 @@ export default function ProfileScreen() {
               <div className='loop-empty'>
                 <p className='loop-empty__text'>Cargando publicaciones...</p>
               </div>
-            ) : posts.length === 0 ? (
+            ) : timelineItems.length === 0 ? (
               <div className='loop-empty'>
                 <p className='loop-empty__text'>
                   {isOwnRoute
@@ -542,10 +578,14 @@ export default function ProfileScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {posts.map((post) => (
+                {timelineItems.map((item) => (
                   <PostCard
-                    key={post._id}
-                    post={post}
+                    key={item.key}
+                    post={item.post}
+                    repostedByLabel={
+                      item.isRepost ? `Reposteado por ${profile.nombre}` : null
+                    }
+                    onUnreposted={item.isRepost ? handleUnrepostedFromProfile : null}
                     onPostUpdated={handlePostUpdated}
                     onPostDeleted={handlePostDeleted}
                   />
