@@ -6,6 +6,16 @@ export async function getUsers() {
   })
 }
 
+export async function searchUsers(query = '', limit = 6) {
+  const params = new URLSearchParams()
+  if (query) params.set('q', query)
+  params.set('limit', String(limit))
+
+  return await apiRequest('/api/users/search?' + params.toString(), {
+    method: 'GET'
+  })
+}
+
 export async function getMyProfile() {
   return await apiRequest('/api/users/me', {
     method: 'GET'
@@ -32,6 +42,23 @@ export async function uploadMyAvatar(file) {
 export async function deleteMyAvatar() {
   return await apiRequest('/api/users/me/avatar', {
     method: 'DELETE'
+  })
+}
+
+export async function checkUsernameAvailability(username) {
+  return await apiRequest(
+    '/api/users/username-availability?username=' + encodeURIComponent(username),
+    {
+      method: 'GET',
+      auth: false
+    }
+  )
+}
+
+export async function updateMyUsername(username) {
+  return await apiRequest('/api/users/me/username', {
+    method: 'PUT',
+    body: { username }
   })
 }
 

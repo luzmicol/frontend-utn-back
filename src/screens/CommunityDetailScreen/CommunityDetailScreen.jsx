@@ -292,7 +292,14 @@ export default function CommunityDetailScreen() {
                           avatarUrl={member.fk_id_usuario.avatar_url}
                           size='sm'
                         />
-                        <span>{member.fk_id_usuario.nombre || 'Usuario'}</span>
+                        <span>
+                          {member.fk_id_usuario.nombre || 'Usuario'}
+                          {member.fk_id_usuario.username && (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontWeight: 400 }}>
+                              {' '}@{member.fk_id_usuario.username}
+                            </span>
+                          )}
+                        </span>
                       </Link>
                     ) : (
                       <span className='community-member-item__name'>Usuario</span>

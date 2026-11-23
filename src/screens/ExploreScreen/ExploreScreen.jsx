@@ -56,7 +56,8 @@ export default function ExploreScreen() {
   const filteredUsers = useMemo(() => {
     if (!normalizedQuery) return users
     return users.filter((person) =>
-      (person.nombre || '').toLowerCase().includes(normalizedQuery)
+      (person.nombre || '').toLowerCase().includes(normalizedQuery) ||
+      (person.username || '').toLowerCase().includes(normalizedQuery)
     )
   }, [users, normalizedQuery])
 
@@ -146,6 +147,11 @@ export default function ExploreScreen() {
                           <Avatar name={person.nombre} avatarUrl={person.avatar_url} size='sm' />
                           <span className='explore-user-card__name'>
                             {person.nombre}
+                            {person.username && (
+                              <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                                @{person.username}
+                              </span>
+                            )}
                           </span>
                         </Link>
                       </li>

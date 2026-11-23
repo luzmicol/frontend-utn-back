@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext'
 import { getPostComments, createComment, deleteComment } from '../../services/postService'
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
+import MentionTextarea from '../UI/MentionTextarea'
+import RichTextWithMentions from '../UI/RichTextWithMentions'
 import './CommentSection.css'
 
 const MAX_COMMENT_LENGTH = 1000
@@ -136,6 +138,11 @@ export default function CommentSection({ postId, onCountChange }) {
                         style={{ textDecoration: 'none' }}
                       >
                         {comment.fk_id_usuario.nombre || 'Usuario'}
+                        {comment.fk_id_usuario.username && (
+                          <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                            {' '}@{comment.fk_id_usuario.username}
+                          </span>
+                        )}
                       </Link>
                     ) : (
                       <span className='comment-item__author'>Usuario</span>
@@ -157,7 +164,9 @@ export default function CommentSection({ postId, onCountChange }) {
                     </button>
                   )}
                 </div>
-                <p className='comment-item__content'>{comment.contenido}</p>
+                <p className='comment-item__content'>
+                  <RichTextWithMentions text={comment.contenido} mentions={comment.menciones} />
+                </p>
               </li>
             )
           })}
@@ -165,12 +174,12 @@ export default function CommentSection({ postId, onCountChange }) {
       )}
 
       <form className='comment-form' onSubmit={handleSubmit}>
-        <textarea
+        <MentionTextarea
           className='comment-form__input'
           placeholder='Escribi un comentario...'
           value={contenido}
-          onChange={(e) => {
-            setContenido(e.target.value)
+          onChange={(nextVal) => {
+            setContenido(nextVal)
             if (submitError) setSubmitError(null)
           }}
           maxLength={MAX_COMMENT_LENGTH}

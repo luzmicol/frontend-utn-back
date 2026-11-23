@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { Calendar, Camera, Pencil, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
+  checkUsernameAvailability,
   deleteMyAvatar,
   followUser,
   getFollowers,
@@ -12,6 +13,7 @@ import {
   getUserReposts,
   unfollowUser,
   updateMyProfile,
+  updateMyUsername,
   uploadMyAvatar
 } from '../../services/userService'
 import { getPosts } from '../../services/postService'
@@ -20,6 +22,9 @@ import Avatar from '../../Components/UI/Avatar'
 import PostCard from '../../Components/Post/PostCard'
 import Alert from '../../Components/Alert/Alert'
 import './ProfileScreen.css'
+
+const USERNAME_REGEX = /^[a-z0-9._]{3,30}$/
+const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
 
 function formatJoinDate(dateString) {
   if (!dateString) return ''
@@ -53,12 +58,58 @@ export default function ProfileScreen() {
   // Estados de edicion de perfil propio (ningun cambio impacta en backend hasta "Guardar")
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
+  const [editUsername, setEditUsername] = useState('')
+  const [usernameStatus, setUsernameStatus] = useState({ state: 'idle', message: '' })
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [removeAvatarPending, setRemoveAvatarPending] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [editError, setEditError] = useState(null)
   const [editSuccess, setEditSuccess] = useState(null)
+  const [nowMs] = useState(() => Date.now())
+
+  const nextUsernameChangeMs = profile?.username_last_changed_at
+    ? new Date(profile.username_last_changed_at).getTime() + USERNAME_COOLDOWN_MS
+    : null
+  const nextUsernameChangeDate =
+    nextUsernameChangeMs && nextUsernameChangeMs > nowMs
+      ? new Date(nextUsernameChangeMs)
+      : null
+  const isUsernameLocked = Boolean(nextUsernameChangeDate)
+
+  useEffect(() => {
+    if (!isEditing || isUsernameLocked || !profile) return
+
+    const normalized = editUsername.trim().toLowerCase()
+    const current = (profile.username || '').toLowerCase()
+
+    if (!normalized || normalized === current || !USERNAME_REGEX.test(normalized)) {
+      return
+    }
+
+    let cancelled = false
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await checkUsernameAvailability(normalized)
+        if (cancelled) return
+        if (res.data?.available) {
+          setUsernameStatus({ state: 'available', message: `@${normalized} esta disponible` })
+        } else {
+          setUsernameStatus({ state: 'taken', message: `@${normalized} ya esta en uso` })
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setUsernameStatus({ state: 'invalid', message: err.message || 'No se pudo verificar.' })
+        }
+      }
+    }, 350)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [editUsername, isEditing, isUsernameLocked, profile])
 
   useEffect(() => {
     return () => {
@@ -189,6 +240,7 @@ export default function ProfileScreen() {
               fk_id_usuario: {
                 ...post.fk_id_usuario,
                 nombre: updatedUser.nombre,
+                username: updatedUser.username || '',
                 avatar_url: updatedUser.avatar_url || ''
               }
             }
@@ -200,6 +252,8 @@ export default function ProfileScreen() {
   function openEditForm() {
     if (!profile) return
     setEditName(profile.nombre || '')
+    setEditUsername(profile.username || '')
+    setUsernameStatus({ state: 'idle', message: '' })
     setSelectedFile(null)
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl('')
@@ -213,6 +267,8 @@ export default function ProfileScreen() {
     if (savingProfile) return
     setIsEditing(false)
     setEditName(profile?.nombre || '')
+    setEditUsername(profile?.username || '')
+    setUsernameStatus({ state: 'idle', message: '' })
     setSelectedFile(null)
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl('')
@@ -258,7 +314,12 @@ export default function ProfileScreen() {
     if (savingProfile || !profile) return
 
     const trimmedName = editName.trim()
+    const normalizedUsername = editUsername.trim().toLowerCase()
     const nameChanged = trimmedName !== (profile.nombre || '').trim()
+    const usernameChanged =
+      !isUsernameLocked &&
+      Boolean(normalizedUsername) &&
+      normalizedUsername !== (profile.username || '').toLowerCase()
     const shouldDeleteAvatar = removeAvatarPending && Boolean(profile.avatar_url)
 
     if (trimmedName.length < 2 || trimmedName.length > 50) {
@@ -266,7 +327,18 @@ export default function ProfileScreen() {
       return
     }
 
-    if (!nameChanged && !selectedFile && !shouldDeleteAvatar) {
+    if (usernameChanged) {
+      if (!USERNAME_REGEX.test(normalizedUsername)) {
+        setEditError('El username debe tener entre 3 y 30 caracteres (letras, numeros, puntos o guion bajo).')
+        return
+      }
+      if (usernameStatus.state === 'taken') {
+        setEditError('Ese username ya esta en uso.')
+        return
+      }
+    }
+
+    if (!nameChanged && !usernameChanged && !selectedFile && !shouldDeleteAvatar) {
       setEditError('No realizaste ningun cambio para guardar.')
       return
     }
@@ -282,6 +354,13 @@ export default function ProfileScreen() {
         const nameRes = await updateMyProfile({ nombre: trimmedName })
         if (nameRes.data?.user) {
           latestUser = nameRes.data.user
+        }
+      }
+
+      if (usernameChanged) {
+        const usernameRes = await updateMyUsername(normalizedUsername)
+        if (usernameRes.data?.user) {
+          latestUser = usernameRes.data.user
         }
       }
 
@@ -303,6 +382,7 @@ export default function ProfileScreen() {
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl('')
       setRemoveAvatarPending(false)
+      setUsernameStatus({ state: 'idle', message: '' })
       setIsEditing(false)
       setEditSuccess('Perfil actualizado correctamente.')
     } catch (err) {
@@ -402,6 +482,9 @@ export default function ProfileScreen() {
                 />
                 <div className='profile-hero__info'>
                   <h1 className='profile-hero__name'>{profile.nombre}</h1>
+                  {profile.username && (
+                    <span className='profile-hero__username'>@{profile.username}</span>
+                  )}
                   {profile.fecha_creacion && (
                     <span className='profile-hero__date'>
                       <Calendar size={13} />
@@ -511,6 +594,59 @@ export default function ProfileScreen() {
                     disabled={savingProfile}
                     required
                   />
+                </div>
+
+                <div className='profile-edit-form__field'>
+                  <label className='profile-edit-form__label' htmlFor='edit-profile-username'>
+                    Username
+                  </label>
+                  <div className='profile-edit-form__username-wrap'>
+                    <span className='profile-edit-form__at'>@</span>
+                    <input
+                      id='edit-profile-username'
+                      type='text'
+                      className='profile-edit-form__input profile-edit-form__input--username'
+                      value={editUsername}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase()
+                        setEditUsername(value)
+                        if (editError) setEditError(null)
+                        const normalized = value.trim()
+                        const current = (profile?.username || '').toLowerCase()
+                        if (!normalized || normalized === current) {
+                          setUsernameStatus({ state: 'idle', message: '' })
+                        } else if (normalized.length < 3 || normalized.length > 30) {
+                          setUsernameStatus({ state: 'invalid', message: 'Debe tener entre 3 y 30 caracteres.' })
+                        } else if (!USERNAME_REGEX.test(normalized)) {
+                          setUsernameStatus({ state: 'invalid', message: 'Solo letras, numeros, puntos y guion bajo.' })
+                        } else {
+                          setUsernameStatus({ state: 'checking', message: 'Verificando disponibilidad...' })
+                        }
+                      }}
+                      minLength={3}
+                      maxLength={30}
+                      disabled={savingProfile || isUsernameLocked}
+                    />
+                  </div>
+                  {isUsernameLocked ? (
+                    <span className='profile-edit-form__hint'>
+                      Podes volver a cambiar tu username el{' '}
+                      {nextUsernameChangeDate.toLocaleDateString('es-AR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                      .
+                    </span>
+                  ) : usernameStatus.message ? (
+                    <span className={`profile-edit-form__status profile-edit-form__status--${usernameStatus.state}`}>
+                      {usernameStatus.message}
+                    </span>
+                  ) : (
+                    <span className='profile-edit-form__hint'>
+                      Podes cambiarlo una vez cada 7 dias.
+                    </span>
+                  )}
                 </div>
 
                 {editError && <Alert variant='error'>{editError}</Alert>}

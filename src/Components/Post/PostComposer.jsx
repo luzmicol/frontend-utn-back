@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 import { createPost } from '../../services/postService'
 import Alert from '../Alert/Alert'
+import MentionTextarea from '../UI/MentionTextarea'
 import './PostComposer.css'
 
 const MAX_LENGTH = 2000
@@ -53,13 +54,13 @@ export default function PostComposer({
 
   return (
     <form className='post-composer' onSubmit={handleSubmit}>
-      <textarea
-        ref={textareaRef}
+      <MentionTextarea
+        textareaRef={textareaRef}
         className='post-composer__textarea'
         placeholder={placeholder}
         value={contenido}
-        onChange={(e) => {
-          setContenido(e.target.value)
+        onChange={(nextVal) => {
+          setContenido(nextVal)
           if (error) setError(null)
         }}
         maxLength={MAX_LENGTH}

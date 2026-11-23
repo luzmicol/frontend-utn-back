@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
+import MentionTextarea from '../UI/MentionTextarea'
+import RichTextWithMentions from '../UI/RichTextWithMentions'
 import LikeButton from './LikeButton'
 import RepostButton from './RepostButton'
 import CommentSection from './CommentSection'
@@ -121,6 +123,9 @@ export default function PostCard({
                 className='post-card__author post-card__author-link'
               >
                 {post.fk_id_usuario.nombre || 'Usuario'}
+                {post.fk_id_usuario.username && (
+                  <span className='post-card__username'> @{post.fk_id_usuario.username}</span>
+                )}
               </Link>
             ) : (
               <span className='post-card__author'>Usuario</span>
@@ -169,10 +174,10 @@ export default function PostCard({
 
       {isEditing ? (
         <form className='post-card__edit-form' onSubmit={handleSaveEdit}>
-          <textarea
+          <MentionTextarea
             className='post-card__edit-textarea'
             value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+            onChange={(nextVal) => setEditContent(nextVal)}
             maxLength={MAX_LENGTH}
             rows={3}
             disabled={actionLoading}
@@ -206,7 +211,9 @@ export default function PostCard({
           </div>
         </form>
       ) : (
-        <p className='post-card__content'>{post.contenido}</p>
+        <p className='post-card__content'>
+          <RichTextWithMentions text={post.contenido} mentions={post.menciones} />
+        </p>
       )}
 
       {confirmDelete && (
