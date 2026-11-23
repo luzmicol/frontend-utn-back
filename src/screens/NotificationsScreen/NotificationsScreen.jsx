@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
 import {
+  deleteAllNotifications,
   deleteNotification,
   getNotifications,
   markAllNotificationsAsRead,
@@ -65,6 +66,8 @@ export default function NotificationsScreen() {
   const [error, setError] = useState(null)
   const [markingAll, setMarkingAll] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   const loadPage = useCallback(async (targetPage, append = false) => {
     try {
@@ -207,6 +210,26 @@ export default function NotificationsScreen() {
     }
   }
 
+  async function handleConfirmDeleteAll() {
+    if (deletingAll) return
+
+    try {
+      setDeletingAll(true)
+      setError(null)
+      await deleteAllNotifications()
+      setNotifications([])
+      setPage(1)
+      setHasMore(false)
+      setUnreadCount(0)
+      setShowDeleteAllModal(false)
+    } catch (err) {
+      setError(err.message || 'No se pudieron borrar las notificaciones.')
+      setShowDeleteAllModal(false)
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   return (
     <section className='loop-page'>
       <header className='notifications-header'>
@@ -215,17 +238,31 @@ export default function NotificationsScreen() {
           <p className='loop-page__subtitle'>Actividad reciente en tu cuenta</p>
         </div>
 
-        {unreadCount > 0 && (
-          <button
-            type='button'
-            className='notifications-header__read-all'
-            onClick={handleMarkAllRead}
-            disabled={markingAll}
-          >
-            <CheckCheck size={16} />
-            <span>{markingAll ? 'Marcando...' : 'Marcar todas como leidas'}</span>
-          </button>
-        )}
+        <div className='notifications-header__actions'>
+          {unreadCount > 0 && (
+            <button
+              type='button'
+              className='notifications-header__read-all'
+              onClick={handleMarkAllRead}
+              disabled={markingAll || deletingAll}
+            >
+              <CheckCheck size={16} />
+              <span>{markingAll ? 'Marcando...' : 'Marcar todas como leidas'}</span>
+            </button>
+          )}
+
+          {!loading && notifications.length > 0 && (
+            <button
+              type='button'
+              className='notifications-header__delete-all'
+              onClick={() => setShowDeleteAllModal(true)}
+              disabled={deletingAll}
+            >
+              <Trash2 size={16} />
+              <span>Borrar todo</span>
+            </button>
+          )}
+        </div>
       </header>
 
       {loading && (
@@ -330,6 +367,43 @@ export default function NotificationsScreen() {
             </button>
           )}
         </>
+      )}
+
+      {showDeleteAllModal && (
+        <div
+          className='notifications-modal__backdrop'
+          role='dialog'
+          aria-modal='true'
+          aria-labelledby='delete-all-notifications-title'
+        >
+          <div className='notifications-modal'>
+            <h2 id='delete-all-notifications-title' className='notifications-modal__title'>
+              Borrar todas las notificaciones
+            </h2>
+            <p className='notifications-modal__text'>
+              ¿Est&aacute;s seguro de que quer&eacute;s borrar todas tus notificaciones? Esta
+              acci&oacute;n no se puede deshacer.
+            </p>
+            <div className='notifications-modal__actions'>
+              <button
+                type='button'
+                className='notifications-modal__btn'
+                onClick={() => setShowDeleteAllModal(false)}
+                disabled={deletingAll}
+              >
+                Cancelar
+              </button>
+              <button
+                type='button'
+                className='notifications-modal__btn notifications-modal__btn--danger'
+                onClick={handleConfirmDeleteAll}
+                disabled={deletingAll}
+              >
+                {deletingAll ? 'Borrando...' : 'Borrar todo'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   )

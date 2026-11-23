@@ -33,3 +33,9 @@ export async function deleteNotification(notification_id) {
     method: 'DELETE'
   })
 }
+
+export async function deleteAllNotifications() {
+  return await apiRequest('/api/notifications', {
+    method: 'DELETE'
+  })
+}

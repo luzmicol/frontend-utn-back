@@ -74,6 +74,8 @@ export default function ConversationView({
   const latestPageRef = useRef(1)
   const pollingInFlightRef = useRef(false)
   const activeConversationIdRef = useRef(conversation?._id || null)
+  const pendingInitialScrollRef = useRef(true)
+  const lastMessageIdRef = useRef(null)
 
   const [messages, setMessages] = useState([])
   const [oldestLoadedPage, setOldestLoadedPage] = useState(1)
@@ -104,6 +106,8 @@ export default function ConversationView({
     const conversationId = conversation?._id
     activeConversationIdRef.current = conversationId || null
     pollingInFlightRef.current = false
+    pendingInitialScrollRef.current = true
+    lastMessageIdRef.current = null
 
     if (!conversationId) return
 
@@ -144,8 +148,6 @@ export default function ConversationView({
           latestPageRef.current = 1
           setHasMore(false)
         }
-        scrollToBottom()
-
         // Marcar como leidos los mensajes recibidos de esta conversacion
         markConversationAsRead(conversationId)
           .then((readRes) => {
@@ -173,7 +175,33 @@ export default function ConversationView({
     return () => {
       isMounted = false
     }
-  }, [conversation?._id, scrollToBottom, setUnreadMessagesCount, onConversationRead])
+  }, [conversation?._id, setUnreadMessagesCount, onConversationRead])
+
+  // Posiciona en el ultimo mensaje al abrir un chat y acompaña mensajes nuevos si el usuario esta cerca del final
+  useEffect(() => {
+    if (loading) return
+
+    const newestId = messages.length > 0 ? messages[messages.length - 1]._id : null
+
+    if (pendingInitialScrollRef.current) {
+      pendingInitialScrollRef.current = false
+      lastMessageIdRef.current = newestId
+      scrollToBottom()
+      return
+    }
+
+    if (newestId && newestId !== lastMessageIdRef.current) {
+      lastMessageIdRef.current = newestId
+      const container = listRef.current
+      if (container) {
+        const distanceFromBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight
+        if (distanceFromBottom < 140) {
+          scrollToBottom()
+        }
+      }
+    }
+  }, [loading, messages, scrollToBottom])
 
   // Polling periodico de mensajes recientes cuando la pestaña esta visible
   useEffect(() => {
