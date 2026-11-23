@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send } from 'lucide-react'
+import { ImagePlus, Send, X } from 'lucide-react'
 import { createPost } from '../../services/postService'
+import { preparePostImageFile } from '../../utils/imageOptimizer'
 import Alert from '../Alert/Alert'
 import MentionTextarea from '../UI/MentionTextarea'
 import './PostComposer.css'
 
 const MAX_LENGTH = 2000
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_ORIGINAL_BYTES = 5 * 1024 * 1024
 
 export default function PostComposer({
   onPostCreated,
@@ -14,7 +17,10 @@ export default function PostComposer({
   autoFocusTrigger = null
 }) {
   const textareaRef = useRef(null)
+  const fileInputRef = useRef(null)
   const [contenido, setContenido] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -25,23 +31,64 @@ export default function PostComposer({
     }
   }, [autoFocusTrigger])
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   const trimmed = contenido.trim()
   const remaining = MAX_LENGTH - contenido.length
+  const canSubmit = Boolean(trimmed || selectedFile)
+
+  function handleFileChange(event) {
+    const file = event.target.files?.[0]
+    setError(null)
+    if (!file) return
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Formato no permitido. Usa JPG, PNG o WebP.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > MAX_ORIGINAL_BYTES) {
+      setError('La imagen no puede superar los 5 MB.')
+      event.target.value = ''
+      return
+    }
+
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setSelectedFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
+  function handleRemoveImage() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setSelectedFile(null)
+    setPreviewUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
 
-    if (!trimmed) {
-      setError('Escribi algo antes de publicar.')
+    if (!canSubmit) {
+      setError('Escribi un texto o adjunta una imagen antes de publicar.')
       return
     }
 
     try {
       setLoading(true)
       setError(null)
-      const response = await createPost(trimmed, communityId)
+      let optimizedFile = null
+      if (selectedFile) {
+        optimizedFile = await preparePostImageFile(selectedFile)
+      }
+      const response = await createPost(trimmed, communityId, optimizedFile)
       const created = response.data?.post
       setContenido('')
+      handleRemoveImage()
       if (created && onPostCreated) {
         onPostCreated(created)
       }
@@ -68,17 +115,47 @@ export default function PostComposer({
         disabled={loading}
       />
 
+      {previewUrl && (
+        <div className='post-composer__preview'>
+          <img src={previewUrl} alt='Vista previa' className='post-composer__preview-img' />
+          <button
+            type='button'
+            className='post-composer__preview-remove'
+            onClick={handleRemoveImage}
+            disabled={loading}
+            aria-label='Quitar imagen'
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {error && <Alert variant='error'>{error}</Alert>}
 
       <div className='post-composer__footer'>
-        <span className={`post-composer__counter${remaining < 100 ? ' post-composer__counter--warn' : ''}`}>
-          {contenido.length} / {MAX_LENGTH}
-        </span>
+        <div className='post-composer__left-tools'>
+          <label className='post-composer__image-btn'>
+            <ImagePlus size={16} strokeWidth={2} />
+            <span>{selectedFile ? 'Cambiar imagen' : 'Imagen'}</span>
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='image/jpeg,image/png,image/webp'
+              onChange={handleFileChange}
+              disabled={loading}
+              hidden
+            />
+          </label>
+
+          <span className={`post-composer__counter${remaining < 100 ? ' post-composer__counter--warn' : ''}`}>
+            {contenido.length} / {MAX_LENGTH}
+          </span>
+        </div>
 
         <button
           type='submit'
           className='post-composer__submit'
-          disabled={loading || !trimmed}
+          disabled={loading || !canSubmit}
         >
           <Send size={16} strokeWidth={2} />
           <span>{loading ? 'Publicando...' : 'Publicar'}</span>

@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2 } from 'lucide-react'
+import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
+import { preparePostImageFile } from '../../utils/imageOptimizer'
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
 import MentionTextarea from '../UI/MentionTextarea'
@@ -37,8 +38,17 @@ export default function PostCard({
   const isAuthor = Boolean(user?._id && post.fk_id_usuario?._id === user._id)
 
   const [isEditing, setIsEditing] = useState(false)
-  const [editContent, setEditContent] = useState(post.contenido)
+  const [editContent, setEditContent] = useState(post.contenido || '')
+  const [editImageFile, setEditImageFile] = useState(null)
+  const [editPreviewUrl, setEditPreviewUrl] = useState('')
+  const [removeImagePending, setRemoveImagePending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    }
+  }, [editPreviewUrl])
   const [showComments, setShowComments] = useState(false)
   const [commentsCount, setCommentsCount] = useState(null)
   const [repostInfo, setRepostInfo] = useState({
@@ -53,20 +63,69 @@ export default function PostCard({
     setRepostInfo(info)
   }, [])
 
+  function handleEditImageChange(event) {
+    const file = event.target.files?.[0]
+    setActionError(null)
+    if (!file) return
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      setActionError('Formato no permitido. Usa JPG, PNG o WebP.')
+      event.target.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setActionError('La imagen no puede superar los 5 MB.')
+      event.target.value = ''
+      return
+    }
+
+    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    setEditImageFile(file)
+    setEditPreviewUrl(URL.createObjectURL(file))
+    setRemoveImagePending(false)
+  }
+
+  function handleMarkRemoveEditImage() {
+    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    setEditImageFile(null)
+    setEditPreviewUrl('')
+    setRemoveImagePending(true)
+  }
+
+  function cancelEdit() {
+    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+    setEditImageFile(null)
+    setEditPreviewUrl('')
+    setRemoveImagePending(false)
+    setIsEditing(false)
+    setActionError(null)
+  }
+
   async function handleSaveEdit(event) {
     event.preventDefault()
     const trimmed = editContent.trim()
-    if (!trimmed) {
-      setActionError('El contenido no puede estar vacio.')
+    const willHaveImage = Boolean(editImageFile) || (Boolean(post.imagen_url) && !removeImagePending)
+
+    if (!trimmed && !willHaveImage) {
+      setActionError('La publicacion debe tener texto o una imagen.')
       return
     }
 
     try {
       setActionLoading(true)
       setActionError(null)
-      const response = await updatePost(post._id, trimmed)
+      let optimizedFile = null
+      if (editImageFile) {
+        optimizedFile = await preparePostImageFile(editImageFile)
+      }
+
+      const response = await updatePost(post._id, trimmed, {
+        imageFile: optimizedFile,
+        removeImage: removeImagePending && !optimizedFile
+      })
       const updated = response.data?.post
-      setIsEditing(false)
+      cancelEdit()
       if (updated && onPostUpdated) {
         onPostUpdated(updated)
       }
@@ -142,7 +201,11 @@ export default function PostCard({
               type='button'
               className='post-card__icon-btn'
               onClick={() => {
-                setEditContent(post.contenido)
+                setEditContent(post.contenido || '')
+                setEditImageFile(null)
+                if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+                setEditPreviewUrl('')
+                setRemoveImagePending(false)
                 setActionError(null)
                 setIsEditing(true)
               }}
@@ -182,6 +245,43 @@ export default function PostCard({
             rows={3}
             disabled={actionLoading}
           />
+
+          {(!removeImagePending && (editPreviewUrl || post.imagen_url)) && (
+            <div className='post-card__image-wrap'>
+              <img
+                src={editPreviewUrl || post.imagen_url}
+                alt='Imagen de la publicacion'
+                className='post-card__image'
+              />
+            </div>
+          )}
+
+          <div className='post-card__edit-image-tools'>
+            <label className='post-card__btn post-card__btn--ghost'>
+              <ImagePlus size={14} />
+              <span>{editPreviewUrl || (!removeImagePending && post.imagen_url) ? 'Cambiar imagen' : 'Agregar imagen'}</span>
+              <input
+                type='file'
+                accept='image/jpeg,image/png,image/webp'
+                onChange={handleEditImageChange}
+                disabled={actionLoading}
+                hidden
+              />
+            </label>
+
+            {(!removeImagePending && (editPreviewUrl || post.imagen_url)) && (
+              <button
+                type='button'
+                className='post-card__btn post-card__btn--danger'
+                onClick={handleMarkRemoveEditImage}
+                disabled={actionLoading}
+              >
+                <Trash2 size={14} />
+                <span>Quitar imagen</span>
+              </button>
+            )}
+          </div>
+
           <div className='post-card__edit-footer'>
             <span className='post-card__counter'>
               {editContent.length} / {MAX_LENGTH}
@@ -190,10 +290,7 @@ export default function PostCard({
               <button
                 type='button'
                 className='post-card__btn post-card__btn--ghost'
-                onClick={() => {
-                  setIsEditing(false)
-                  setActionError(null)
-                }}
+                onClick={cancelEdit}
                 disabled={actionLoading}
               >
                 <X size={15} />
@@ -202,7 +299,10 @@ export default function PostCard({
               <button
                 type='submit'
                 className='post-card__btn post-card__btn--primary'
-                disabled={actionLoading || !editContent.trim()}
+                disabled={
+                  actionLoading ||
+                  (!editContent.trim() && !editImageFile && (!post.imagen_url || removeImagePending))
+                }
               >
                 <Check size={15} />
                 <span>{actionLoading ? 'Guardando...' : 'Guardar'}</span>
@@ -211,9 +311,24 @@ export default function PostCard({
           </div>
         </form>
       ) : (
-        <p className='post-card__content'>
-          <RichTextWithMentions text={post.contenido} mentions={post.menciones} />
-        </p>
+        <>
+          {post.contenido && (
+            <p className='post-card__content'>
+              <RichTextWithMentions text={post.contenido} mentions={post.menciones} />
+            </p>
+          )}
+          {post.imagen_url && (
+            <div className='post-card__image-wrap'>
+              <img
+                src={post.imagen_url}
+                alt='Imagen de la publicacion'
+                className='post-card__image'
+                loading='lazy'
+                decoding='async'
+              />
+            </div>
+          )}
+        </>
       )}
 
       {confirmDelete && (

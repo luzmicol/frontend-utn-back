@@ -6,7 +6,21 @@ export async function getPosts() {
   })
 }
 
-export async function createPost(contenido, fk_id_comunidad = null) {
+export async function createPost(contenido, fk_id_comunidad = null, imageFile = null) {
+  if (imageFile) {
+    const formData = new FormData()
+    formData.append('contenido', contenido || '')
+    if (fk_id_comunidad) {
+      formData.append('fk_id_comunidad', fk_id_comunidad)
+    }
+    formData.append('imagen', imageFile)
+
+    return await apiRequest('/api/posts', {
+      method: 'POST',
+      body: formData
+    })
+  }
+
   const body = { contenido }
   if (fk_id_comunidad) {
     body.fk_id_comunidad = fk_id_comunidad
@@ -18,7 +32,23 @@ export async function createPost(contenido, fk_id_comunidad = null) {
   })
 }
 
-export async function updatePost(post_id, contenido) {
+export async function updatePost(post_id, contenido, { imageFile = null, removeImage = false } = {}) {
+  if (imageFile || removeImage) {
+    const formData = new FormData()
+    formData.append('contenido', contenido || '')
+    if (imageFile) {
+      formData.append('imagen', imageFile)
+    }
+    if (removeImage) {
+      formData.append('remove_image', 'true')
+    }
+
+    return await apiRequest('/api/posts/' + post_id, {
+      method: 'PUT',
+      body: formData
+    })
+  }
+
   return await apiRequest('/api/posts/' + post_id, {
     method: 'PUT',
     body: { contenido }
