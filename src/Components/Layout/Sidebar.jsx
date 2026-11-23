@@ -27,7 +27,7 @@ export default function Sidebar({ onLogoutRequest }) {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <img
-            src='/loop-email-logo.png'
+            src='/loop-wordmark.png'
             alt='LOOP'
             className='sidebar__brand-img'
           />

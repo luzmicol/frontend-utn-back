@@ -45,7 +45,7 @@ export default function AppLayout() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <img
-            src='/loop-email-logo.png'
+            src='/loop-icon.png'
             alt='LOOP'
             className='mobile-header__brand-img'
           />
