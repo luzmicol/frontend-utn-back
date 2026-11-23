@@ -54,11 +54,21 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
         }
     }
 
-    const response_http = await fetch(API_URL + endpoint, {
-        method,
-        headers: request_headers,
-        body: body !== undefined ? JSON.stringify(body) : undefined
-    })
+    let response_http
+
+    try {
+        response_http = await fetch(API_URL + endpoint, {
+            method,
+            headers: request_headers,
+            body: body !== undefined ? JSON.stringify(body) : undefined
+        })
+    } catch {
+        const network_error = new Error('No se pudo conectar con el servidor. Probá de nuevo en unos minutos.')
+        network_error.status = null
+        network_error.code = 'NETWORK_ERROR'
+        network_error.isNetworkError = true
+        throw network_error
+    }
 
     const response_body = await readResponseBody(response_http)
 

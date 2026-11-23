@@ -1,11 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
 
-export default function Sidebar() {
-  const { logout } = useAuth()
+export default function Sidebar({ onLogoutRequest }) {
   const navigate = useNavigate()
 
   function handleCreatePostClick() {
@@ -44,7 +42,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      <button type='button' className='sidebar__logout' onClick={logout}>
+      <button type='button' className='sidebar__logout' onClick={onLogoutRequest}>
         <LogOut size={18} strokeWidth={2} />
         <span>Cerrar sesion</span>
       </button>

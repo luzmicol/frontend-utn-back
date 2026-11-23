@@ -1,21 +1,30 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
 import { NAV_ITEMS } from './navItems'
+import LogoutConfirmModal from './LogoutConfirmModal'
 import './AppLayout.css'
 
 export default function AppLayout() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
   }
 
+  function handleConfirmLogout() {
+    setShowLogoutModal(false)
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className='app-layout'>
-      <Sidebar />
+      <Sidebar onLogoutRequest={() => setShowLogoutModal(true)} />
 
       <header className='mobile-header'>
         <div className='mobile-header__brand'>
@@ -38,7 +47,7 @@ export default function AppLayout() {
           <button
             type='button'
             className='mobile-header__logout'
-            onClick={logout}
+            onClick={() => setShowLogoutModal(true)}
             aria-label='Cerrar sesion'
           >
             <LogOut size={18} strokeWidth={2} />
@@ -67,6 +76,12 @@ export default function AppLayout() {
           </NavLink>
         ))}
       </nav>
+
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   )
 }
