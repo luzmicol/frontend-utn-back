@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import useForm from '../../hooks/useForm'
 import useRequest from '../../hooks/useRequest'
@@ -10,11 +11,32 @@ function RegisterScreen() {
   const initial_state = { name: '', email: '', password: '' }
   const { formState, handleChangeInput } = useForm(initial_state)
   const { loading, response, error, sendRequest } = useRequest()
+  const [validationError, setValidationError] = useState(null)
+
+  function handleFieldChange(event) {
+    if (validationError) setValidationError(null)
+    handleChangeInput(event)
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
+    const name = formState.name.trim()
+    const email = formState.email.trim()
+    const password = formState.password
+
+    if (!name || !email || !password) {
+      setValidationError('Completa todos los campos obligatorios para registrarte.')
+      return
+    }
+
+    if (password.length < 8) {
+      setValidationError('La contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+
+    setValidationError(null)
     sendRequest(
-      () => register(formState.name, formState.email, formState.password)
+      () => register(name, email, password)
     )
   }
 
@@ -34,7 +56,8 @@ function RegisterScreen() {
           type='text'
           placeholder='Nombre'
           value={formState.name}
-          onChange={handleChangeInput}
+          onChange={handleFieldChange}
+          required
         />
         <FormField
           label='Email'
@@ -42,7 +65,8 @@ function RegisterScreen() {
           type='email'
           placeholder='Email'
           value={formState.email}
-          onChange={handleChangeInput}
+          onChange={handleFieldChange}
+          required
         />
         <FormField
           label='Password'
@@ -50,10 +74,12 @@ function RegisterScreen() {
           type='password'
           placeholder='Password'
           value={formState.password}
-          onChange={handleChangeInput}
+          onChange={handleFieldChange}
+          required
         />
         <FormButton loading={loading}>Registrarse</FormButton>
-        {error && !loading && <Alert variant='error'>{error}</Alert>}
+        {validationError && <Alert variant='error'>{validationError}</Alert>}
+        {!validationError && error && !loading && <Alert variant='error'>{error}</Alert>}
         {response && !loading && (
           <Alert variant='success'>
             Registro exitoso, revisa tu correo electronico para verificar la

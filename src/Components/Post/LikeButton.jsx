@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Heart } from 'lucide-react'
 import { getPostLikes, likePost, unlikePost } from '../../services/postService'
 
-export default function LikeButton({ postId, initialLikesCount, initialLikedByMe }) {
+export default function LikeButton({ postId, initialLikesCount, initialLikedByMe, onError }) {
   const hasInitialData = initialLikesCount !== undefined
   const [likesCount, setLikesCount] = useState(initialLikesCount ?? 0)
   const [likedByMe, setLikedByMe] = useState(Boolean(initialLikedByMe))
@@ -43,6 +43,7 @@ export default function LikeButton({ postId, initialLikesCount, initialLikedByMe
     setLikedByMe(nextLiked)
     setLikesCount(nextCount)
     setBusy(true)
+    if (onError) onError(null)
 
     try {
       const response = nextLiked ? await likePost(postId) : await unlikePost(postId)
@@ -50,9 +51,12 @@ export default function LikeButton({ postId, initialLikesCount, initialLikedByMe
         setLikesCount(response.data.likes_count ?? nextCount)
         setLikedByMe(Boolean(response.data.liked_by_me))
       }
-    } catch {
+    } catch (err) {
       setLikedByMe(prevLiked)
       setLikesCount(prevCount)
+      if (onError) {
+        onError(err.message || 'No se pudo actualizar el me gusta.')
+      }
     } finally {
       setBusy(false)
     }

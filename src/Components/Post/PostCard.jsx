@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus } from 'lucide-react'
+import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
 import { preparePostImageFile } from '../../utils/imageOptimizer'
@@ -58,6 +58,8 @@ export default function PostCard({
   })
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
+  const [failedImageUrl, setFailedImageUrl] = useState('')
+  const imageLoadFailed = Boolean(post.imagen_url && failedImageUrl === post.imagen_url)
 
   const handleRepostInfoChange = useCallback((info) => {
     setRepostInfo(info)
@@ -319,13 +321,21 @@ export default function PostCard({
           )}
           {post.imagen_url && (
             <div className='post-card__image-wrap'>
-              <img
-                src={post.imagen_url}
-                alt='Imagen de la publicacion'
-                className='post-card__image'
-                loading='lazy'
-                decoding='async'
-              />
+              {imageLoadFailed ? (
+                <div className='post-card__image-fallback' role='img' aria-label='No se pudo cargar la imagen'>
+                  <ImageOff size={20} aria-hidden='true' />
+                  <span>No se pudo cargar la imagen</span>
+                </div>
+              ) : (
+                <img
+                  src={post.imagen_url}
+                  alt='Imagen de la publicacion'
+                  className='post-card__image'
+                  loading='lazy'
+                  decoding='async'
+                  onError={() => setFailedImageUrl(post.imagen_url)}
+                />
+              )}
             </div>
           )}
         </>
@@ -364,6 +374,7 @@ export default function PostCard({
           postId={post._id}
           initialLikesCount={post.likes_count}
           initialLikedByMe={post.liked_by_me}
+          onError={setActionError}
         />
 
         <RepostButton

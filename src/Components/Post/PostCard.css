@@ -293,3 +293,15 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.post-card__image-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 140px;
+  padding: 20px;
+  background-color: var(--surface-elevated);
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import useForm from '../../hooks/useForm'
 import useRequest from '../../hooks/useRequest'
@@ -12,13 +12,28 @@ function LoginScreen() {
   const { formState, handleChangeInput } = useForm(initial_state)
   const { loading, response, error, sendRequest } = useRequest()
   const { login } = useAuth()
+  const [validationError, setValidationError] = useState(null)
   
   const navigate = useNavigate()
 
+  function handleFieldChange(event) {
+    if (validationError) setValidationError(null)
+    handleChangeInput(event)
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
+    const email = formState.email.trim()
+    const password = formState.password
+
+    if (!email || !password) {
+      setValidationError('Completa tu email y contraseña para iniciar sesion.')
+      return
+    }
+
+    setValidationError(null)
     sendRequest(
-      () => login(formState.email, formState.password)
+      () => login(email, password)
     )
   }
 
@@ -46,7 +61,8 @@ function LoginScreen() {
           type='email'
           placeholder='Email'
           value={formState.email}
-          onChange={handleChangeInput}
+          onChange={handleFieldChange}
+          required
         />
         <FormField
           label='Password'
@@ -54,13 +70,15 @@ function LoginScreen() {
           type='password'
           placeholder='Password'
           value={formState.password}
-          onChange={handleChangeInput}
+          onChange={handleFieldChange}
+          required
         />
         <FormButton loading={loading}>Iniciar sesion</FormButton>
         <Link className='form__link' to='/forgot-password'>
           Olvide mi contrasena
         </Link>
-        {error && !loading && <Alert variant='error'>{error}</Alert>}
+        {validationError && <Alert variant='error'>{validationError}</Alert>}
+        {!validationError && error && !loading && <Alert variant='error'>{error}</Alert>}
         {response && !loading && (
           <Alert variant='success'>Inicio de sesion exitoso</Alert>
         )}

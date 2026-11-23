@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_APP_URL_BACKEND
+const RAW_API_URL = import.meta.env.VITE_APP_URL_BACKEND
+const API_URL = typeof RAW_API_URL === 'string' ? RAW_API_URL.trim().replace(/\/+$/, '') : ''
+
+if (!API_URL && import.meta.env.DEV) {
+    console.warn('[apiClient] VITE_APP_URL_BACKEND no esta configurada en el entorno.')
+}
 export const AUTH_TOKEN_KEY = 'auth_token'
 
 let unauthorizedHandler = null
@@ -41,6 +46,13 @@ function createApiError(response_body, status) {
 }
 
 export async function apiRequest(endpoint, { method = 'GET', body, headers = {}, auth = true } = {}) {
+    if (!API_URL) {
+        const config_error = new Error('La configuracion del servidor no esta disponible.')
+        config_error.status = null
+        config_error.code = 'CONFIG_ERROR'
+        throw config_error
+    }
+
     const request_headers = { ...headers }
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
