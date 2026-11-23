@@ -8,9 +8,12 @@
     flex-direction: column;
     gap: 16px;
     width: 280px;
-    position: sticky;
+    position: fixed;
     top: 24px;
-    align-self: start;
+    right: max(24px, calc((100vw - var(--sidebar-width) - 984px) / 2));
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    z-index: 10;
   }
 
   .feed-suggestions__card {
