@@ -5,7 +5,7 @@ import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
 
-export default function Sidebar({ onLogoutRequest }) {
+export default function Sidebar({ onLogoutRequest, onBrandClick }) {
   const navigate = useNavigate()
   const { unreadCount } = useNotifications()
   const { unreadMessagesCount } = useUnreadMessages()
@@ -24,7 +24,7 @@ export default function Sidebar({ onLogoutRequest }) {
           to='/'
           className='sidebar__brand'
           aria-label='Ir al inicio de LOOP'
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={onBrandClick}
         >
           <img
             src='/loop-wordmark.png'

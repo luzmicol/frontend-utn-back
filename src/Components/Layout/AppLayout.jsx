@@ -23,6 +23,13 @@ export default function AppLayout() {
   const messagesBadgeText =
     unreadMessagesCount > 99 ? '99+' : String(unreadMessagesCount)
 
+  function handleBrandClick(event) {
+    if (location.pathname === '/') {
+      event.preventDefault()
+      window.location.reload()
+    }
+  }
+
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
   }
@@ -35,14 +42,17 @@ export default function AppLayout() {
 
   return (
     <div className='app-layout'>
-      <Sidebar onLogoutRequest={() => setShowLogoutModal(true)} />
+      <Sidebar
+        onLogoutRequest={() => setShowLogoutModal(true)}
+        onBrandClick={handleBrandClick}
+      />
 
       <header className='mobile-header'>
         <Link
           to='/'
           className='mobile-header__brand'
           aria-label='Ir al inicio de LOOP'
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={handleBrandClick}
         >
           <img
             src='/loop-icon.png'
