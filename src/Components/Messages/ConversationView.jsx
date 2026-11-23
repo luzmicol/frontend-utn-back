@@ -35,6 +35,7 @@ function mergeMessagesUnique(existing, incoming) {
 export default function ConversationView({ conversation, onBack, onConversationActivity }) {
   const { user: currentUser } = useAuth()
   const listRef = useRef(null)
+  const inputRef = useRef(null)
 
   const [messages, setMessages] = useState([])
   const [page, setPage] = useState(1)
@@ -191,6 +192,9 @@ export default function ConversationView({ conversation, onBack, onConversationA
       setError(err.message || 'No se pudo enviar el mensaje.')
     } finally {
       setSending(false)
+      requestAnimationFrame(() => {
+        inputRef.current?.focus()
+      })
     }
   }
 
@@ -325,6 +329,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
         }}
       >
         <textarea
+          ref={inputRef}
           className='chat-view__input'
           placeholder='Escribi un mensaje...'
           value={text}
@@ -332,7 +337,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
           onKeyDown={handleKeyDown}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
-          disabled={sending}
+          readOnly={sending}
         />
         <button
           type='submit'

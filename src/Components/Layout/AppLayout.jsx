@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
@@ -10,7 +10,10 @@ import './AppLayout.css'
 export default function AppLayout() {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  const isMessagesRoute = location.pathname.startsWith('/messages')
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
@@ -55,8 +58,8 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className='app-layout__main'>
-        <div className='app-layout__container'>
+      <main className={`app-layout__main${isMessagesRoute ? ' app-layout__main--messages' : ''}`}>
+        <div className={`app-layout__container${isMessagesRoute ? ' app-layout__container--wide' : ''}`}>
           <Outlet />
         </div>
       </main>

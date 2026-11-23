@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { MessageSquare, Search } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -115,7 +115,7 @@ export default function MessagesScreen() {
     }
   }
 
-  function handleConversationActivity(conversationId, previewText) {
+  const handleConversationActivity = useCallback((conversationId, previewText) => {
     const nowIso = new Date().toISOString()
     setConversations((prev) => {
       const updated = prev.map((c) =>
@@ -129,7 +129,7 @@ export default function MessagesScreen() {
           new Date(a.ultima_actualizacion).getTime()
       )
     })
-  }
+  }, [])
 
   const selectedConversation =
     conversations.find((c) => c._id === selectedId) || null
