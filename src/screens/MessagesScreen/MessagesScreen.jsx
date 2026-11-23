@@ -161,6 +161,12 @@ export default function MessagesScreen() {
     })
   }, [])
 
+  const handleConversationRead = useCallback((conversationId) => {
+    setConversations((prev) =>
+      prev.map((c) => (c._id === conversationId ? { ...c, unread_count: 0 } : c))
+    )
+  }, [])
+
   const selectedConversation =
     conversations.find((c) => c._id === selectedId) || null
 
@@ -264,9 +270,16 @@ export default function MessagesScreen() {
                         {other?.username && (
                           <span className='messages-list__username'>@{other.username}</span>
                         )}
-                        <span className='messages-list__preview'>
-                          {conv.ultimo_mensaje || 'Sin mensajes todavia'}
-                        </span>
+                        <div className='messages-list__bottom'>
+                          <span className='messages-list__preview'>
+                            {conv.ultimo_mensaje || 'Sin mensajes todavia'}
+                          </span>
+                          {(conv.unread_count ?? 0) > 0 && (
+                            <span className='messages-list__badge'>
+                              {conv.unread_count > 99 ? '99+' : conv.unread_count}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </button>
                   </li>
@@ -282,6 +295,7 @@ export default function MessagesScreen() {
               conversation={selectedConversation}
               onBack={() => setSelectedId(null)}
               onConversationActivity={handleConversationActivity}
+              onConversationRead={handleConversationRead}
             />
           ) : (
             <div className='messages-placeholder'>

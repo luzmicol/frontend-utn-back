@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Trash2, UserPlus, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
+  deleteCommunity,
   deleteCommunityImage,
   getCommunityById,
   getCommunityMembers,
@@ -30,6 +31,7 @@ function formatDate(dateString) {
 
 export default function CommunityDetailScreen() {
   const { community_id } = useParams()
+  const navigate = useNavigate()
   const { user: currentUser } = useAuth()
 
   const [community, setCommunity] = useState(null)
@@ -54,6 +56,10 @@ export default function CommunityDetailScreen() {
   const [removeImagePending, setRemoveImagePending] = useState(false)
   const [savingImage, setSavingImage] = useState(false)
   const [imageError, setImageError] = useState(null)
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingCommunity, setDeletingCommunity] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
 
   useEffect(() => {
     return () => {
@@ -263,6 +269,22 @@ export default function CommunityDetailScreen() {
     }
   }
 
+  async function handleConfirmDeleteCommunity() {
+    if (deletingCommunity || !community?._id) return
+
+    try {
+      setDeletingCommunity(true)
+      setDeleteError(null)
+      await deleteCommunity(community._id)
+      setShowDeleteModal(false)
+      navigate('/communities', { replace: true })
+    } catch (err) {
+      setDeleteError(err.message || 'No se pudo eliminar la comunidad.')
+    } finally {
+      setDeletingCommunity(false)
+    }
+  }
+
   const displayedCommunityImage = editingImage
     ? removeImagePending
       ? ''
@@ -312,14 +334,27 @@ export default function CommunityDetailScreen() {
 
               <div className='community-hero__actions'>
                 {isOwner && !editingImage && (
-                  <button
-                    type='button'
-                    className='community-card__btn'
-                    onClick={openImageEditor}
-                  >
-                    <Camera size={14} />
-                    <span>Editar imagen</span>
-                  </button>
+                  <>
+                    <button
+                      type='button'
+                      className='community-card__btn'
+                      onClick={openImageEditor}
+                    >
+                      <Camera size={14} />
+                      <span>Editar imagen</span>
+                    </button>
+                    <button
+                      type='button'
+                      className='community-card__btn community-card__btn--danger'
+                      onClick={() => {
+                        setDeleteError(null)
+                        setShowDeleteModal(true)
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      <span>Eliminar comunidad</span>
+                    </button>
+                  </>
                 )}
                 {isMember ? (
                   <>
@@ -517,6 +552,47 @@ export default function CommunityDetailScreen() {
               </ul>
             )}
           </section>
+
+          {showDeleteModal && (
+            <div
+              className='community-delete-modal__backdrop'
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby='delete-community-title'
+            >
+              <div className='community-delete-modal'>
+                <h2 id='delete-community-title' className='community-delete-modal__title'>
+                  Eliminar comunidad
+                </h2>
+                <p className='community-delete-modal__text'>
+                  ¿Seguro que quer&eacute;s eliminar <strong>{community.nombre}</strong>? Esta
+                  acci&oacute;n es irreversible y eliminar&aacute; sus membres&iacute;as y
+                  publicaciones asociadas.
+                </p>
+
+                {deleteError && <Alert variant='error'>{deleteError}</Alert>}
+
+                <div className='community-delete-modal__actions'>
+                  <button
+                    type='button'
+                    className='community-card__btn'
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={deletingCommunity}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type='button'
+                    className='community-card__btn community-card__btn--danger'
+                    onClick={handleConfirmDeleteCommunity}
+                    disabled={deletingCommunity}
+                  >
+                    {deletingCommunity ? 'Eliminando...' : 'Eliminar definitivamente'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

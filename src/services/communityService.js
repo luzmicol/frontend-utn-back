@@ -58,3 +58,9 @@ export async function deleteCommunityImage(community_id) {
     method: 'DELETE'
   })
 }
+
+export async function deleteCommunity(community_id) {
+  return await apiRequest('/api/communities/' + community_id, {
+    method: 'DELETE'
+  })
+}

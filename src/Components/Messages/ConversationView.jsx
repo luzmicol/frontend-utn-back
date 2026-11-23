@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Send, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, CheckCheck, Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
@@ -61,7 +61,12 @@ function reconcilePolledMessages(existing, polledMessages, { isCompleteConversat
   return mergeMessagesUnique(keptOlder, sortedPolled)
 }
 
-export default function ConversationView({ conversation, onBack, onConversationActivity }) {
+export default function ConversationView({
+  conversation,
+  onBack,
+  onConversationActivity,
+  onConversationRead
+}) {
   const { user: currentUser } = useAuth()
   const { setUnreadMessagesCount } = useUnreadMessages()
   const listRef = useRef(null)
@@ -146,6 +151,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
           .then((readRes) => {
             if (isMounted && activeConversationIdRef.current === conversationId) {
               setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+              if (onConversationRead) onConversationRead(conversationId)
             }
           })
           .catch(() => {
@@ -167,7 +173,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
     return () => {
       isMounted = false
     }
-  }, [conversation?._id, scrollToBottom, setUnreadMessagesCount])
+  }, [conversation?._id, scrollToBottom, setUnreadMessagesCount, onConversationRead])
 
   // Polling periodico de mensajes recientes cuando la pestaña esta visible
   useEffect(() => {
@@ -237,6 +243,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
             .then((readRes) => {
               if (isMounted && activeConversationIdRef.current === conversationId) {
                 setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+                if (onConversationRead) onConversationRead(conversationId)
               }
             })
             .catch(() => {
@@ -265,7 +272,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [conversation?._id, currentUser?._id, setUnreadMessagesCount])
+  }, [conversation?._id, currentUser?._id, setUnreadMessagesCount, onConversationRead])
 
   async function handleLoadPrevious() {
     const conversationId = conversation?._id
@@ -404,6 +411,13 @@ export default function ConversationView({ conversation, onBack, onConversationA
         {!loading &&
           messages.map((msg) => {
             const isMine = msg.fk_id_remitente?._id === currentUser?._id
+            const otherId = otherUser?._id
+            const isReadByOther = Boolean(
+              isMine && otherId && (msg.leido_por || []).includes(otherId)
+            )
+            const isDeliveredToOther = Boolean(
+              isMine && otherId && (msg.entregado_a || []).includes(otherId)
+            )
             return (
               <div
                 key={msg._id}
@@ -413,6 +427,31 @@ export default function ConversationView({ conversation, onBack, onConversationA
                   <p className='chat-bubble__text'>{msg.contenido}</p>
                   <div className='chat-bubble__meta'>
                     <time className='chat-bubble__time'>{formatTime(msg.fecha_creacion)}</time>
+                    {isMine && (
+                      <span
+                        className={`chat-bubble__status${isReadByOther ? ' chat-bubble__status--read' : ''}`}
+                        aria-label={
+                          isReadByOther
+                            ? 'Visto'
+                            : isDeliveredToOther
+                              ? 'Entregado'
+                              : 'Enviado'
+                        }
+                        title={
+                          isReadByOther
+                            ? 'Visto'
+                            : isDeliveredToOther
+                              ? 'Entregado'
+                              : 'Enviado'
+                        }
+                      >
+                        {isReadByOther || isDeliveredToOther ? (
+                          <CheckCheck size={14} strokeWidth={2.2} />
+                        ) : (
+                          <Check size={14} strokeWidth={2.2} />
+                        )}
+                      </span>
+                    )}
                     {isMine && confirmDeleteId !== msg._id && (
                       <button
                         type='button'
