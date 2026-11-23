@@ -81,3 +81,11 @@
     gap: 1rem;
   }
 }
+
+.auth-content__brand-img {
+  display: block;
+  height: 44px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}

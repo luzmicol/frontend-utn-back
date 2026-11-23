@@ -1,5 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Bell, PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
+import { Bell, PenSquare, LogOut } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import { NAV_ITEMS } from './navItems'
@@ -26,10 +26,11 @@ export default function Sidebar({ onLogoutRequest }) {
           aria-label='Ir al inicio de LOOP'
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
-          <span className='sidebar__logo' aria-hidden='true'>
-            <InfinityIcon size={22} strokeWidth={2.2} />
-          </span>
-          <span className='sidebar__name'>LOOP</span>
+          <img
+            src='/loop-email-logo.png'
+            alt='LOOP'
+            className='sidebar__brand-img'
+          />
         </Link>
 
         <nav className='sidebar__nav'>

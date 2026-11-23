@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
+import { Bell, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
@@ -44,10 +44,11 @@ export default function AppLayout() {
           aria-label='Ir al inicio de LOOP'
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
-          <span className='mobile-header__logo' aria-hidden='true'>
-            <InfinityIcon size={18} strokeWidth={2.2} />
-          </span>
-          <span className='mobile-header__name'>LOOP</span>
+          <img
+            src='/loop-email-logo.png'
+            alt='LOOP'
+            className='mobile-header__brand-img'
+          />
         </Link>
 
         <div className='mobile-header__actions'>

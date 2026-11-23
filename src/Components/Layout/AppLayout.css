@@ -24,10 +24,17 @@
 .mobile-header__brand {
   display: flex;
   align-items: center;
-  gap: 8px;
   text-decoration: none;
   cursor: pointer;
   border-radius: 10px;
+}
+
+.mobile-header__brand-img {
+  display: block;
+  height: 30px;
+  width: auto;
+  max-width: 132px;
+  object-fit: contain;
 }
 
 .mobile-header__brand:focus-visible {
