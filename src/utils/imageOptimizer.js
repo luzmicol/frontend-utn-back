@@ -23,7 +23,7 @@ function loadImageViaDataUrl(file) {
 async function loadImage(file) {
   if (typeof createImageBitmap === 'function') {
     try {
-      const bitmap = await createImageBitmap(file)
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
       return {
         source: bitmap,
         width: bitmap.width,
@@ -31,7 +31,17 @@ async function loadImage(file) {
         close: () => bitmap.close()
       }
     } catch {
-      // Fallback a FileReader + Image si createImageBitmap falla con este formato/navegador
+      try {
+        const bitmap = await createImageBitmap(file)
+        return {
+          source: bitmap,
+          width: bitmap.width,
+          height: bitmap.height,
+          close: () => bitmap.close()
+        }
+      } catch {
+        // Fallback a FileReader + Image si createImageBitmap falla con este formato/navegador
+      }
     }
   }
 
@@ -105,10 +115,11 @@ export async function prepareAvatarFile(file) {
   }
 }
 
-const POST_MAX_ORIGINAL_BYTES = 5 * 1024 * 1024 // 5 MB
-const POST_MAX_DIMENSION = 1200
+const POST_MAX_ORIGINAL_BYTES = 15 * 1024 * 1024 // 15 MB antes de optimizar en el navegador
+const POST_DIMENSION_STEPS = [1200, 960, 800]
+const POST_QUALITY_STEPS = [0.82, 0.72, 0.62, 0.5, 0.4, 0.32]
 const POST_TARGET_BYTES = 300 * 1024
-const POST_MAX_FINAL_BYTES = 1.5 * 1024 * 1024 // 1.5 MB
+const POST_MAX_FINAL_BYTES = 1.5 * 1024 * 1024 // 1.5 MB final enviado al backend (limite backend: 5 MB)
 
 export async function preparePostImageFile(file) {
   if (!file) {
@@ -120,32 +131,41 @@ export async function preparePostImageFile(file) {
   }
 
   if (file.size > POST_MAX_ORIGINAL_BYTES) {
-    throw new Error('La imagen no puede superar los 5 MB.')
+    throw new Error('La imagen original no puede superar los 15 MB.')
   }
 
   const img = await loadImage(file)
   try {
-    const scale = Math.min(1, POST_MAX_DIMENSION / Math.max(img.width, img.height))
-    const targetWidth = Math.max(1, Math.round(img.width * scale))
-    const targetHeight = Math.max(1, Math.round(img.height * scale))
-
-    const canvas = document.createElement('canvas')
-    canvas.width = targetWidth
-    canvas.height = targetHeight
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) {
-      throw new Error('No se pudo procesar la imagen en este navegador.')
-    }
-
-    ctx.drawImage(img.source, 0, 0, targetWidth, targetHeight)
-
     let bestBlob = null
-    for (const quality of QUALITY_STEPS) {
-      const blob = await canvasToBlob(canvas, quality)
-      bestBlob = blob
-      if (blob.size <= POST_TARGET_BYTES) {
-        break
+
+    for (const maxDimension of POST_DIMENSION_STEPS) {
+      const scale = Math.min(1, maxDimension / Math.max(img.width, img.height))
+      const targetWidth = Math.max(1, Math.round(img.width * scale))
+      const targetHeight = Math.max(1, Math.round(img.height * scale))
+
+      const canvas = document.createElement('canvas')
+      canvas.width = targetWidth
+      canvas.height = targetHeight
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        throw new Error('No se pudo procesar la imagen en este navegador.')
+      }
+
+      ctx.drawImage(img.source, 0, 0, targetWidth, targetHeight)
+
+      for (const quality of POST_QUALITY_STEPS) {
+        const blob = await canvasToBlob(canvas, quality)
+        if (!bestBlob || blob.size < bestBlob.size) {
+          bestBlob = blob
+        }
+        if (blob.size <= POST_TARGET_BYTES) {
+          return new File([blob], 'post.webp', { type: 'image/webp' })
+        }
+      }
+
+      if (bestBlob && bestBlob.size <= POST_MAX_FINAL_BYTES) {
+        return new File([bestBlob], 'post.webp', { type: 'image/webp' })
       }
     }
 

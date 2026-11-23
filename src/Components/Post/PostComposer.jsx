@@ -8,7 +8,7 @@ import './PostComposer.css'
 
 const MAX_LENGTH = 2000
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const MAX_ORIGINAL_BYTES = 5 * 1024 * 1024
+const MAX_ORIGINAL_BYTES = 15 * 1024 * 1024
 
 export default function PostComposer({
   onPostCreated,
@@ -53,7 +53,7 @@ export default function PostComposer({
     }
 
     if (file.size > MAX_ORIGINAL_BYTES) {
-      setError('La imagen no puede superar los 5 MB.')
+      setError('La imagen original no puede superar los 15 MB.')
       event.target.value = ''
       return
     }
