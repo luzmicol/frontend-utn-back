@@ -15,7 +15,7 @@ export default function AuthMiddleware() {
         <div className='auth-content'>
           <div className='auth-content__brand'>
             <img
-              src='/loop-email-logo.png'
+              src='/loop-wordmark.png'
               alt='LOOP'
               className='auth-content__brand-img'
             />
@@ -42,7 +42,7 @@ export default function AuthMiddleware() {
         <div className='auth-content'>
           <div className='auth-content__brand'>
             <img
-              src='/loop-email-logo.png'
+              src='/loop-wordmark.png'
               alt='LOOP'
               className='auth-content__brand-img'
             />
