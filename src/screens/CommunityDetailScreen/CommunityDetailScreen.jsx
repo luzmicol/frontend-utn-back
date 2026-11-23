@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, Check, Lock, LogOut, UserPlus, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Trash2, UserPlus, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
+  deleteCommunityImage,
   getCommunityById,
   getCommunityMembers,
   getMyCommunities,
   joinCommunity,
-  leaveCommunity
+  leaveCommunity,
+  updateCommunityImage
 } from '../../services/communityService'
 import { getPosts } from '../../services/postService'
+import { prepareAvatarFile } from '../../utils/imageOptimizer'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
 import Avatar from '../../Components/UI/Avatar'
@@ -43,6 +46,22 @@ export default function CommunityDetailScreen() {
   const [error, setError] = useState(null)
   const [membershipBusy, setMembershipBusy] = useState(false)
   const [membershipError, setMembershipError] = useState(null)
+
+  const fileInputRef = useRef(null)
+  const [editingImage, setEditingImage] = useState(false)
+  const [pendingImageFile, setPendingImageFile] = useState(null)
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState('')
+  const [removeImagePending, setRemoveImagePending] = useState(false)
+  const [savingImage, setSavingImage] = useState(false)
+  const [imageError, setImageError] = useState(null)
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl)
+      }
+    }
+  }, [pendingPreviewUrl])
 
   const loadMembers = useCallback(async () => {
     try {
@@ -171,6 +190,84 @@ export default function CommunityDetailScreen() {
   }
 
   const isMember = Boolean(membershipRole)
+  const isOwner = membershipRole === 'owner'
+
+  function openImageEditor() {
+    setEditingImage(true)
+    setPendingImageFile(null)
+    setPendingPreviewUrl('')
+    setRemoveImagePending(false)
+    setImageError(null)
+  }
+
+  function closeImageEditor() {
+    setEditingImage(false)
+    setPendingImageFile(null)
+    setPendingPreviewUrl('')
+    setRemoveImagePending(false)
+    setImageError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleSelectImage(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      setImageError(null)
+      const optimized = await prepareAvatarFile(file)
+      const nextUrl = URL.createObjectURL(optimized)
+      setPendingImageFile(optimized)
+      setPendingPreviewUrl(nextUrl)
+      setRemoveImagePending(false)
+    } catch (err) {
+      setImageError(err.message || 'No se pudo procesar la imagen seleccionada.')
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  function handleMarkRemoveImage() {
+    setPendingImageFile(null)
+    setPendingPreviewUrl('')
+    setRemoveImagePending(true)
+    setImageError(null)
+  }
+
+  async function handleSaveImage() {
+    if (savingImage || !community?._id) return
+
+    try {
+      setSavingImage(true)
+      setImageError(null)
+
+      if (pendingImageFile) {
+        const res = await updateCommunityImage(community._id, pendingImageFile)
+        if (res.data?.community) {
+          setCommunity(res.data.community)
+        }
+      } else if (removeImagePending && community.imagen_url) {
+        const res = await deleteCommunityImage(community._id)
+        if (res.data?.community) {
+          setCommunity(res.data.community)
+        }
+      }
+
+      closeImageEditor()
+    } catch (err) {
+      setImageError(err.message || 'No se pudo actualizar la imagen de la comunidad.')
+    } finally {
+      setSavingImage(false)
+    }
+  }
+
+  const displayedCommunityImage = editingImage
+    ? removeImagePending
+      ? ''
+      : pendingPreviewUrl || community?.imagen_url || ''
+    : community?.imagen_url || ''
 
   return (
     <section className='loop-page'>
@@ -192,9 +289,11 @@ export default function CommunityDetailScreen() {
           <header className='community-hero'>
             <div className='community-hero__top'>
               <div className='community-hero__identity'>
-                <span className='community-hero__icon' aria-hidden='true'>
-                  <Users size={22} />
-                </span>
+                <Avatar
+                  name={community.nombre}
+                  avatarUrl={displayedCommunityImage}
+                  size='lg'
+                />
                 <div>
                   <h1 className='community-hero__title'>{community.nombre}</h1>
                   <div className='community-hero__meta'>
@@ -212,6 +311,16 @@ export default function CommunityDetailScreen() {
               </div>
 
               <div className='community-hero__actions'>
+                {isOwner && !editingImage && (
+                  <button
+                    type='button'
+                    className='community-card__btn'
+                    onClick={openImageEditor}
+                  >
+                    <Camera size={14} />
+                    <span>Editar imagen</span>
+                  </button>
+                )}
                 {isMember ? (
                   <>
                     <span className='community-card__badge'>
@@ -244,6 +353,64 @@ export default function CommunityDetailScreen() {
 
             {community.descripcion && (
               <p className='community-hero__description'>{community.descripcion}</p>
+            )}
+
+            {isOwner && editingImage && (
+              <div className='community-image-editor'>
+                <input
+                  ref={fileInputRef}
+                  type='file'
+                  accept='image/jpeg,image/png,image/webp'
+                  onChange={handleSelectImage}
+                  hidden
+                />
+
+                <div className='community-image-editor__controls'>
+                  <button
+                    type='button'
+                    className='community-card__btn'
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={savingImage}
+                  >
+                    <Camera size={14} />
+                    <span>Seleccionar imagen</span>
+                  </button>
+
+                  {(community.imagen_url || pendingPreviewUrl) && !removeImagePending && (
+                    <button
+                      type='button'
+                      className='community-card__btn community-card__btn--danger'
+                      onClick={handleMarkRemoveImage}
+                      disabled={savingImage}
+                    >
+                      <Trash2 size={14} />
+                      <span>Quitar imagen</span>
+                    </button>
+                  )}
+
+                  <button
+                    type='button'
+                    className='community-card__btn'
+                    onClick={closeImageEditor}
+                    disabled={savingImage}
+                  >
+                    <X size={14} />
+                    <span>Cancelar</span>
+                  </button>
+
+                  <button
+                    type='button'
+                    className='community-card__btn community-card__btn--primary'
+                    onClick={handleSaveImage}
+                    disabled={savingImage || (!pendingImageFile && !removeImagePending)}
+                  >
+                    <Check size={14} />
+                    <span>{savingImage ? 'Guardando...' : 'Guardar'}</span>
+                  </button>
+                </div>
+
+                {imageError && <Alert variant='error'>{imageError}</Alert>}
+              </div>
             )}
 
             {membershipError && <Alert variant='error'>{membershipError}</Alert>}

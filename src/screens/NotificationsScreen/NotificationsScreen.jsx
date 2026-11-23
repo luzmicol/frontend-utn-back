@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
@@ -54,6 +54,8 @@ function mergeUnique(prev, next) {
 export default function NotificationsScreen() {
   const navigate = useNavigate()
   const { unreadCount, setUnreadCount, decrementUnread } = useNotifications()
+  const autoMarkedRef = useRef(false)
+  const initialUnreadCountRef = useRef(unreadCount)
 
   const [notifications, setNotifications] = useState([])
   const [page, setPage] = useState(1)
@@ -100,6 +102,27 @@ export default function NotificationsScreen() {
         setNotifications(incoming)
         setPage(1)
         setHasMore(more)
+
+        const hasUnread =
+          incoming.some((n) => !n.leida) || initialUnreadCountRef.current > 0
+
+        if (hasUnread && !autoMarkedRef.current) {
+          autoMarkedRef.current = true
+          try {
+            await markAllNotificationsAsRead()
+            if (!cancelled) {
+              setNotifications((prev) => prev.map((n) => ({ ...n, leida: true })))
+              setUnreadCount(0)
+            }
+          } catch (markErr) {
+            autoMarkedRef.current = false
+            if (!cancelled) {
+              setError(
+                markErr.message || 'No se pudieron marcar las notificaciones como leidas.'
+              )
+            }
+          }
+        }
       } catch (err) {
         if (cancelled) return
         setError(err.message || 'No se pudieron cargar las notificaciones.')
@@ -114,7 +137,7 @@ export default function NotificationsScreen() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [setUnreadCount])
 
   async function handleOpenNotification(notification) {
     if (!notification.leida) {

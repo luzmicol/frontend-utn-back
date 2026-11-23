@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
   deleteMessage,
   getConversationMessages,
+  markConversationAsRead,
   sendMessage
 } from '../../services/conversationService'
 import Avatar from '../UI/Avatar'
@@ -61,6 +63,7 @@ function reconcilePolledMessages(existing, polledMessages, { isCompleteConversat
 
 export default function ConversationView({ conversation, onBack, onConversationActivity }) {
   const { user: currentUser } = useAuth()
+  const { setUnreadMessagesCount } = useUnreadMessages()
   const listRef = useRef(null)
   const inputRef = useRef(null)
   const latestPageRef = useRef(1)
@@ -137,6 +140,17 @@ export default function ConversationView({ conversation, onBack, onConversationA
           setHasMore(false)
         }
         scrollToBottom()
+
+        // Marcar como leidos los mensajes recibidos de esta conversacion
+        markConversationAsRead(conversationId)
+          .then((readRes) => {
+            if (isMounted && activeConversationIdRef.current === conversationId) {
+              setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+            }
+          })
+          .catch(() => {
+            // Silencioso
+          })
       } catch (err) {
         if (isMounted && activeConversationIdRef.current === conversationId) {
           setError(err.message || 'No se pudieron cargar los mensajes.')
@@ -153,7 +167,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
     return () => {
       isMounted = false
     }
-  }, [conversation?._id, scrollToBottom])
+  }, [conversation?._id, scrollToBottom, setUnreadMessagesCount])
 
   // Polling periodico de mensajes recientes cuando la pestaña esta visible
   useEffect(() => {
@@ -212,6 +226,23 @@ export default function ConversationView({ conversation, onBack, onConversationA
             total
           })
         )
+
+        const hasUnreadFromOther = polledMessages.some(
+          (m) =>
+            m.fk_id_remitente?._id !== currentUser?._id &&
+            !(m.leido_por || []).includes(currentUser?._id)
+        )
+        if (hasUnreadFromOther) {
+          markConversationAsRead(conversationId)
+            .then((readRes) => {
+              if (isMounted && activeConversationIdRef.current === conversationId) {
+                setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+              }
+            })
+            .catch(() => {
+              // Silencioso
+            })
+        }
       } catch {
         // Silencioso en polling
       } finally {
@@ -234,7 +265,7 @@ export default function ConversationView({ conversation, onBack, onConversationA
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [conversation?._id])
+  }, [conversation?._id, currentUser?._id, setUnreadMessagesCount])
 
   async function handleLoadPrevious() {
     const conversationId = conversation?._id

@@ -36,3 +36,15 @@ export async function deleteMessage(message_id) {
     method: 'DELETE'
   })
 }
+
+export async function getUnreadMessagesCount() {
+  return await apiRequest('/api/conversations/unread-count', {
+    method: 'GET'
+  })
+}
+
+export async function markConversationAsRead(conversation_id) {
+  return await apiRequest(`/api/conversations/${conversation_id}/read`, {
+    method: 'PATCH'
+  })
+}

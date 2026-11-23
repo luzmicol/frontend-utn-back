@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, LogOut, UserPlus, Users } from 'lucide-react'
+import { Check, LogOut, UserPlus } from 'lucide-react'
 import { joinCommunity, leaveCommunity } from '../../services/communityService'
+import Avatar from '../UI/Avatar'
 import Alert from '../Alert/Alert'
 import './CommunityCard.css'
 
@@ -51,9 +52,7 @@ export default function CommunityCard({
       <div className='community-card__top'>
         <Link to={`/communities/${community._id}`} className='community-card__info community-card__link'>
           <div className='community-card__title-row'>
-            <span className='community-card__icon' aria-hidden='true'>
-              <Users size={16} />
-            </span>
+            <Avatar name={community.nombre} avatarUrl={community.imagen_url} size='sm' />
             <h3 className='community-card__name'>{community.nombre}</h3>
           </div>
 

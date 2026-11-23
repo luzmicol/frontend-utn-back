@@ -66,3 +66,23 @@ a {
 button {
   font-family: inherit;
 }
+
+/* Evita el zoom automatico de iOS Safari al enfocar inputs/textareas en movil */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Areas tactiles comodas en dispositivos tactiles */
+@media (pointer: coarse) {
+  .post-card__icon-btn,
+  .comment-item__delete,
+  .notification-item__delete,
+  .chat-view__back {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}

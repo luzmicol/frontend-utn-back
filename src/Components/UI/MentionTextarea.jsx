@@ -77,6 +77,23 @@ export default function MentionTextarea({
     }
   }
 
+  const [openUpward, setOpenUpward] = useState(false)
+  const blurTimerRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+    }
+  }, [])
+
+  function updateDropdownDirection() {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    setOpenUpward(spaceBelow < 240 && spaceAbove > spaceBelow)
+  }
+
   function insertMention(user) {
     if (!mentionContext || !user?.username) return
 
@@ -125,16 +142,25 @@ export default function MentionTextarea({
         className={className}
         placeholder={placeholder}
         value={value}
-        onChange={handleChange}
+        onChange={(e) => {
+          updateDropdownDirection()
+          handleChange(e)
+        }}
         onKeyDown={handleKeyDown}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onBlur={() => {
+          blurTimerRef.current = setTimeout(() => setOpen(false), 150)
+        }}
         maxLength={maxLength}
         rows={rows}
         disabled={disabled}
       />
 
       {open && suggestions.length > 0 && (
-        <ul className='mention-dropdown' role='listbox' aria-label='Sugerencias de usuarios'>
+        <ul
+          className={`mention-dropdown${openUpward ? ' mention-dropdown--upward' : ''}`}
+          role='listbox'
+          aria-label='Sugerencias de usuarios'
+        >
           {suggestions.map((user, index) => (
             <li
               key={user._id}

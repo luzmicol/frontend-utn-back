@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
+import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import Sidebar from './Sidebar'
 import { NAV_ITEMS } from './navItems'
 import LogoutConfirmModal from './LogoutConfirmModal'
@@ -11,12 +12,15 @@ import './AppLayout.css'
 export default function AppLayout() {
   const { logout } = useAuth()
   const { unreadCount } = useNotifications()
+  const { unreadMessagesCount } = useUnreadMessages()
   const navigate = useNavigate()
   const location = useLocation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isMessagesRoute = location.pathname.startsWith('/messages')
   const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
+  const messagesBadgeText =
+    unreadMessagesCount > 99 ? '99+' : String(unreadMessagesCount)
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
@@ -33,12 +37,17 @@ export default function AppLayout() {
       <Sidebar onLogoutRequest={() => setShowLogoutModal(true)} />
 
       <header className='mobile-header'>
-        <div className='mobile-header__brand'>
+        <Link
+          to='/'
+          className='mobile-header__brand'
+          aria-label='Ir al inicio de LOOP'
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
           <span className='mobile-header__logo' aria-hidden='true'>
             <InfinityIcon size={18} strokeWidth={2.2} />
           </span>
           <span className='mobile-header__name'>LOOP</span>
-        </div>
+        </Link>
 
         <div className='mobile-header__actions'>
           <NavLink
@@ -88,7 +97,12 @@ export default function AppLayout() {
               `mobile-nav__link${isActive ? ' mobile-nav__link--active' : ''}`
             }
           >
-            <Icon size={20} strokeWidth={2} />
+            <span className='mobile-nav__icon-wrap'>
+              <Icon size={20} strokeWidth={2} />
+              {to === '/messages' && unreadMessagesCount > 0 && (
+                <span className='mobile-nav__badge'>{messagesBadgeText}</span>
+              )}
+            </span>
             <span className='mobile-nav__label'>{label}</span>
           </NavLink>
         ))}

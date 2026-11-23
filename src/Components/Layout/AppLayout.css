@@ -1,5 +1,6 @@
 .app-layout {
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   overflow-x: hidden;
@@ -10,10 +11,10 @@
   top: 0;
   left: 0;
   right: 0;
-  height: var(--mobile-header-height);
+  height: calc(var(--mobile-header-height) + env(safe-area-inset-top));
   background-color: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px;
+  padding: env(safe-area-inset-top) 16px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -24,6 +25,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.mobile-header__brand:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
 }
 
 .mobile-header__logo {
@@ -108,7 +117,7 @@
 
 .app-layout__main {
   width: 100%;
-  padding: calc(var(--mobile-header-height) + 16px) 12px calc(var(--mobile-nav-height) + 20px);
+  padding: calc(var(--mobile-header-height) + env(safe-area-inset-top) + 16px) 12px calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 20px);
 }
 
 .app-layout__container {
@@ -118,7 +127,8 @@
 }
 
 .app-layout__main--messages {
-  padding: var(--mobile-header-height) 0 var(--mobile-nav-height);
+  padding: calc(var(--mobile-header-height) + env(safe-area-inset-top)) 0 calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
 }
@@ -133,12 +143,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  height: var(--mobile-nav-height);
+  height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   background-color: var(--surface);
   border-top: 1px solid var(--border);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   z-index: 20;
+}
+
+@media (pointer: coarse) {
+  .mobile-header__notif,
+  .mobile-header__create,
+  .mobile-header__logout {
+    width: 42px;
+    height: 42px;
+  }
 }
 
 .mobile-nav__link {
@@ -153,6 +173,30 @@
   font-weight: 500;
   min-width: 0;
   padding: 6px 2px;
+}
+
+.mobile-nav__icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav__badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background-color: var(--primary);
+  color: var(--text);
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobile-nav__label {

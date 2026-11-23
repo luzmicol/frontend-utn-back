@@ -1,13 +1,17 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Bell, PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
+import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
 
 export default function Sidebar({ onLogoutRequest }) {
   const navigate = useNavigate()
   const { unreadCount } = useNotifications()
+  const { unreadMessagesCount } = useUnreadMessages()
   const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
+  const messagesBadgeText =
+    unreadMessagesCount > 99 ? '99+' : String(unreadMessagesCount)
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
@@ -16,12 +20,17 @@ export default function Sidebar({ onLogoutRequest }) {
   return (
     <aside className='sidebar' aria-label='Navegacion principal'>
       <div className='sidebar__top'>
-        <div className='sidebar__brand'>
+        <Link
+          to='/'
+          className='sidebar__brand'
+          aria-label='Ir al inicio de LOOP'
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
           <span className='sidebar__logo' aria-hidden='true'>
             <InfinityIcon size={22} strokeWidth={2.2} />
           </span>
           <span className='sidebar__name'>LOOP</span>
-        </div>
+        </Link>
 
         <nav className='sidebar__nav'>
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
@@ -35,6 +44,9 @@ export default function Sidebar({ onLogoutRequest }) {
             >
               <Icon size={20} strokeWidth={2} />
               <span>{label}</span>
+              {to === '/messages' && unreadMessagesCount > 0 && (
+                <span className='sidebar__badge'>{messagesBadgeText}</span>
+              )}
             </NavLink>
           ))}
 

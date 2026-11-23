@@ -1,18 +1,11 @@
-import { apiRequest, setAuthToken } from './apiClient'
+import { apiRequest } from './apiClient'
 
 export async function login(email, password) {
-    const response_body = await apiRequest('/api/auth/login', {
+    return await apiRequest('/api/auth/login', {
         method: 'POST',
         body: { email, password },
         auth: false
     })
-
-    const token = response_body.authentication_token || response_body.data?.authentication_token
-    if (token) {
-        setAuthToken(token)
-    }
-
-    return response_body
 }
 
 export async function register(username, email, password) {

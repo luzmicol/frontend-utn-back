@@ -42,3 +42,19 @@ export async function leaveCommunity(community_id) {
     method: 'DELETE'
   })
 }
+
+export async function updateCommunityImage(community_id, imageFile) {
+  const formData = new FormData()
+  formData.append('imagen', imageFile)
+
+  return await apiRequest('/api/communities/' + community_id + '/image', {
+    method: 'PATCH',
+    body: formData
+  })
+}
+
+export async function deleteCommunityImage(community_id) {
+  return await apiRequest('/api/communities/' + community_id + '/image', {
+    method: 'DELETE'
+  })
+}
