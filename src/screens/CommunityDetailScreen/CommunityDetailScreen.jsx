@@ -32,6 +32,9 @@ export default function CommunityDetailScreen() {
   const [community, setCommunity] = useState(null)
   const [membershipRole, setMembershipRole] = useState(null)
   const [posts, setPosts] = useState([])
+  const [postsPage, setPostsPage] = useState(1)
+  const [hasMorePosts, setHasMorePosts] = useState(false)
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false)
   const [members, setMembers] = useState([])
   const [membersForbidden, setMembersForbidden] = useState(false)
   const [membersError, setMembersError] = useState(null)
@@ -69,7 +72,7 @@ export default function CommunityDetailScreen() {
         const [commRes, myCommsRes, postsRes] = await Promise.all([
           getCommunityById(community_id),
           getMyCommunities(),
-          getPosts(),
+          getPosts({ community_id, page: 1, limit: 20 }),
           loadMembers()
         ])
 
@@ -82,8 +85,9 @@ export default function CommunityDetailScreen() {
         const myMembership = myList.find((c) => c._id === community_id)
         setMembershipRole(myMembership ? myMembership.rol || 'user' : null)
 
-        const allPosts = postsRes.data?.posts ?? []
-        setPosts(allPosts.filter((p) => p.fk_id_comunidad?._id === community_id))
+        setPosts(postsRes.data?.posts ?? [])
+        setPostsPage(1)
+        setHasMorePosts(Boolean(postsRes.data?.pagination?.has_more))
       } catch (err) {
         if (isMounted) {
           setError(err.message || 'No se pudo cargar la comunidad.')
@@ -128,6 +132,27 @@ export default function CommunityDetailScreen() {
       setMembershipError(err.message || 'No se pudo abandonar la comunidad.')
     } finally {
       setMembershipBusy(false)
+    }
+  }
+
+  async function handleLoadMorePosts() {
+    if (loadingMorePosts || !hasMorePosts || !community_id) return
+
+    try {
+      setLoadingMorePosts(true)
+      const nextPage = postsPage + 1
+      const res = await getPosts({ community_id, page: nextPage, limit: 20 })
+      const incoming = res.data?.posts ?? []
+      setPosts((prev) => {
+        const seen = new Set(prev.map((p) => p._id))
+        return [...prev, ...incoming.filter((p) => !seen.has(p._id))]
+      })
+      setPostsPage(nextPage)
+      setHasMorePosts(Boolean(res.data?.pagination?.has_more))
+    } catch {
+      // Mantiene las publicaciones ya cargadas
+    } finally {
+      setLoadingMorePosts(false)
     }
   }
 
@@ -255,6 +280,19 @@ export default function CommunityDetailScreen() {
                     onPostDeleted={handlePostDeleted}
                   />
                 ))}
+
+                {hasMorePosts && (
+                  <div className='loop-empty'>
+                    <button
+                      type='button'
+                      className='post-card__action-pill'
+                      onClick={handleLoadMorePosts}
+                      disabled={loadingMorePosts}
+                    >
+                      {loadingMorePosts ? 'Cargando...' : 'Cargar mas publicaciones'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>

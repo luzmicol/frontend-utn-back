@@ -1,7 +1,14 @@
 import { apiRequest } from './apiClient'
 
-export async function getPosts() {
-  return await apiRequest('/api/posts', {
+export async function getPosts({ user_id, community_id, page, limit } = {}) {
+  const params = new URLSearchParams()
+  if (user_id) params.set('user_id', user_id)
+  if (community_id) params.set('community_id', community_id)
+  if (page !== undefined && page !== null) params.set('page', String(page))
+  if (limit !== undefined && limit !== null) params.set('limit', String(limit))
+  const query = params.toString()
+
+  return await apiRequest(query ? `/api/posts?${query}` : '/api/posts', {
     method: 'GET'
   })
 }

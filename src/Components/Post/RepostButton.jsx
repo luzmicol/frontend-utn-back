@@ -3,13 +3,23 @@ import { Repeat2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getPostReposts, repostPost, unrepostPost } from '../../services/postService'
 
-export default function RepostButton({ postId, onRepostInfoChange, onUnreposted, onError }) {
+export default function RepostButton({
+  postId,
+  initialRepostsCount,
+  initialRepostedByMe,
+  onRepostInfoChange,
+  onUnreposted,
+  onError
+}) {
   const { user: currentUser } = useAuth()
-  const [repostsCount, setRepostsCount] = useState(0)
-  const [repostedByMe, setRepostedByMe] = useState(false)
+  const hasInitialData = initialRepostsCount !== undefined
+  const [repostsCount, setRepostsCount] = useState(initialRepostsCount ?? 0)
+  const [repostedByMe, setRepostedByMe] = useState(Boolean(initialRepostedByMe))
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    if (hasInitialData) return
+
     let isMounted = true
 
     async function loadReposts() {
@@ -38,7 +48,7 @@ export default function RepostButton({ postId, onRepostInfoChange, onUnreposted,
     return () => {
       isMounted = false
     }
-  }, [postId, onRepostInfoChange])
+  }, [postId, hasInitialData, onRepostInfoChange])
 
   async function handleToggle() {
     if (busy) return

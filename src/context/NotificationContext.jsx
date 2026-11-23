@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { getUnreadCount } from '../services/notificationService'
 
@@ -7,27 +7,35 @@ const POLL_INTERVAL_MS = 15000
 
 export function NotificationProvider({ children }) {
   const { user } = useAuth()
+  const userId = user?._id || null
   const [unreadCount, setUnreadCount] = useState(0)
+  const inFlightRef = useRef(false)
 
   const refreshUnreadCount = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setUnreadCount(0)
       return
     }
+    if (inFlightRef.current) return
+    inFlightRef.current = true
     try {
       const res = await getUnreadCount()
       setUnreadCount(res.data?.unread_count ?? 0)
     } catch {
       // Silencioso en polling
+    } finally {
+      inFlightRef.current = false
     }
-  }, [user])
+  }, [userId])
 
   useEffect(() => {
-    if (!user) return
+    if (!userId) return
 
     let isMounted = true
 
-    async function fetchInitial() {
+    async function pollUnread() {
+      if (inFlightRef.current) return
+      inFlightRef.current = true
       try {
         const res = await getUnreadCount()
         if (isMounted) {
@@ -35,22 +43,33 @@ export function NotificationProvider({ children }) {
         }
       } catch {
         // Silencioso
+      } finally {
+        inFlightRef.current = false
       }
     }
 
-    fetchInitial()
+    pollUnread()
 
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        fetchInitial()
+        pollUnread()
       }
     }, POLL_INTERVAL_MS)
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        pollUnread()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       isMounted = false
       clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user])
+  }, [userId])
 
   const decrementUnread = useCallback(() => {
     setUnreadCount((prev) => Math.max(0, prev - 1))

@@ -23,22 +23,52 @@ function formatTime(dateString) {
   })
 }
 
+function sortMessagesChronologically(list) {
+  return [...list].sort((a, b) => {
+    const diff = new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
+    if (diff !== 0) return diff
+    return String(a._id).localeCompare(String(b._id))
+  })
+}
+
 function mergeMessagesUnique(existing, incoming) {
   const map = new Map()
   for (const m of existing) map.set(m._id, m)
   for (const m of incoming) map.set(m._id, m)
-  return Array.from(map.values()).sort(
-    (a, b) => new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
+  return sortMessagesChronologically(Array.from(map.values()))
+}
+
+function reconcilePolledMessages(existing, polledMessages, { isCompleteConversation, total }) {
+  if (total === 0) return []
+  if (isCompleteConversation) {
+    return mergeMessagesUnique([], polledMessages)
+  }
+  if (polledMessages.length === 0) {
+    return existing
+  }
+
+  const sortedPolled = sortMessagesChronologically(polledMessages)
+  const windowStartTime = new Date(sortedPolled[0].fecha_creacion).getTime()
+
+  // Conservamos el historial anterior a la ventana consultada y reconciliamos
+  // cualquier mensaje eliminado dentro de la ventana más reciente.
+  const keptOlder = existing.filter(
+    (m) => new Date(m.fecha_creacion).getTime() < windowStartTime
   )
+
+  return mergeMessagesUnique(keptOlder, sortedPolled)
 }
 
 export default function ConversationView({ conversation, onBack, onConversationActivity }) {
   const { user: currentUser } = useAuth()
   const listRef = useRef(null)
   const inputRef = useRef(null)
+  const latestPageRef = useRef(1)
+  const pollingInFlightRef = useRef(false)
+  const activeConversationIdRef = useRef(conversation?._id || null)
 
   const [messages, setMessages] = useState([])
-  const [page, setPage] = useState(1)
+  const [oldestLoadedPage, setOldestLoadedPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -63,7 +93,11 @@ export default function ConversationView({ conversation, onBack, onConversationA
 
   // Carga inicial al cambiar de conversacion
   useEffect(() => {
-    if (!conversation?._id) return
+    const conversationId = conversation?._id
+    activeConversationIdRef.current = conversationId || null
+    pollingInFlightRef.current = false
+
+    if (!conversationId) return
 
     let isMounted = true
 
@@ -72,36 +106,45 @@ export default function ConversationView({ conversation, onBack, onConversationA
         setLoading(true)
         setError(null)
         setConfirmDeleteId(null)
-        const firstRes = await getConversationMessages(conversation._id, {
+        setMessages([])
+        setHasMore(false)
+        setOldestLoadedPage(1)
+        latestPageRef.current = 1
+
+        const firstRes = await getConversationMessages(conversationId, {
           page: 1,
           limit: PAGE_LIMIT
         })
-        if (!isMounted) return
+        if (!isMounted || activeConversationIdRef.current !== conversationId) return
 
         const total = firstRes.data?.pagination?.total ?? 0
         const lastPage = Math.max(1, Math.ceil(total / PAGE_LIMIT))
 
         if (lastPage > 1) {
-          const lastRes = await getConversationMessages(conversation._id, {
+          const lastRes = await getConversationMessages(conversationId, {
             page: lastPage,
             limit: PAGE_LIMIT
           })
-          if (!isMounted) return
-          setMessages(lastRes.data?.messages ?? [])
-          setPage(lastPage)
+          if (!isMounted || activeConversationIdRef.current !== conversationId) return
+          setMessages(sortMessagesChronologically(lastRes.data?.messages ?? []))
+          setOldestLoadedPage(lastPage)
+          latestPageRef.current = lastPage
           setHasMore(true)
         } else {
-          setMessages(firstRes.data?.messages ?? [])
-          setPage(1)
+          setMessages(sortMessagesChronologically(firstRes.data?.messages ?? []))
+          setOldestLoadedPage(1)
+          latestPageRef.current = 1
           setHasMore(false)
         }
         scrollToBottom()
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && activeConversationIdRef.current === conversationId) {
           setError(err.message || 'No se pudieron cargar los mensajes.')
         }
       } finally {
-        if (isMounted) setLoading(false)
+        if (isMounted && activeConversationIdRef.current === conversationId) {
+          setLoading(false)
+        }
       }
     }
 
@@ -112,45 +155,106 @@ export default function ConversationView({ conversation, onBack, onConversationA
     }
   }, [conversation?._id, scrollToBottom])
 
-  // Polling periodico cuando la pestaña esta visible
+  // Polling periodico de mensajes recientes cuando la pestaña esta visible
   useEffect(() => {
-    if (!conversation?._id) return
+    const conversationId = conversation?._id
+    if (!conversationId) return
 
-    const interval = setInterval(async () => {
+    let isMounted = true
+
+    const pollLatest = async () => {
       if (document.visibilityState !== 'visible') return
+      if (pollingInFlightRef.current) return
+      if (activeConversationIdRef.current !== conversationId) return
+
+      pollingInFlightRef.current = true
       try {
-        const res = await getConversationMessages(conversation._id, {
-          page,
+        const targetPage = latestPageRef.current
+        const res = await getConversationMessages(conversationId, {
+          page: targetPage,
           limit: PAGE_LIMIT
         })
-        const incoming = res.data?.messages ?? []
-        if (incoming.length > 0) {
-          setMessages((prev) => mergeMessagesUnique(prev, incoming))
+        if (!isMounted || activeConversationIdRef.current !== conversationId) return
+
+        const total = res.data?.pagination?.total ?? 0
+        const serverLastPage = Math.max(1, Math.ceil(total / PAGE_LIMIT))
+        let polledMessages = res.data?.messages ?? []
+
+        if (serverLastPage > targetPage) {
+          // Nuevos mensajes cruzaron el limite de pagina: traemos tambien la nueva ultima pagina
+          const nextRes = await getConversationMessages(conversationId, {
+            page: serverLastPage,
+            limit: PAGE_LIMIT
+          })
+          if (!isMounted || activeConversationIdRef.current !== conversationId) return
+          polledMessages = mergeMessagesUnique(polledMessages, nextRes.data?.messages ?? [])
+          latestPageRef.current = serverLastPage
+        } else if (serverLastPage < targetPage) {
+          // Eliminaciones redujeron la cantidad total de paginas
+          latestPageRef.current = serverLastPage
+          setOldestLoadedPage((prev) => {
+            const next = Math.min(prev, serverLastPage)
+            setHasMore(next > 1)
+            return next
+          })
+          const adjustedRes = await getConversationMessages(conversationId, {
+            page: serverLastPage,
+            limit: PAGE_LIMIT
+          })
+          if (!isMounted || activeConversationIdRef.current !== conversationId) return
+          polledMessages = adjustedRes.data?.messages ?? []
         }
+
+        const isCompleteConversation = serverLastPage === 1
+        setMessages((prev) =>
+          reconcilePolledMessages(prev, polledMessages, {
+            isCompleteConversation,
+            total
+          })
+        )
       } catch {
         // Silencioso en polling
+      } finally {
+        pollingInFlightRef.current = false
       }
-    }, POLL_INTERVAL_MS)
+    }
 
-    return () => clearInterval(interval)
-  }, [conversation?._id, page])
+    const interval = setInterval(pollLatest, POLL_INTERVAL_MS)
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        pollLatest()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [conversation?._id])
 
   async function handleLoadPrevious() {
-    if (loadingMore || !hasMore || page <= 1 || !conversation?._id) return
+    const conversationId = conversation?._id
+    if (loadingMore || !hasMore || oldestLoadedPage <= 1 || !conversationId) return
 
     const container = listRef.current
     const prevScrollHeight = container ? container.scrollHeight : 0
 
     try {
       setLoadingMore(true)
-      const prevPage = page - 1
-      const res = await getConversationMessages(conversation._id, {
+      const prevPage = oldestLoadedPage - 1
+      const res = await getConversationMessages(conversationId, {
         page: prevPage,
         limit: PAGE_LIMIT
       })
+      if (activeConversationIdRef.current !== conversationId) return
+
       const older = res.data?.messages ?? []
       setMessages((prev) => mergeMessagesUnique(older, prev))
-      setPage(prevPage)
+      setOldestLoadedPage(prevPage)
       setHasMore(prevPage > 1)
 
       requestAnimationFrame(() => {
@@ -159,7 +263,9 @@ export default function ConversationView({ conversation, onBack, onConversationA
         }
       })
     } catch (err) {
-      setError(err.message || 'No se pudieron cargar mensajes anteriores.')
+      if (activeConversationIdRef.current === conversationId) {
+        setError(err.message || 'No se pudieron cargar mensajes anteriores.')
+      }
     } finally {
       setLoadingMore(false)
     }

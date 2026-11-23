@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { MessageSquare, Search } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -25,9 +25,23 @@ function formatShortDate(dateString) {
 export default function MessagesScreen() {
   const { user: currentUser } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
 
   const [conversations, setConversations] = useState([])
   const [selectedId, setSelectedId] = useState(() => location.state?.conversationId || null)
+
+  // Detecta cambios posteriores en location.state.conversationId y limpia el estado de navegacion
+  useEffect(() => {
+    const incomingId = location.state?.conversationId
+    if (!incomingId) return
+
+    const frame = requestAnimationFrame(() => {
+      setSelectedId(incomingId)
+    })
+    navigate('/messages', { replace: true, state: null })
+
+    return () => cancelAnimationFrame(frame)
+  }, [location.state?.conversationId, navigate])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -35,10 +49,14 @@ export default function MessagesScreen() {
   const [searchResults, setSearchResults] = useState([])
   const [startingChat, setStartingChat] = useState(false)
 
+  const inboxInFlightRef = useRef(false)
+
   useEffect(() => {
     let isMounted = true
 
     async function fetchInbox(silent) {
+      if (inboxInFlightRef.current) return
+      inboxInFlightRef.current = true
       try {
         const res = await getConversations()
         if (isMounted) {
@@ -50,6 +68,7 @@ export default function MessagesScreen() {
           setError(err.message || 'No se pudieron cargar las conversaciones.')
         }
       } finally {
+        inboxInFlightRef.current = false
         if (isMounted && !silent) setLoading(false)
       }
     }
@@ -62,9 +81,18 @@ export default function MessagesScreen() {
       }
     }, INBOX_POLL_MS)
 
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        fetchInbox(true)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       isMounted = false
       clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 

@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Heart } from 'lucide-react'
 import { getPostLikes, likePost, unlikePost } from '../../services/postService'
 
-export default function LikeButton({ postId }) {
-  const [likesCount, setLikesCount] = useState(0)
-  const [likedByMe, setLikedByMe] = useState(false)
+export default function LikeButton({ postId, initialLikesCount, initialLikedByMe }) {
+  const hasInitialData = initialLikesCount !== undefined
+  const [likesCount, setLikesCount] = useState(initialLikesCount ?? 0)
+  const [likedByMe, setLikedByMe] = useState(Boolean(initialLikedByMe))
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
+    if (hasInitialData) return
+
     let isMounted = true
 
     async function loadLikes() {
@@ -27,7 +30,7 @@ export default function LikeButton({ postId }) {
     return () => {
       isMounted = false
     }
-  }, [postId])
+  }, [postId, hasInitialData])
 
   async function handleToggle() {
     if (busy) return

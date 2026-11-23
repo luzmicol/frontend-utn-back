@@ -43,6 +43,9 @@ export default function ProfileScreen() {
 
   const [profile, setProfile] = useState(() => (isOwnRoute ? currentUser : null))
   const [posts, setPosts] = useState([])
+  const [postsPage, setPostsPage] = useState(1)
+  const [hasMorePosts, setHasMorePosts] = useState(false)
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false)
   const [reposts, setReposts] = useState([])
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
@@ -133,7 +136,6 @@ export default function ProfileScreen() {
       setLoadingPosts(true)
 
       if (isOwnRoute) {
-        setProfile(currentUser)
         setLoadingProfile(false)
       } else {
         setProfile(null)
@@ -156,16 +158,18 @@ export default function ProfileScreen() {
           })
       }
 
-      Promise.all([getPosts(), getUserReposts(targetUserId)])
+      Promise.all([getPosts({ user_id: targetUserId, page: 1, limit: 20 }), getUserReposts(targetUserId)])
         .then(([postsRes, repostsRes]) => {
           if (!isMounted) return
-          const allPosts = postsRes.data?.posts ?? []
-          setPosts(allPosts.filter((p) => p.fk_id_usuario?._id === targetUserId))
+          setPosts(postsRes.data?.posts ?? [])
+          setPostsPage(1)
+          setHasMorePosts(Boolean(postsRes.data?.pagination?.has_more))
           setReposts(repostsRes.data?.reposts ?? [])
         })
         .catch(() => {
           if (!isMounted) return
           setPosts([])
+          setHasMorePosts(false)
           setReposts([])
         })
         .finally(() => {
@@ -203,7 +207,16 @@ export default function ProfileScreen() {
     return () => {
       isMounted = false
     }
-  }, [targetUserId, isOwnRoute, currentUser])
+  }, [targetUserId, isOwnRoute])
+
+  // Sincronizacion liviana del perfil propio con currentUser sin recargar datos ni resetear pestaña/mensajes
+  useEffect(() => {
+    if (!isOwnRoute || !currentUser) return
+    const frame = requestAnimationFrame(() => {
+      setProfile(currentUser)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [isOwnRoute, currentUser])
 
   const timelineItems = useMemo(() => {
     const ownItems = posts.map((post) => ({
@@ -426,6 +439,27 @@ export default function ProfileScreen() {
       setFollowError(err.message || 'No se pudo actualizar el seguimiento.')
     } finally {
       setFollowBusy(false)
+    }
+  }
+
+  async function handleLoadMorePosts() {
+    if (loadingMorePosts || !hasMorePosts || !targetUserId) return
+
+    try {
+      setLoadingMorePosts(true)
+      const nextPage = postsPage + 1
+      const res = await getPosts({ user_id: targetUserId, page: nextPage, limit: 20 })
+      const incoming = res.data?.posts ?? []
+      setPosts((prev) => {
+        const seen = new Set(prev.map((p) => p._id))
+        return [...prev, ...incoming.filter((p) => !seen.has(p._id))]
+      })
+      setPostsPage(nextPage)
+      setHasMorePosts(Boolean(res.data?.pagination?.has_more))
+    } catch {
+      // Mantiene las publicaciones ya cargadas
+    } finally {
+      setLoadingMorePosts(false)
     }
   }
 
@@ -726,6 +760,19 @@ export default function ProfileScreen() {
                     onPostDeleted={handlePostDeleted}
                   />
                 ))}
+
+                {hasMorePosts && (
+                  <div className='loop-empty'>
+                    <button
+                      type='button'
+                      className='post-card__action-pill'
+                      onClick={handleLoadMorePosts}
+                      disabled={loadingMorePosts}
+                    >
+                      {loadingMorePosts ? 'Cargando...' : 'Cargar mas publicaciones'}
+                    </button>
+                  </div>
+                )}
               </div>
             )
           )}

@@ -52,9 +52,9 @@ export default function PostCard({
   const [showComments, setShowComments] = useState(false)
   const [commentsCount, setCommentsCount] = useState(null)
   const [repostInfo, setRepostInfo] = useState({
-    reposts_count: 0,
-    reposted_by_me: false,
-    latest_repost_by: null
+    reposts_count: post.reposts_count ?? 0,
+    reposted_by_me: Boolean(post.reposted_by_me),
+    latest_repost_by: post.latest_repost_by ?? null
   })
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
@@ -360,10 +360,17 @@ export default function PostCard({
       {actionError && <Alert variant='error'>{actionError}</Alert>}
 
       <footer className='post-card__interactions'>
-        <LikeButton postId={post._id} />
+        <LikeButton
+          postId={post._id}
+          initialLikesCount={post.likes_count}
+          initialLikedByMe={post.liked_by_me}
+        />
 
         <RepostButton
           postId={post._id}
+          initialRepostsCount={post.reposts_count}
+          initialRepostedByMe={post.reposted_by_me}
+          initialLatestRepostBy={post.latest_repost_by}
           onRepostInfoChange={handleRepostInfoChange}
           onUnreposted={onUnreposted}
           onError={setActionError}
