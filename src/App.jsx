@@ -10,6 +10,7 @@ import ExploreScreen from './screens/ExploreScreen/ExploreScreen'
 import CommunitiesScreen from './screens/CommunitiesScreen/CommunitiesScreen'
 import CommunityDetailScreen from './screens/CommunityDetailScreen/CommunityDetailScreen'
 import MessagesScreen from './screens/MessagesScreen/MessagesScreen'
+import NotificationsScreen from './screens/NotificationsScreen/NotificationsScreen'
 import ProfileScreen from './screens/ProfileScreen/ProfileScreen'
 import NotFoundScreen from './screens/NotFoundScreen/NotFoundScreen'
 import AppLayout from './Components/Layout/AppLayout'
@@ -25,6 +26,7 @@ const App = () => {
           <Route path='/communities' element={<CommunitiesScreen />} />
           <Route path='/communities/:community_id' element={<CommunityDetailScreen />} />
           <Route path='/messages' element={<MessagesScreen />} />
+          <Route path='/notifications' element={<NotificationsScreen />} />
           <Route path='/profile' element={<ProfileScreen />} />
           <Route path='/users/:user_id' element={<ProfileScreen />} />
         </Route>

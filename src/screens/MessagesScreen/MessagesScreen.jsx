@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { MessageSquare, Search } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -23,9 +24,10 @@ function formatShortDate(dateString) {
 
 export default function MessagesScreen() {
   const { user: currentUser } = useAuth()
+  const location = useLocation()
 
   const [conversations, setConversations] = useState([])
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(() => location.state?.conversationId || null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 

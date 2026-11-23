@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
+import { Bell, Infinity as InfinityIcon, LogOut, PenSquare } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
 import Sidebar from './Sidebar'
 import { NAV_ITEMS } from './navItems'
 import LogoutConfirmModal from './LogoutConfirmModal'
@@ -9,11 +10,13 @@ import './AppLayout.css'
 
 export default function AppLayout() {
   const { logout } = useAuth()
+  const { unreadCount } = useNotifications()
   const navigate = useNavigate()
   const location = useLocation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isMessagesRoute = location.pathname.startsWith('/messages')
+  const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
@@ -38,6 +41,17 @@ export default function AppLayout() {
         </div>
 
         <div className='mobile-header__actions'>
+          <NavLink
+            to='/notifications'
+            className='mobile-header__notif'
+            aria-label='Notificaciones'
+          >
+            <Bell size={18} strokeWidth={2} />
+            {unreadCount > 0 && (
+              <span className='mobile-header__badge'>{badgeText}</span>
+            )}
+          </NavLink>
+
           <button
             type='button'
             className='mobile-header__create'

@@ -1,10 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
+import { Bell, PenSquare, LogOut, Infinity as InfinityIcon } from 'lucide-react'
+import { useNotifications } from '../../context/NotificationContext'
 import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
 
 export default function Sidebar({ onLogoutRequest }) {
   const navigate = useNavigate()
+  const { unreadCount } = useNotifications()
+  const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
 
   function handleCreatePostClick() {
     navigate('/', { state: { focusComposer: Date.now() } })
@@ -34,6 +37,19 @@ export default function Sidebar({ onLogoutRequest }) {
               <span>{label}</span>
             </NavLink>
           ))}
+
+          <NavLink
+            to='/notifications'
+            className={({ isActive }) =>
+              `sidebar__link${isActive ? ' sidebar__link--active' : ''}`
+            }
+          >
+            <Bell size={20} strokeWidth={2} />
+            <span>Notificaciones</span>
+            {unreadCount > 0 && (
+              <span className='sidebar__badge'>{badgeText}</span>
+            )}
+          </NavLink>
         </nav>
 
         <button type='button' className='sidebar__cta' onClick={handleCreatePostClick}>
