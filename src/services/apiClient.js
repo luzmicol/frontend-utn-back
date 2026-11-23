@@ -42,8 +42,9 @@ function createApiError(response_body, status) {
 
 export async function apiRequest(endpoint, { method = 'GET', body, headers = {}, auth = true } = {}) {
     const request_headers = { ...headers }
+    const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
 
-    if (body !== undefined && !request_headers['Content-Type']) {
+    if (body !== undefined && !isFormData && !request_headers['Content-Type']) {
         request_headers['Content-Type'] = 'application/json'
     }
 
@@ -60,7 +61,7 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
         response_http = await fetch(API_URL + endpoint, {
             method,
             headers: request_headers,
-            body: body !== undefined ? JSON.stringify(body) : undefined
+            body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
         })
     } catch {
         const network_error = new Error('No se pudo conectar con el servidor. Probá de nuevo en unos minutos.')

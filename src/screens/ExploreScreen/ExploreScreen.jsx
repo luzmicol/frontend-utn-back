@@ -5,15 +5,9 @@ import { useAuth } from '../../context/AuthContext'
 import { getUsers } from '../../services/userService'
 import { getPosts } from '../../services/postService'
 import PostCard from '../../Components/Post/PostCard'
+import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import './ExploreScreen.css'
-
-function getInitials(name = '') {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return (parts[0][0] + parts[1][0]).toUpperCase()
-}
 
 export default function ExploreScreen() {
   const { user: currentUser } = useAuth()
@@ -149,9 +143,7 @@ export default function ExploreScreen() {
                     {filteredUsers.map((person) => (
                       <li key={person._id} className='explore-user-card'>
                         <Link to={getProfileLink(person._id)} className='explore-user-card__link'>
-                          <span className='explore-user-card__avatar' aria-hidden='true'>
-                            {getInitials(person.nombre)}
-                          </span>
+                          <Avatar name={person.nombre} avatarUrl={person.avatar_url} size='sm' />
                           <span className='explore-user-card__name'>
                             {person.nombre}
                           </span>

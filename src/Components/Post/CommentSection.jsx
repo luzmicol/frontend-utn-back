@@ -4,6 +4,7 @@ import { Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getPostComments, createComment, deleteComment } from '../../services/postService'
 import Alert from '../Alert/Alert'
+import Avatar from '../UI/Avatar'
 import './CommentSection.css'
 
 const MAX_COMMENT_LENGTH = 1000
@@ -123,6 +124,11 @@ export default function CommentSection({ postId, onCountChange }) {
               <li key={comment._id} className='comment-item'>
                 <div className='comment-item__header'>
                   <div className='comment-item__meta'>
+                    <Avatar
+                      name={comment.fk_id_usuario?.nombre || 'Usuario'}
+                      avatarUrl={comment.fk_id_usuario?.avatar_url}
+                      size='xs'
+                    />
                     {comment.fk_id_usuario?._id ? (
                       <Link
                         to={isOwner ? '/profile' : `/users/${comment.fk_id_usuario._id}`}

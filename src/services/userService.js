@@ -12,6 +12,29 @@ export async function getMyProfile() {
   })
 }
 
+export async function updateMyProfile(data) {
+  return await apiRequest('/api/users/me', {
+    method: 'PUT',
+    body: data
+  })
+}
+
+export async function uploadMyAvatar(file) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+
+  return await apiRequest('/api/users/me/avatar', {
+    method: 'POST',
+    body: formData
+  })
+}
+
+export async function deleteMyAvatar() {
+  return await apiRequest('/api/users/me/avatar', {
+    method: 'DELETE'
+  })
+}
+
 export async function getUserById(user_id) {
   return await apiRequest('/api/users/' + user_id, {
     method: 'GET'

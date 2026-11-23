@@ -12,6 +12,7 @@ import {
 import { getPosts } from '../../services/postService'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
+import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import './CommunityDetailScreen.css'
 
@@ -285,9 +286,14 @@ export default function CommunityDetailScreen() {
                             : `/users/${member.fk_id_usuario._id}`
                         }
                         className='community-member-item__name'
-                        style={{ textDecoration: 'none' }}
+                        style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '10px' }}
                       >
-                        {member.fk_id_usuario.nombre || 'Usuario'}
+                        <Avatar
+                          name={member.fk_id_usuario.nombre || 'Usuario'}
+                          avatarUrl={member.fk_id_usuario.avatar_url}
+                          size='sm'
+                        />
+                        <span>{member.fk_id_usuario.nombre || 'Usuario'}</span>
                       </Link>
                     ) : (
                       <span className='community-member-item__name'>Usuario</span>
