@@ -1,0 +1,246 @@
+.messages-page {
+  width: 100%;
+}
+
+.messages-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  min-height: 70vh;
+}
+
+.messages-inbox {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.messages-inbox__header {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.messages-inbox__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.messages-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.messages-search__icon {
+  position: absolute;
+  left: 11px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.messages-search__input {
+  width: 100%;
+  background-color: var(--surface-elevated);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px 8px 34px;
+  font-family: inherit;
+  font-size: 0.86rem;
+  outline: none;
+}
+
+.messages-search__input:focus {
+  border-color: var(--primary);
+}
+
+.messages-search-results {
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.messages-search-results__empty {
+  margin: 4px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.messages-search-results__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.messages-search-results__item:hover {
+  background-color: var(--surface);
+}
+
+.messages-search-results__meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.84rem;
+}
+
+.messages-search-results__username {
+  font-size: 0.74rem;
+  color: var(--primary-soft);
+}
+
+.messages-inbox__error {
+  padding: 10px 14px 0;
+}
+
+.messages-inbox__empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.messages-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.messages-list__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.messages-list__item:hover {
+  background-color: var(--surface-elevated);
+}
+
+.messages-list__item--active {
+  background-color: var(--surface-elevated);
+  border-color: var(--primary);
+}
+
+.messages-list__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.messages-list__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.messages-list__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-list__date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.messages-list__username {
+  font-size: 0.75rem;
+  color: var(--primary-soft);
+}
+
+.messages-list__preview {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-chat-pane {
+  display: none;
+  min-height: 70vh;
+}
+
+.messages-shell--chat-open .messages-inbox {
+  display: none;
+}
+
+.messages-shell--chat-open .messages-chat-pane {
+  display: block;
+}
+
+.messages-placeholder {
+  height: 100%;
+  min-height: 460px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 900px) {
+  .messages-shell {
+    grid-template-columns: 270px 1fr;
+    height: calc(100vh - 80px);
+  }
+
+  .messages-shell--chat-open .messages-inbox,
+  .messages-inbox {
+    display: flex;
+  }
+
+  .messages-chat-pane,
+  .messages-shell--chat-open .messages-chat-pane {
+    display: block;
+    min-height: 0;
+    height: 100%;
+  }
+}
