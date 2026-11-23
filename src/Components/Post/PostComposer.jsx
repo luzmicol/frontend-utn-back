@@ -58,13 +58,12 @@ export default function PostComposer({
       return
     }
 
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
     setSelectedFile(file)
     setPreviewUrl(URL.createObjectURL(file))
+    event.target.value = ''
   }
 
   function handleRemoveImage() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
     setSelectedFile(null)
     setPreviewUrl('')
     if (fileInputRef.current) fileInputRef.current.value = ''

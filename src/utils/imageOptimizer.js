@@ -4,21 +4,38 @@ const TARGET_BYTES = 150 * 1024
 const MAX_FINAL_BYTES = 1024 * 1024 // 1 MB
 const QUALITY_STEPS = [0.82, 0.72, 0.62, 0.5, 0.4]
 
-function loadImage(file) {
+function loadImageViaDataUrl(file) {
   return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file)
-    const img = new Image()
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl)
-      resolve(img)
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
+    const reader = new FileReader()
+    reader.onerror = () => {
       reject(new Error('No se pudo leer la imagen seleccionada.'))
     }
-    img.src = objectUrl
+    reader.onload = () => {
+      const img = new Image()
+      img.onload = () => resolve({ source: img, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height, close: () => {} })
+      img.onerror = () => reject(new Error('No se pudo leer la imagen seleccionada.'))
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
   })
+}
+
+async function loadImage(file) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file)
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        close: () => bitmap.close()
+      }
+    } catch {
+      // Fallback a FileReader + Image si createImageBitmap falla con este formato/navegador
+    }
+  }
+
+  return await loadImageViaDataUrl(file)
 }
 
 function canvasToBlob(canvas, quality) {
@@ -52,37 +69,40 @@ export async function prepareAvatarFile(file) {
   }
 
   const img = await loadImage(file)
+  try {
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height))
+    const targetWidth = Math.max(1, Math.round(img.width * scale))
+    const targetHeight = Math.max(1, Math.round(img.height * scale))
 
-  const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height))
-  const targetWidth = Math.max(1, Math.round(img.width * scale))
-  const targetHeight = Math.max(1, Math.round(img.height * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = targetWidth
+    canvas.height = targetHeight
 
-  const canvas = document.createElement('canvas')
-  canvas.width = targetWidth
-  canvas.height = targetHeight
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('No se pudo procesar la imagen en este navegador.')
-  }
-
-  ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
-
-  let bestBlob = null
-
-  for (const quality of QUALITY_STEPS) {
-    const blob = await canvasToBlob(canvas, quality)
-    bestBlob = blob
-    if (blob.size <= TARGET_BYTES) {
-      break
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      throw new Error('No se pudo procesar la imagen en este navegador.')
     }
-  }
 
-  if (!bestBlob || bestBlob.size > MAX_FINAL_BYTES) {
-    throw new Error('La imagen es demasiado grande incluso tras comprimirla (maximo 1 MB).')
-  }
+    ctx.drawImage(img.source, 0, 0, targetWidth, targetHeight)
 
-  return new File([bestBlob], 'avatar.webp', { type: 'image/webp' })
+    let bestBlob = null
+
+    for (const quality of QUALITY_STEPS) {
+      const blob = await canvasToBlob(canvas, quality)
+      bestBlob = blob
+      if (blob.size <= TARGET_BYTES) {
+        break
+      }
+    }
+
+    if (!bestBlob || bestBlob.size > MAX_FINAL_BYTES) {
+      throw new Error('La imagen es demasiado grande incluso tras comprimirla (maximo 1 MB).')
+    }
+
+    return new File([bestBlob], 'avatar.webp', { type: 'image/webp' })
+  } finally {
+    img.close()
+  }
 }
 
 const POST_MAX_ORIGINAL_BYTES = 5 * 1024 * 1024 // 5 MB
@@ -104,33 +124,37 @@ export async function preparePostImageFile(file) {
   }
 
   const img = await loadImage(file)
-  const scale = Math.min(1, POST_MAX_DIMENSION / Math.max(img.width, img.height))
-  const targetWidth = Math.max(1, Math.round(img.width * scale))
-  const targetHeight = Math.max(1, Math.round(img.height * scale))
+  try {
+    const scale = Math.min(1, POST_MAX_DIMENSION / Math.max(img.width, img.height))
+    const targetWidth = Math.max(1, Math.round(img.width * scale))
+    const targetHeight = Math.max(1, Math.round(img.height * scale))
 
-  const canvas = document.createElement('canvas')
-  canvas.width = targetWidth
-  canvas.height = targetHeight
+    const canvas = document.createElement('canvas')
+    canvas.width = targetWidth
+    canvas.height = targetHeight
 
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('No se pudo procesar la imagen en este navegador.')
-  }
-
-  ctx.drawImage(img, 0, 0, targetWidth, targetHeight)
-
-  let bestBlob = null
-  for (const quality of QUALITY_STEPS) {
-    const blob = await canvasToBlob(canvas, quality)
-    bestBlob = blob
-    if (blob.size <= POST_TARGET_BYTES) {
-      break
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      throw new Error('No se pudo procesar la imagen en este navegador.')
     }
-  }
 
-  if (!bestBlob || bestBlob.size > POST_MAX_FINAL_BYTES) {
-    throw new Error('La imagen es demasiado grande incluso tras comprimirla.')
-  }
+    ctx.drawImage(img.source, 0, 0, targetWidth, targetHeight)
 
-  return new File([bestBlob], 'post.webp', { type: 'image/webp' })
+    let bestBlob = null
+    for (const quality of QUALITY_STEPS) {
+      const blob = await canvasToBlob(canvas, quality)
+      bestBlob = blob
+      if (blob.size <= POST_TARGET_BYTES) {
+        break
+      }
+    }
+
+    if (!bestBlob || bestBlob.size > POST_MAX_FINAL_BYTES) {
+      throw new Error('La imagen es demasiado grande incluso tras comprimirla.')
+    }
+
+    return new File([bestBlob], 'post.webp', { type: 'image/webp' })
+  } finally {
+    img.close()
+  }
 }
