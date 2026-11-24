@@ -129,7 +129,9 @@ Todas las solicitudes pasan por [src/services/apiClient.js](./src/services/apiCl
 
 ---
 
-## 9. Repositorios
+## 9. Repositorios y despliegues
 
 - **Frontend (GitHub):** `https://github.com/luzmicol/frontend-utn-back.git`
 - **Backend (GitHub):** `https://github.com/luzmicol/backend-utn.git`
+- **Backend desplegado (Vercel):** `https://backend-utn-seven.vercel.app`
+- **Frontend desplegado (Vercel):** *(agregar aquí la URL pública de tu despliegue en Vercel)*
