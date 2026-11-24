@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Bookmark, Calendar, Camera, Pencil, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
+import { Bookmark, Calendar, Camera, FileText, Pencil, Repeat2, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
   checkUsernameAvailability,
@@ -862,36 +862,14 @@ export default function ProfileScreen() {
               </form>
             )}
 
-            <div className={`profile-stats${isOwnRoute ? ' profile-stats--own' : ''}`}>
-              <button
-                type='button'
-                className={`profile-stat${activeTab === 'posts' ? ' profile-stat--active' : ''}`}
-                onClick={() => setActiveTab('posts')}
-              >
+            <div className='profile-metrics' aria-label='Estadisticas del perfil'>
+              <div className='profile-metric'>
                 <strong>{posts.length}</strong>
                 <span>Publicaciones</span>
-              </button>
+              </div>
               <button
                 type='button'
-                className={`profile-stat${activeTab === 'reposts' ? ' profile-stat--active' : ''}`}
-                onClick={() => setActiveTab('reposts')}
-              >
-                <strong>{repostsLoaded ? reposts.length : '—'}</strong>
-                <span>Reposts</span>
-              </button>
-              {isOwnRoute && (
-                <button
-                  type='button'
-                  className={`profile-stat${activeTab === 'bookmarks' ? ' profile-stat--active' : ''}`}
-                  onClick={() => setActiveTab('bookmarks')}
-                >
-                  <strong>{bookmarksLoaded ? bookmarks.length : '—'}</strong>
-                  <span>Guardados</span>
-                </button>
-              )}
-              <button
-                type='button'
-                className={`profile-stat${activeTab === 'followers' ? ' profile-stat--active' : ''}`}
+                className={`profile-metric profile-metric--interactive${activeTab === 'followers' ? ' profile-metric--active' : ''}`}
                 onClick={() => setActiveTab('followers')}
               >
                 <strong>{followers.length}</strong>
@@ -899,13 +877,48 @@ export default function ProfileScreen() {
               </button>
               <button
                 type='button'
-                className={`profile-stat${activeTab === 'following' ? ' profile-stat--active' : ''}`}
+                className={`profile-metric profile-metric--interactive${activeTab === 'following' ? ' profile-metric--active' : ''}`}
                 onClick={() => setActiveTab('following')}
               >
                 <strong>{following.length}</strong>
                 <span>Siguiendo</span>
               </button>
             </div>
+
+            <nav className='profile-tabs' role='tablist' aria-label='Contenido del perfil'>
+              <button
+                type='button'
+                role='tab'
+                aria-selected={activeTab === 'posts'}
+                className={`profile-tab${activeTab === 'posts' ? ' profile-tab--active' : ''}`}
+                onClick={() => setActiveTab('posts')}
+              >
+                <FileText size={16} />
+                <span>Publicaciones</span>
+              </button>
+              <button
+                type='button'
+                role='tab'
+                aria-selected={activeTab === 'reposts'}
+                className={`profile-tab${activeTab === 'reposts' ? ' profile-tab--active' : ''}`}
+                onClick={() => setActiveTab('reposts')}
+              >
+                <Repeat2 size={16} />
+                <span>Reposts</span>
+              </button>
+              {isOwnRoute && (
+                <button
+                  type='button'
+                  role='tab'
+                  aria-selected={activeTab === 'bookmarks'}
+                  className={`profile-tab${activeTab === 'bookmarks' ? ' profile-tab--active' : ''}`}
+                  onClick={() => setActiveTab('bookmarks')}
+                >
+                  <Bookmark size={16} />
+                  <span>Guardados</span>
+                </button>
+              )}
+            </nav>
           </header>
 
           {activeTab === 'posts' && (

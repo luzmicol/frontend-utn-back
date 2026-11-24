@@ -341,56 +341,95 @@
   color: var(--error);
 }
 
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  border-top: 1px solid var(--border);
-  padding-top: 14px;
-}
-
-.profile-stats--own {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-@media (max-width: 640px) {
-  .profile-stats,
-  .profile-stats--own {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.profile-stat {
+.profile-metrics {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 6px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background-color: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.8rem;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 4px;
 }
 
-.profile-stat strong {
-  font-size: 1.05rem;
+.profile-metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-family: inherit;
+}
+
+.profile-metric strong {
+  font-size: 0.96rem;
+  font-weight: 700;
   color: var(--text);
 }
 
-.profile-stat:hover {
-  background-color: var(--surface-elevated);
+.profile-metric--interactive {
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-.profile-stat--active {
-  background-color: var(--surface-elevated);
-  border-color: var(--border);
+.profile-metric--interactive:hover,
+.profile-metric--active {
   color: var(--primary-soft);
 }
 
-.profile-stat--active strong {
+.profile-metric--interactive:hover strong,
+.profile-metric--active strong {
   color: var(--primary-soft);
+}
+
+.profile-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.profile-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 10px 10px 0 0;
+  background-color: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-tab:hover {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+}
+
+.profile-tab--active {
+  color: var(--primary-soft);
+  border-bottom-color: var(--primary);
+  background-color: var(--surface-elevated);
+}
+
+@media (max-width: 480px) {
+  .profile-metrics {
+    gap: 14px;
+  }
+
+  .profile-tab {
+    padding: 9px 6px;
+    font-size: 0.8rem;
+    gap: 5px;
+  }
 }
 
 .profile-user-list {
