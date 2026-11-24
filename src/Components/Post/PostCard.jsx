@@ -10,6 +10,7 @@ import MentionTextarea from '../UI/MentionTextarea'
 import RichTextWithMentions from '../UI/RichTextWithMentions'
 import LikeButton from './LikeButton'
 import RepostButton from './RepostButton'
+import BookmarkButton from './BookmarkButton'
 import CommentSection from './CommentSection'
 import './PostCard.css'
 
@@ -33,6 +34,7 @@ export default function PostCard({
   onPostDeleted,
   repostedByLabel = null,
   onUnreposted = null,
+  onUnbookmarked = null,
   defaultShowComments = false
 }) {
   const { user } = useAuth()
@@ -399,6 +401,13 @@ export default function PostCard({
           <MessageCircle size={16} strokeWidth={2} />
           <span>{commentsCount !== null ? `Comentarios (${commentsCount})` : 'Comentarios'}</span>
         </button>
+
+        <BookmarkButton
+          postId={post._id}
+          initialBookmarked={post.is_bookmarked}
+          onUnbookmarked={onUnbookmarked}
+          onError={setActionError}
+        />
       </footer>
 
       {showComments && (

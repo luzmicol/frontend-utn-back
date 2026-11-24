@@ -1,4 +1,5 @@
 import { apiRequest } from './apiClient'
+import { invalidateCache } from '../utils/memoryCache'
 
 export async function getPosts({ user_id, community_id, page, limit } = {}) {
   const params = new URLSearchParams()
@@ -127,4 +128,20 @@ export async function unrepostPost(post_id) {
   return await apiRequest('/api/posts/' + post_id + '/reposts', {
     method: 'DELETE'
   })
+}
+
+export async function bookmarkPost(post_id) {
+  const response = await apiRequest('/api/posts/' + post_id + '/bookmarks', {
+    method: 'POST'
+  })
+  invalidateCache('feed:')
+  return response
+}
+
+export async function unbookmarkPost(post_id) {
+  const response = await apiRequest('/api/posts/' + post_id + '/bookmarks', {
+    method: 'DELETE'
+  })
+  invalidateCache('feed:')
+  return response
 }

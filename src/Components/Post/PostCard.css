@@ -254,6 +254,17 @@
   background-color: var(--success-bg);
 }
 
+.post-card__action-pill--bookmark {
+  margin-left: auto;
+  padding: 6px 10px;
+}
+
+.post-card__action-pill--bookmarked {
+  color: var(--primary-soft);
+  border-color: var(--primary);
+  background-color: var(--primary-halo);
+}
+
 .post-card__repost-banner {
   display: inline-flex;
   align-items: center;

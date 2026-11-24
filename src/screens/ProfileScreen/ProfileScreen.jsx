@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { Calendar, Camera, Pencil, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
+import { Bookmark, Calendar, Camera, Pencil, Trash2, UserCheck, UserPlus, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
   checkUsernameAvailability,
@@ -9,6 +9,7 @@ import {
   getFollowers,
   getFollowing,
   getFollowStatus,
+  getMyBookmarks,
   getUserById,
   getUserReposts,
   unfollowUser,
@@ -35,6 +36,14 @@ function formatJoinDate(dateString) {
   })
 }
 
+function formatRepostDate(dateString) {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'short'
+  })
+}
+
 export default function ProfileScreen() {
   const { user_id } = useParams()
   const { user: currentUser, setUser } = useAuth()
@@ -48,6 +57,16 @@ export default function ProfileScreen() {
   const [hasMorePosts, setHasMorePosts] = useState(false)
   const [loadingMorePosts, setLoadingMorePosts] = useState(false)
   const [reposts, setReposts] = useState([])
+  const [repostsLoaded, setRepostsLoaded] = useState(false)
+  const [loadingReposts, setLoadingReposts] = useState(false)
+  const [repostsError, setRepostsError] = useState(null)
+  const [bookmarks, setBookmarks] = useState([])
+  const [bookmarksPage, setBookmarksPage] = useState(1)
+  const [hasMoreBookmarks, setHasMoreBookmarks] = useState(false)
+  const [loadingMoreBookmarks, setLoadingMoreBookmarks] = useState(false)
+  const [bookmarksLoaded, setBookmarksLoaded] = useState(false)
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false)
+  const [bookmarksError, setBookmarksError] = useState(null)
   const [followers, setFollowers] = useState([])
   const [following, setFollowing] = useState([])
   const [isFollowing, setIsFollowing] = useState(false)
@@ -136,6 +155,17 @@ export default function ProfileScreen() {
       setIsEditing(false)
       setEditSuccess(null)
       setLoadingPosts(true)
+      setReposts([])
+      setRepostsLoaded(false)
+      setLoadingReposts(false)
+      setRepostsError(null)
+      setBookmarks([])
+      setBookmarksPage(1)
+      setHasMoreBookmarks(false)
+      setLoadingMoreBookmarks(false)
+      setBookmarksLoaded(false)
+      setLoadingBookmarks(false)
+      setBookmarksError(null)
 
       if (isOwnRoute) {
         setLoadingProfile(false)
@@ -160,19 +190,17 @@ export default function ProfileScreen() {
           })
       }
 
-      Promise.all([getPosts({ user_id: targetUserId, page: 1, limit: 20 }), getUserReposts(targetUserId)])
-        .then(([postsRes, repostsRes]) => {
+      getPosts({ user_id: targetUserId, page: 1, limit: 20 })
+        .then((postsRes) => {
           if (!isMounted) return
           setPosts(postsRes.data?.posts ?? [])
           setPostsPage(1)
           setHasMorePosts(Boolean(postsRes.data?.pagination?.has_more))
-          setReposts(repostsRes.data?.reposts ?? [])
         })
         .catch(() => {
           if (!isMounted) return
           setPosts([])
           setHasMorePosts(false)
-          setReposts([])
         })
         .finally(() => {
           if (isMounted) setLoadingPosts(false)
@@ -220,25 +248,69 @@ export default function ProfileScreen() {
     return () => cancelAnimationFrame(frame)
   }, [isOwnRoute, currentUser])
 
-  const timelineItems = useMemo(() => {
-    const ownItems = posts.map((post) => ({
-      key: `post-${post._id}`,
-      post,
-      sortTime: new Date(post.fecha_creacion).getTime(),
-      isRepost: false
-    }))
+  // Carga diferida de reposts: solo consulta cuando el usuario abre la pestaña Reposts
+  useEffect(() => {
+    if (activeTab !== 'reposts' || !targetUserId || repostsLoaded) return
 
-    const repostItems = reposts
-      .filter((item) => item.post)
-      .map((item) => ({
-        key: `repost-${item._id}`,
-        post: item.post,
-        sortTime: new Date(item.fecha_repost).getTime(),
-        isRepost: true
-      }))
+    let isMounted = true
 
-    return [...ownItems, ...repostItems].sort((a, b) => b.sortTime - a.sortTime)
-  }, [posts, reposts])
+    async function loadReposts() {
+      setLoadingReposts(true)
+      setRepostsError(null)
+      try {
+        const res = await getUserReposts(targetUserId)
+        if (!isMounted) return
+        setReposts((res.data?.reposts ?? []).filter((item) => item.post))
+        setRepostsLoaded(true)
+      } catch (err) {
+        if (!isMounted) return
+        setRepostsError(err.message || 'No se pudieron cargar los reposts.')
+      } finally {
+        if (isMounted) {
+          setLoadingReposts(false)
+        }
+      }
+    }
+
+    loadReposts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [activeTab, targetUserId, repostsLoaded])
+
+  // Carga diferida de guardados: exclusivamente en el perfil propio
+  useEffect(() => {
+    if (!isOwnRoute || activeTab !== 'bookmarks' || bookmarksLoaded) return
+
+    let isMounted = true
+
+    async function loadBookmarks() {
+      setLoadingBookmarks(true)
+      setBookmarksError(null)
+      try {
+        const res = await getMyBookmarks({ page: 1, limit: 20 })
+        if (!isMounted) return
+        setBookmarks((res.data?.bookmarks ?? []).filter((item) => item.post))
+        setBookmarksPage(1)
+        setHasMoreBookmarks(Boolean(res.data?.pagination?.has_more))
+        setBookmarksLoaded(true)
+      } catch (err) {
+        if (!isMounted) return
+        setBookmarksError(err.message || 'No se pudieron cargar las publicaciones guardadas.')
+      } finally {
+        if (isMounted) {
+          setLoadingBookmarks(false)
+        }
+      }
+    }
+
+    loadBookmarks()
+
+    return () => {
+      isMounted = false
+    }
+  }, [isOwnRoute, activeTab, bookmarksLoaded])
 
   if (user_id && currentUser?._id && user_id === currentUser._id) {
     return <Navigate to='/profile' replace />
@@ -478,6 +550,41 @@ export default function ProfileScreen() {
     }
   }
 
+  async function handleLoadMoreBookmarks() {
+    if (loadingMoreBookmarks || !hasMoreBookmarks || !isOwnRoute) return
+
+    try {
+      setLoadingMoreBookmarks(true)
+      const nextPage = bookmarksPage + 1
+      const res = await getMyBookmarks({ page: nextPage, limit: 20 })
+      const incoming = (res.data?.bookmarks ?? []).filter((item) => item.post)
+      setBookmarks((prev) => {
+        const seen = new Set(prev.map((b) => b._id))
+        return [...prev, ...incoming.filter((b) => !seen.has(b._id))]
+      })
+      setBookmarksPage(nextPage)
+      setHasMoreBookmarks(Boolean(res.data?.pagination?.has_more))
+    } catch {
+      // Mantiene los guardados ya cargados
+    } finally {
+      setLoadingMoreBookmarks(false)
+    }
+  }
+
+  function handleUnbookmarkedFromProfile(postId) {
+    setBookmarks((prev) => prev.filter((item) => item.post?._id !== postId))
+    setPosts((prev) =>
+      prev.map((item) => (item._id === postId ? { ...item, is_bookmarked: false } : item))
+    )
+    setReposts((prev) =>
+      prev.map((item) =>
+        item.post?._id === postId
+          ? { ...item, post: { ...item.post, is_bookmarked: false } }
+          : item
+      )
+    )
+  }
+
   function handlePostUpdated(updatedPost) {
     setPosts((prev) =>
       prev.map((item) => (item._id === updatedPost._id ? updatedPost : item))
@@ -487,11 +594,19 @@ export default function ProfileScreen() {
         item.post?._id === updatedPost._id ? { ...item, post: updatedPost } : item
       )
     )
+    setBookmarks((prev) =>
+      prev.map((item) =>
+        item.post?._id === updatedPost._id
+          ? { ...item, post: { ...updatedPost, is_bookmarked: true } }
+          : item
+      )
+    )
   }
 
   function handlePostDeleted(deletedPostId) {
     setPosts((prev) => prev.filter((item) => item._id !== deletedPostId))
     setReposts((prev) => prev.filter((item) => item.post?._id !== deletedPostId))
+    setBookmarks((prev) => prev.filter((item) => item.post?._id !== deletedPostId))
   }
 
   function handleUnrepostedFromProfile(postId) {
@@ -747,15 +862,33 @@ export default function ProfileScreen() {
               </form>
             )}
 
-            <div className='profile-stats'>
+            <div className={`profile-stats${isOwnRoute ? ' profile-stats--own' : ''}`}>
               <button
                 type='button'
                 className={`profile-stat${activeTab === 'posts' ? ' profile-stat--active' : ''}`}
                 onClick={() => setActiveTab('posts')}
               >
-                <strong>{timelineItems.length}</strong>
+                <strong>{posts.length}</strong>
                 <span>Publicaciones</span>
               </button>
+              <button
+                type='button'
+                className={`profile-stat${activeTab === 'reposts' ? ' profile-stat--active' : ''}`}
+                onClick={() => setActiveTab('reposts')}
+              >
+                <strong>{repostsLoaded ? reposts.length : '—'}</strong>
+                <span>Reposts</span>
+              </button>
+              {isOwnRoute && (
+                <button
+                  type='button'
+                  className={`profile-stat${activeTab === 'bookmarks' ? ' profile-stat--active' : ''}`}
+                  onClick={() => setActiveTab('bookmarks')}
+                >
+                  <strong>{bookmarksLoaded ? bookmarks.length : '—'}</strong>
+                  <span>Guardados</span>
+                </button>
+              )}
               <button
                 type='button'
                 className={`profile-stat${activeTab === 'followers' ? ' profile-stat--active' : ''}`}
@@ -780,7 +913,7 @@ export default function ProfileScreen() {
               <div className='loop-empty'>
                 <p className='loop-empty__text'>Cargando publicaciones...</p>
               </div>
-            ) : timelineItems.length === 0 ? (
+            ) : posts.length === 0 ? (
               <div className='loop-empty'>
                 <p className='loop-empty__text'>
                   {isOwnRoute
@@ -790,14 +923,10 @@ export default function ProfileScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {timelineItems.map((item) => (
+                {posts.map((post) => (
                   <PostCard
-                    key={item.key}
-                    post={item.post}
-                    repostedByLabel={
-                      item.isRepost ? `Reposteado por ${profile.nombre}` : null
-                    }
-                    onUnreposted={item.isRepost ? handleUnrepostedFromProfile : null}
+                    key={`post-${post._id}`}
+                    post={post}
                     onPostUpdated={handlePostUpdated}
                     onPostDeleted={handlePostDeleted}
                   />
@@ -812,6 +941,85 @@ export default function ProfileScreen() {
                       disabled={loadingMorePosts}
                     >
                       {loadingMorePosts ? 'Cargando...' : 'Cargar mas publicaciones'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          )}
+
+          {activeTab === 'reposts' && (
+            loadingReposts ? (
+              <div className='loop-empty'>
+                <p className='loop-empty__text'>Cargando reposts...</p>
+              </div>
+            ) : repostsError ? (
+              <Alert variant='error'>{repostsError}</Alert>
+            ) : reposts.length === 0 ? (
+              <div className='loop-empty'>
+                <p className='loop-empty__text'>
+                  {isOwnRoute
+                    ? 'Todavia no reposteaste ninguna publicacion.'
+                    : 'Este usuario todavia no reposteo publicaciones.'}
+                </p>
+              </div>
+            ) : (
+              <div className='loop-page'>
+                {reposts.map((item) => (
+                  <PostCard
+                    key={`repost-${item._id}`}
+                    post={item.post}
+                    repostedByLabel={
+                      item.fecha_repost
+                        ? `Reposteado por ${profile.nombre} · ${formatRepostDate(item.fecha_repost)}`
+                        : `Reposteado por ${profile.nombre}`
+                    }
+                    onUnreposted={handleUnrepostedFromProfile}
+                    onPostUpdated={handlePostUpdated}
+                    onPostDeleted={handlePostDeleted}
+                  />
+                ))}
+              </div>
+            )
+          )}
+
+          {isOwnRoute && activeTab === 'bookmarks' && (
+            loadingBookmarks ? (
+              <div className='loop-empty'>
+                <p className='loop-empty__text'>Cargando publicaciones guardadas...</p>
+              </div>
+            ) : bookmarksError ? (
+              <Alert variant='error'>{bookmarksError}</Alert>
+            ) : bookmarks.length === 0 ? (
+              <div className='loop-empty'>
+                <span className='loop-empty__icon' aria-hidden='true'>
+                  <Bookmark size={20} />
+                </span>
+                <p className='loop-empty__text'>
+                  Todavia no guardaste ninguna publicacion. Usa el icono de marcador para guardar tus favoritas.
+                </p>
+              </div>
+            ) : (
+              <div className='loop-page'>
+                {bookmarks.map((item) => (
+                  <PostCard
+                    key={`bookmark-${item._id}`}
+                    post={item.post}
+                    onUnbookmarked={handleUnbookmarkedFromProfile}
+                    onPostUpdated={handlePostUpdated}
+                    onPostDeleted={handlePostDeleted}
+                  />
+                ))}
+
+                {hasMoreBookmarks && (
+                  <div className='loop-empty'>
+                    <button
+                      type='button'
+                      className='post-card__action-pill'
+                      onClick={handleLoadMoreBookmarks}
+                      disabled={loadingMoreBookmarks}
+                    >
+                      {loadingMoreBookmarks ? 'Cargando...' : 'Cargar mas guardados'}
                     </button>
                   </div>
                 )}

@@ -107,3 +107,13 @@ export async function getUserReposts(user_id) {
     method: 'GET'
   })
 }
+
+export async function getMyBookmarks({ page = 1, limit = 20 } = {}) {
+  const params = new URLSearchParams()
+  params.set('page', String(page))
+  params.set('limit', String(limit))
+
+  return await apiRequest('/api/users/me/bookmarks?' + params.toString(), {
+    method: 'GET'
+  })
+}
