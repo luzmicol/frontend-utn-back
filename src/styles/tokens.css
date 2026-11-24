@@ -45,35 +45,35 @@
     Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Paleta de modo claro - limpia, luminosa y con contraste entre superficies */
+/* Paleta de modo claro - suave, luminosa y equilibrada */
 :root[data-theme='light'] {
-  --bg: #E9EDF5;
-  --sidebar-bg: #F0F2F8;
-  --surface: #FFFFFF;
-  --surface-elevated: #F7F8FC;
-  --input-bg: #EDF0F6;
-  --card-shadow: 0 2px 8px rgba(36, 36, 50, 0.06), 0 1px 2px rgba(36, 36, 50, 0.04);
+  --bg: #ECEEF6;
+  --sidebar-bg: #F3F4FA;
+  --surface: #FCFCFE;
+  --surface-elevated: #F4F5FB;
+  --input-bg: #F0F2F8;
+  --card-shadow: 0 2px 10px rgba(39, 40, 56, 0.05), 0 1px 2px rgba(39, 40, 56, 0.03);
 
-  --primary: #7546E8;
-  --primary-dark: #6234D6;
-  --primary-soft: #6234D6;
-  --primary-halo: rgba(117, 70, 232, 0.14);
+  --primary: #8B68F0;
+  --primary-dark: #7A56E4;
+  --primary-soft: #7A56E4;
+  --primary-halo: rgba(139, 104, 240, 0.12);
   --on-primary: #FFFFFF;
 
-  --text: #242432;
-  --text-muted: #6F7182;
-  --border: #DCE1EC;
+  --text: #272838;
+  --text-muted: #6E7185;
+  --border: #E0E3EE;
 
   --error: #dc2626;
   --error-bg: rgba(220, 38, 38, 0.08);
-  --error-border: rgba(220, 38, 38, 0.28);
+  --error-border: rgba(220, 38, 38, 0.25);
 
   --success: #059669;
   --success-bg: rgba(5, 150, 105, 0.08);
-  --success-border: rgba(5, 150, 105, 0.28);
+  --success-border: rgba(5, 150, 105, 0.25);
 }
 
-/* Asegura texto blanco sobre botones primarios violeta en ambos temas */
+/* Asegura texto blanco sobre botones primarios y badges violeta en modo claro */
 :root[data-theme='light'] .post-composer__submit,
 :root[data-theme='light'] .post-card__btn--primary,
 :root[data-theme='light'] .comment-form__submit,
@@ -82,7 +82,11 @@
 :root[data-theme='light'] .share-modal__btn--primary,
 :root[data-theme='light'] .chat-view__send,
 :root[data-theme='light'] .chat-bubble--mine,
-:root[data-theme='light'] .form-button {
+:root[data-theme='light'] .form-button,
+:root[data-theme='light'] .mobile-header__create,
+:root[data-theme='light'] .mobile-header__badge,
+:root[data-theme='light'] .sidebar__create-btn,
+:root[data-theme='light'] .sidebar__badge {
   color: var(--on-primary);
 }
 
