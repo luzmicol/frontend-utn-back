@@ -32,7 +32,8 @@ export default function PostCard({
   onPostUpdated,
   onPostDeleted,
   repostedByLabel = null,
-  onUnreposted = null
+  onUnreposted = null,
+  defaultShowComments = false
 }) {
   const { user } = useAuth()
   const isAuthor = Boolean(user?._id && post.fk_id_usuario?._id === user._id)
@@ -49,7 +50,7 @@ export default function PostCard({
       if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
     }
   }, [editPreviewUrl])
-  const [showComments, setShowComments] = useState(false)
+  const [showComments, setShowComments] = useState(defaultShowComments)
   const [commentsCount, setCommentsCount] = useState(null)
   const [repostInfo, setRepostInfo] = useState({
     reposts_count: post.reposts_count ?? 0,
@@ -191,9 +192,11 @@ export default function PostCard({
             ) : (
               <span className='post-card__author'>Usuario</span>
             )}
-            <time className='post-card__date' dateTime={post.fecha_creacion}>
-              {formatDate(post.fecha_creacion)}
-            </time>
+            <Link to={`/posts/${post._id}`} className='post-card__date' style={{ textDecoration: 'none' }}>
+              <time dateTime={post.fecha_creacion}>
+                {formatDate(post.fecha_creacion)}
+              </time>
+            </Link>
           </div>
         </div>
 

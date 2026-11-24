@@ -6,6 +6,7 @@ import ResetPasswordScreen from './screens/ResetPasswordScreen/ResetPasswordScre
 import VerifyEmailScreen from './screens/VerifyEmailScreen/VerifyEmailScreen'
 import ResendEmailVerificationScreen from './screens/ResendEmailVerificationScreen/ResendEmailVerificationScreen'
 import FeedScreen from './screens/FeedScreen/FeedScreen'
+import PostDetailScreen from './screens/PostDetailScreen/PostDetailScreen'
 import ExploreScreen from './screens/ExploreScreen/ExploreScreen'
 import CommunitiesScreen from './screens/CommunitiesScreen/CommunitiesScreen'
 import CommunityDetailScreen from './screens/CommunityDetailScreen/CommunityDetailScreen'
@@ -22,6 +23,7 @@ const App = () => {
       <Route element={<AuthMiddleware />}>
         <Route element={<AppLayout />}>
           <Route path='/' element={<FeedScreen />} />
+          <Route path='/posts/:post_id' element={<PostDetailScreen />} />
           <Route path='/explore' element={<ExploreScreen />} />
           <Route path='/communities' element={<CommunitiesScreen />} />
           <Route path='/communities/:community_id' element={<CommunityDetailScreen />} />

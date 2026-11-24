@@ -13,6 +13,12 @@ export async function getPosts({ user_id, community_id, page, limit } = {}) {
   })
 }
 
+export async function getPostById(post_id) {
+  return await apiRequest('/api/posts/' + post_id, {
+    method: 'GET'
+  })
+}
+
 export async function createPost(contenido, fk_id_comunidad = null, imageFile = null) {
   if (imageFile) {
     const formData = new FormData()
