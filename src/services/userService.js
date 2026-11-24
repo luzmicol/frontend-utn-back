@@ -22,10 +22,14 @@ export async function getMyProfile() {
   })
 }
 
-export async function updateMyProfile(data) {
+export async function updateMyProfile(data = {}) {
+  const payload = {}
+  if (data.nombre !== undefined) payload.nombre = data.nombre
+  if (data.bio !== undefined) payload.bio = data.bio
+
   return await apiRequest('/api/users/me', {
     method: 'PUT',
-    body: data
+    body: payload
   })
 }
 

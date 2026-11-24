@@ -219,6 +219,35 @@
   gap: 6px;
 }
 
+.profile-hero__bio {
+  margin: 4px 0 2px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.profile-edit-form__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.profile-edit-form__counter {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-edit-form__textarea {
+  resize: vertical;
+  min-height: 76px;
+  line-height: 1.45;
+}
+
 .profile-edit-form__label {
   font-size: 0.84rem;
   font-weight: 500;

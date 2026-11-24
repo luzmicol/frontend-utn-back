@@ -25,6 +25,7 @@ import './ProfileScreen.css'
 
 const USERNAME_REGEX = /^[a-z0-9._]{3,30}$/
 const USERNAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
+const MAX_BIO_LENGTH = 160
 
 function formatJoinDate(dateString) {
   if (!dateString) return ''
@@ -61,6 +62,7 @@ export default function ProfileScreen() {
   // Estados de edicion de perfil propio (ningun cambio impacta en backend hasta "Guardar")
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
+  const [editBio, setEditBio] = useState('')
   const [editUsername, setEditUsername] = useState('')
   const [usernameStatus, setUsernameStatus] = useState({ state: 'idle', message: '' })
   const [selectedFile, setSelectedFile] = useState(null)
@@ -265,6 +267,7 @@ export default function ProfileScreen() {
   function openEditForm() {
     if (!profile) return
     setEditName(profile.nombre || '')
+    setEditBio(profile.bio || '')
     setEditUsername(profile.username || '')
     setUsernameStatus({ state: 'idle', message: '' })
     setSelectedFile(null)
@@ -280,6 +283,7 @@ export default function ProfileScreen() {
     if (savingProfile) return
     setIsEditing(false)
     setEditName(profile?.nombre || '')
+    setEditBio(profile?.bio || '')
     setEditUsername(profile?.username || '')
     setUsernameStatus({ state: 'idle', message: '' })
     setSelectedFile(null)
@@ -327,8 +331,10 @@ export default function ProfileScreen() {
     if (savingProfile || !profile) return
 
     const trimmedName = editName.trim()
+    const trimmedBio = editBio.trim()
     const normalizedUsername = editUsername.trim().toLowerCase()
     const nameChanged = trimmedName !== (profile.nombre || '').trim()
+    const bioChanged = trimmedBio !== (profile.bio || '').trim()
     const usernameChanged =
       !isUsernameLocked &&
       Boolean(normalizedUsername) &&
@@ -337,6 +343,11 @@ export default function ProfileScreen() {
 
     if (trimmedName.length < 2 || trimmedName.length > 50) {
       setEditError('El nombre debe tener entre 2 y 50 caracteres.')
+      return
+    }
+
+    if (trimmedBio.length > MAX_BIO_LENGTH) {
+      setEditError(`La biografia no puede superar los ${MAX_BIO_LENGTH} caracteres.`)
       return
     }
 
@@ -351,7 +362,7 @@ export default function ProfileScreen() {
       }
     }
 
-    if (!nameChanged && !usernameChanged && !selectedFile && !shouldDeleteAvatar) {
+    if (!nameChanged && !bioChanged && !usernameChanged && !selectedFile && !shouldDeleteAvatar) {
       setEditError('No realizaste ningun cambio para guardar.')
       return
     }
@@ -363,10 +374,14 @@ export default function ProfileScreen() {
       setEditError(null)
       setEditSuccess(null)
 
-      if (nameChanged) {
-        const nameRes = await updateMyProfile({ nombre: trimmedName })
-        if (nameRes.data?.user) {
-          latestUser = nameRes.data.user
+      if (nameChanged || bioChanged) {
+        const profilePayload = {}
+        if (nameChanged) profilePayload.nombre = trimmedName
+        if (bioChanged) profilePayload.bio = trimmedBio
+
+        const profileRes = await updateMyProfile(profilePayload)
+        if (profileRes.data?.user) {
+          latestUser = profileRes.data.user
         }
       }
 
@@ -519,6 +534,9 @@ export default function ProfileScreen() {
                   {profile.username && (
                     <span className='profile-hero__username'>@{profile.username}</span>
                   )}
+                  {profile.bio && (
+                    <p className='profile-hero__bio'>{profile.bio}</p>
+                  )}
                   {profile.fecha_creacion && (
                     <span className='profile-hero__date'>
                       <Calendar size={13} />
@@ -627,6 +645,30 @@ export default function ProfileScreen() {
                     maxLength={50}
                     disabled={savingProfile}
                     required
+                  />
+                </div>
+
+                <div className='profile-edit-form__field'>
+                  <div className='profile-edit-form__label-row'>
+                    <label className='profile-edit-form__label' htmlFor='edit-profile-bio'>
+                      Biografia
+                    </label>
+                    <span className='profile-edit-form__counter'>
+                      {editBio.length}/{MAX_BIO_LENGTH}
+                    </span>
+                  </div>
+                  <textarea
+                    id='edit-profile-bio'
+                    className='profile-edit-form__input profile-edit-form__textarea'
+                    value={editBio}
+                    onChange={(e) => {
+                      setEditBio(e.target.value.slice(0, MAX_BIO_LENGTH))
+                      if (editError) setEditError(null)
+                    }}
+                    placeholder='Conta un poco sobre vos...'
+                    maxLength={MAX_BIO_LENGTH}
+                    rows={3}
+                    disabled={savingProfile}
                   />
                 </div>
 
