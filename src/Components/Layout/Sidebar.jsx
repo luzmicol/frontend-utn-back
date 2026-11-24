@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Bell, PenSquare, LogOut } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
+import { useTheme } from '../../context/ThemeContext'
 import { NAV_ITEMS } from './navItems'
 import './Sidebar.css'
 
@@ -9,6 +10,8 @@ export default function Sidebar({ onLogoutRequest, onBrandClick }) {
   const navigate = useNavigate()
   const { unreadCount } = useNotifications()
   const { unreadMessagesCount } = useUnreadMessages()
+  const { resolvedTheme } = useTheme()
+  const logoSrc = resolvedTheme === 'light' ? '/loop-wordmark-dark.png' : '/loop-wordmark.png'
   const badgeText = unreadCount > 99 ? '99+' : String(unreadCount)
   const messagesBadgeText =
     unreadMessagesCount > 99 ? '99+' : String(unreadMessagesCount)
@@ -27,7 +30,7 @@ export default function Sidebar({ onLogoutRequest, onBrandClick }) {
           onClick={onBrandClick}
         >
           <img
-            src='/loop-wordmark.png'
+            src={logoSrc}
             alt='LOOP'
             className='sidebar__brand-img'
           />

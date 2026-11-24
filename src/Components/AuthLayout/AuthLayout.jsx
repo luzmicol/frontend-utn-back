@@ -1,12 +1,16 @@
+import { useTheme } from '../../context/ThemeContext'
 import './AuthLayout.css'
 
 export default function AuthLayout({ title, subtitle, footer, children }) {
+  const { resolvedTheme } = useTheme()
+  const logoSrc = resolvedTheme === 'light' ? '/loop-wordmark-dark.png' : '/loop-wordmark.png'
+
   return (
     <main className='auth-layout'>
       <div className='auth-content'>
         <div className='auth-content__brand'>
           <img
-            src='/loop-wordmark.png'
+            src={logoSrc}
             alt='LOOP'
             className='auth-content__brand-img'
           />

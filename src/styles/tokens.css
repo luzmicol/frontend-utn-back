@@ -45,23 +45,24 @@
     Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Paleta de modo claro - limpia, luminosa y minimalista */
+/* Paleta de modo claro - limpia, luminosa y con contraste entre superficies */
 :root[data-theme='light'] {
-  --bg: #F1F4F9;
-  --sidebar-bg: #F7F8FC;
+  --bg: #E9EDF5;
+  --sidebar-bg: #F0F2F8;
   --surface: #FFFFFF;
-  --surface-elevated: #F4F6FB;
-  --card-shadow: 0 1px 3px rgba(32, 32, 42, 0.06), 0 1px 2px rgba(32, 32, 42, 0.04);
+  --surface-elevated: #F7F8FC;
+  --input-bg: #EDF0F6;
+  --card-shadow: 0 2px 8px rgba(36, 36, 50, 0.06), 0 1px 2px rgba(36, 36, 50, 0.04);
 
   --primary: #7546E8;
   --primary-dark: #6234D6;
   --primary-soft: #6234D6;
-  --primary-halo: rgba(117, 70, 232, 0.12);
+  --primary-halo: rgba(117, 70, 232, 0.14);
   --on-primary: #FFFFFF;
 
-  --text: #20202A;
-  --text-muted: #737585;
-  --border: #E5E7EF;
+  --text: #242432;
+  --text-muted: #6F7182;
+  --border: #DCE1EC;
 
   --error: #dc2626;
   --error-bg: rgba(220, 38, 38, 0.08);
@@ -85,7 +86,9 @@
   color: var(--on-primary);
 }
 
-:root[data-theme='light'] .sidebar {
+:root[data-theme='light'] .sidebar,
+:root[data-theme='light'] .mobile-header,
+:root[data-theme='light'] .mobile-nav {
   background-color: var(--sidebar-bg);
 }
 
@@ -93,8 +96,22 @@
 :root[data-theme='light'] .post-composer,
 :root[data-theme='light'] .profile-header,
 :root[data-theme='light'] .community-card,
-:root[data-theme='light'] .settings-card {
+:root[data-theme='light'] .settings-card,
+:root[data-theme='light'] .feed-suggestions__card,
+:root[data-theme='light'] .auth-card {
   box-shadow: var(--card-shadow);
+}
+
+:root[data-theme='light'] .post-composer__textarea,
+:root[data-theme='light'] .post-card__edit-textarea,
+:root[data-theme='light'] .comment-form__input,
+:root[data-theme='light'] .chat-view__input,
+:root[data-theme='light'] .profile-edit-form__input,
+:root[data-theme='light'] .form-field__input,
+:root[data-theme='light'] .share-modal__search,
+:root[data-theme='light'] .share-modal__note,
+:root[data-theme='light'] .emoji-picker__search {
+  background-color: var(--input-bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
