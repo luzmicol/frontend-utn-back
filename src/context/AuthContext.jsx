@@ -7,6 +7,7 @@ import {
     setUnauthorizedHandler
 } from '../services/apiClient'
 import { login as loginRequest } from '../services/authService'
+import { clearAllCache } from '../utils/memoryCache'
 
 const AuthContext = createContext(null)
 
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
 
     const logout = useCallback(() => {
         clearAuthToken()
+        clearAllCache()
         setUser(null)
         setSessionError(null)
     }, [])
@@ -117,6 +119,7 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         setUnauthorizedHandler(() => {
+            clearAllCache()
             setUser(null)
             setSessionError(null)
         })

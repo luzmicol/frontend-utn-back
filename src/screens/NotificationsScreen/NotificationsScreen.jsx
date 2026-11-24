@@ -9,6 +9,7 @@ import {
   markAllNotificationsAsRead,
   markNotificationAsRead
 } from '../../services/notificationService'
+import { fetchWithCache, getCachedData, setCachedData } from '../../utils/memoryCache'
 import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import './NotificationsScreen.css'
@@ -52,16 +53,19 @@ function mergeUnique(prev, next) {
   return Array.from(map.values())
 }
 
+const NOTIFICATIONS_CACHE_KEY = 'notifications:list'
+
 export default function NotificationsScreen() {
   const navigate = useNavigate()
   const { unreadCount, setUnreadCount, decrementUnread } = useNotifications()
   const autoMarkedRef = useRef(false)
   const initialUnreadCountRef = useRef(unreadCount)
 
-  const [notifications, setNotifications] = useState([])
+  const initialCache = getCachedData(NOTIFICATIONS_CACHE_KEY)?.data
+  const [notifications, setNotifications] = useState(() => initialCache?.notifications ?? [])
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(() => Boolean(initialCache?.hasMore))
+  const [loading, setLoading] = useState(() => !initialCache)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const [markingAll, setMarkingAll] = useState(false)
@@ -95,13 +99,20 @@ export default function NotificationsScreen() {
 
   useEffect(() => {
     let cancelled = false
+    const hasCached = Boolean(getCachedData(NOTIFICATIONS_CACHE_KEY)?.data)
 
     async function fetchInitial() {
       try {
-        const res = await getNotifications({ page: 1, limit: PAGE_LIMIT })
+        const cachedPayload = await fetchWithCache(NOTIFICATIONS_CACHE_KEY, async () => {
+          const res = await getNotifications({ page: 1, limit: PAGE_LIMIT })
+          return {
+            notifications: res.data?.notifications ?? [],
+            hasMore: Boolean(res.data?.pagination?.has_more)
+          }
+        })
         if (cancelled) return
-        const incoming = res.data?.notifications ?? []
-        const more = Boolean(res.data?.pagination?.has_more)
+        const incoming = cachedPayload.notifications
+        const more = cachedPayload.hasMore
         setNotifications(incoming)
         setPage(1)
         setHasMore(more)
@@ -114,7 +125,9 @@ export default function NotificationsScreen() {
           try {
             await markAllNotificationsAsRead()
             if (!cancelled) {
-              setNotifications((prev) => prev.map((n) => ({ ...n, leida: true })))
+              const allRead = incoming.map((n) => ({ ...n, leida: true }))
+              setNotifications(allRead)
+              setCachedData(NOTIFICATIONS_CACHE_KEY, { notifications: allRead, hasMore: more })
               setUnreadCount(0)
             }
           } catch (markErr) {
@@ -128,7 +141,9 @@ export default function NotificationsScreen() {
         }
       } catch (err) {
         if (cancelled) return
-        setError(err.message || 'No se pudieron cargar las notificaciones.')
+        if (!hasCached) {
+          setError(err.message || 'No se pudieron cargar las notificaciones.')
+        }
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -218,6 +233,7 @@ export default function NotificationsScreen() {
       setError(null)
       await deleteAllNotifications()
       setNotifications([])
+      setCachedData(NOTIFICATIONS_CACHE_KEY, { notifications: [], hasMore: false })
       setPage(1)
       setHasMore(false)
       setUnreadCount(0)

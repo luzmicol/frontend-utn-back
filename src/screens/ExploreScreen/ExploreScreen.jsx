@@ -4,37 +4,55 @@ import { Search, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getUsers } from '../../services/userService'
 import { getPosts } from '../../services/postService'
+import { fetchWithCache, getCachedData } from '../../utils/memoryCache'
 import PostCard from '../../Components/Post/PostCard'
 import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import './ExploreScreen.css'
 
+const EXPLORE_USERS_KEY = 'explore:users'
+const FEED_CACHE_KEY = 'feed:posts'
+
 export default function ExploreScreen() {
   const { user: currentUser } = useAuth()
 
-  const [users, setUsers] = useState([])
-  const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const cachedUsers = getCachedData(EXPLORE_USERS_KEY)?.data
+  const cachedFeed = getCachedData(FEED_CACHE_KEY)?.data
+  const [users, setUsers] = useState(() => cachedUsers ?? [])
+  const [posts, setPosts] = useState(() => cachedFeed?.posts ?? [])
+  const [loading, setLoading] = useState(() => !(cachedUsers && cachedFeed))
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     let isMounted = true
+    const hasCached = Boolean(
+      getCachedData(EXPLORE_USERS_KEY)?.data && getCachedData(FEED_CACHE_KEY)?.data
+    )
 
     async function loadExplore() {
       try {
-        setLoading(true)
+        if (!hasCached) setLoading(true)
         setError(null)
-        const [usersRes, postsRes] = await Promise.all([
-          getUsers(),
-          getPosts()
+        const [usersList, feedData] = await Promise.all([
+          fetchWithCache(EXPLORE_USERS_KEY, async () => {
+            const res = await getUsers()
+            return res.data?.users ?? []
+          }),
+          fetchWithCache(FEED_CACHE_KEY, async () => {
+            const res = await getPosts()
+            return {
+              posts: res.data?.posts ?? [],
+              hasMore: Boolean(res.data?.pagination?.has_more)
+            }
+          })
         ])
         if (isMounted) {
-          setUsers(usersRes.data?.users ?? [])
-          setPosts(postsRes.data?.posts ?? [])
+          setUsers(usersList)
+          setPosts(feedData.posts)
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && !hasCached) {
           setError(err.message || 'No se pudo cargar la seccion Explorar.')
         }
       } finally {

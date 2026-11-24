@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plus, Search, Users } from 'lucide-react'
 import { getCommunities, getMyCommunities } from '../../services/communityService'
+import { fetchWithCache, getCachedData } from '../../utils/memoryCache'
 import CommunityCard from '../../Components/Community/CommunityCard'
 import CommunityForm from '../../Components/Community/CommunityForm'
 import Alert from '../../Components/Alert/Alert'
 import './CommunitiesScreen.css'
 
+const COMMUNITIES_ALL_KEY = 'communities:all'
+const COMMUNITIES_ME_KEY = 'communities:me'
+
 export default function CommunitiesScreen() {
-  const [allCommunities, setAllCommunities] = useState([])
-  const [myCommunities, setMyCommunities] = useState([])
-  const [loading, setLoading] = useState(true)
+  const cachedAll = getCachedData(COMMUNITIES_ALL_KEY)?.data
+  const cachedMe = getCachedData(COMMUNITIES_ME_KEY)?.data
+  const [allCommunities, setAllCommunities] = useState(() => cachedAll ?? [])
+  const [myCommunities, setMyCommunities] = useState(() => cachedMe ?? [])
+  const [loading, setLoading] = useState(() => !(cachedAll && cachedMe))
   const [error, setError] = useState(null)
 
   const [activeTab, setActiveTab] = useState('all')
@@ -18,21 +24,30 @@ export default function CommunitiesScreen() {
 
   useEffect(() => {
     let isMounted = true
+    const hasCached = Boolean(
+      getCachedData(COMMUNITIES_ALL_KEY)?.data && getCachedData(COMMUNITIES_ME_KEY)?.data
+    )
 
     async function loadData() {
       try {
-        setLoading(true)
+        if (!hasCached) setLoading(true)
         setError(null)
-        const [allRes, myRes] = await Promise.all([
-          getCommunities(),
-          getMyCommunities()
+        const [allList, myList] = await Promise.all([
+          fetchWithCache(COMMUNITIES_ALL_KEY, async () => {
+            const res = await getCommunities()
+            return res.data?.communities ?? []
+          }),
+          fetchWithCache(COMMUNITIES_ME_KEY, async () => {
+            const res = await getMyCommunities()
+            return res.data?.communities ?? []
+          })
         ])
         if (isMounted) {
-          setAllCommunities(allRes.data?.communities ?? [])
-          setMyCommunities(myRes.data?.communities ?? [])
+          setAllCommunities(allList)
+          setMyCommunities(myList)
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && !hasCached) {
           setError(err.message || 'No se pudieron cargar las comunidades.')
         }
       } finally {

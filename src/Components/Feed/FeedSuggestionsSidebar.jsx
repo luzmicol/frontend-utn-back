@@ -7,15 +7,28 @@ import {
   getMyCommunities,
   joinCommunity
 } from '../../services/communityService'
+import { fetchWithCache, getCachedData } from '../../utils/memoryCache'
 import Avatar from '../UI/Avatar'
 import './FeedSuggestionsSidebar.css'
 
 const MAX_SUGGESTIONS = 3
+const DESKTOP_MEDIA_QUERY = '(min-width: 1200px)'
+const EXPLORE_USERS_KEY = 'explore:users'
+const COMMUNITIES_ALL_KEY = 'communities:all'
+const COMMUNITIES_ME_KEY = 'communities:me'
+
+function getIsDesktopViewport() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false
+  }
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches
+}
 
 export default function FeedSuggestionsSidebar() {
   const { user: currentUser } = useAuth()
   const currentUserId = currentUser?._id || null
 
+  const [isDesktop, setIsDesktop] = useState(getIsDesktopViewport)
   const [suggestedUsers, setSuggestedUsers] = useState([])
   const [suggestedCommunities, setSuggestedCommunities] = useState([])
   const [loading, setLoading] = useState(true)
@@ -27,40 +40,87 @@ export default function FeedSuggestionsSidebar() {
   const [busyCommunityIds, setBusyCommunityIds] = useState(() => new Set())
 
   useEffect(() => {
-    if (!currentUserId) return
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    function handleChange(event) {
+      setIsDesktop(event.matches)
+    }
+
+    mediaQuery.addEventListener('change', handleChange)
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!currentUserId || !isDesktop) return
 
     let isMounted = true
+    const followingKey = `suggestions:following:${currentUserId}`
 
     async function loadSuggestions() {
       try {
-        const [usersRes, followingRes, communitiesRes, myCommunitiesRes] =
+        const cachedUsers = getCachedData(EXPLORE_USERS_KEY)
+        const cachedFollowing = getCachedData(followingKey)
+        const cachedComms = getCachedData(COMMUNITIES_ALL_KEY)
+        const cachedMyComms = getCachedData(COMMUNITIES_ME_KEY)
+
+        const allFresh = Boolean(
+          cachedUsers?.isFresh &&
+          cachedFollowing?.isFresh &&
+          cachedComms?.isFresh &&
+          cachedMyComms?.isFresh
+        )
+
+        const applyData = (allUsers, followingList, allCommunities, myCommunities) => {
+          const followingSet = new Set(followingList.map((u) => u._id))
+          const filteredUsers = allUsers
+            .filter((u) => u._id !== currentUserId && !followingSet.has(u._id))
+            .slice(0, MAX_SUGGESTIONS)
+
+          const myCommunitySet = new Set(myCommunities.map((c) => c._id))
+          const filteredCommunities = allCommunities
+            .filter((c) => !myCommunitySet.has(c._id))
+            .slice(0, MAX_SUGGESTIONS)
+
+          setSuggestedUsers(filteredUsers)
+          setSuggestedCommunities(filteredCommunities)
+          setLoading(false)
+        }
+
+        if (cachedUsers && cachedFollowing && cachedComms && cachedMyComms) {
+          applyData(
+            cachedUsers.data,
+            cachedFollowing.data,
+            cachedComms.data,
+            cachedMyComms.data
+          )
+          if (allFresh) return
+        }
+
+        const [allUsers, followingList, allCommunities, myCommunities] =
           await Promise.all([
-            getUsers(),
-            getFollowing(currentUserId),
-            getCommunities(),
-            getMyCommunities()
+            fetchWithCache(EXPLORE_USERS_KEY, async () => {
+              const res = await getUsers()
+              return res.data?.users ?? []
+            }),
+            fetchWithCache(followingKey, async () => {
+              const res = await getFollowing(currentUserId)
+              return res.data?.following ?? []
+            }),
+            fetchWithCache(COMMUNITIES_ALL_KEY, async () => {
+              const res = await getCommunities()
+              return res.data?.communities ?? []
+            }),
+            fetchWithCache(COMMUNITIES_ME_KEY, async () => {
+              const res = await getMyCommunities()
+              return res.data?.communities ?? []
+            })
           ])
 
         if (!isMounted) return
-
-        const allUsers = usersRes.data?.users ?? []
-        const followingList = followingRes.data?.following ?? []
-        const followingSet = new Set(followingList.map((u) => u._id))
-
-        const filteredUsers = allUsers
-          .filter((u) => u._id !== currentUserId && !followingSet.has(u._id))
-          .slice(0, MAX_SUGGESTIONS)
-
-        const allCommunities = communitiesRes.data?.communities ?? []
-        const myCommunities = myCommunitiesRes.data?.communities ?? []
-        const myCommunitySet = new Set(myCommunities.map((c) => c._id))
-
-        const filteredCommunities = allCommunities
-          .filter((c) => !myCommunitySet.has(c._id))
-          .slice(0, MAX_SUGGESTIONS)
-
-        setSuggestedUsers(filteredUsers)
-        setSuggestedCommunities(filteredCommunities)
+        applyData(allUsers, followingList, allCommunities, myCommunities)
       } catch {
         // Silencioso para no interferir con el Feed principal
       } finally {
@@ -73,7 +133,7 @@ export default function FeedSuggestionsSidebar() {
     return () => {
       isMounted = false
     }
-  }, [currentUserId])
+  }, [currentUserId, isDesktop])
 
   async function handleFollow(userId) {
     if (busyUserIds.has(userId) || followedIds.has(userId)) return

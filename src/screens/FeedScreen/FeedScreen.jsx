@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import { getPosts } from '../../services/postService'
+import { fetchWithCache, getCachedData, setCachedData } from '../../utils/memoryCache'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
 import FeedSuggestionsSidebar from '../../Components/Feed/FeedSuggestionsSidebar'
@@ -22,32 +23,44 @@ function mergePostsUnique(existing, incoming) {
   return merged
 }
 
+const FEED_CACHE_KEY = 'feed:posts'
+
 export default function FeedScreen() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [posts, setPosts] = useState([])
+  const initialCache = getCachedData(FEED_CACHE_KEY)?.data
+  const [posts, setPosts] = useState(() => initialCache?.posts ?? [])
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(() => Boolean(initialCache?.hasMore))
+  const [loading, setLoading] = useState(() => !initialCache)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const [highlightedPostId, setHighlightedPostId] = useState(null)
 
   useEffect(() => {
     let isMounted = true
+    const hasCached = Boolean(getCachedData(FEED_CACHE_KEY)?.data)
 
     async function loadFeed() {
       try {
-        setLoading(true)
+        if (!hasCached) {
+          setLoading(true)
+        }
         setError(null)
-        const response = await getPosts({ page: 1, limit: PAGE_LIMIT })
+        const response = await fetchWithCache(FEED_CACHE_KEY, async () => {
+          const res = await getPosts({ page: 1, limit: PAGE_LIMIT })
+          return {
+            posts: res.data?.posts ?? [],
+            hasMore: Boolean(res.data?.pagination?.has_more)
+          }
+        })
         if (isMounted) {
-          setPosts(response.data?.posts ?? [])
+          setPosts(response.posts)
           setPage(1)
-          setHasMore(Boolean(response.data?.pagination?.has_more))
+          setHasMore(response.hasMore)
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && !hasCached) {
           setError(err.message || 'No se pudieron cargar las publicaciones.')
         }
       } finally {
@@ -111,17 +124,27 @@ export default function FeedScreen() {
   }, [loading, location.pathname, location.state, navigate, posts.length])
 
   function handlePostCreated(newPost) {
-    setPosts((prev) => [newPost, ...prev])
+    setPosts((prev) => {
+      const next = [newPost, ...prev]
+      setCachedData(FEED_CACHE_KEY, { posts: next, hasMore })
+      return next
+    })
   }
 
   function handlePostUpdated(updatedPost) {
-    setPosts((prev) =>
-      prev.map((item) => (item._id === updatedPost._id ? updatedPost : item))
-    )
+    setPosts((prev) => {
+      const next = prev.map((item) => (item._id === updatedPost._id ? updatedPost : item))
+      setCachedData(FEED_CACHE_KEY, { posts: next, hasMore })
+      return next
+    })
   }
 
   function handlePostDeleted(deletedPostId) {
-    setPosts((prev) => prev.filter((item) => item._id !== deletedPostId))
+    setPosts((prev) => {
+      const next = prev.filter((item) => item._id !== deletedPostId)
+      setCachedData(FEED_CACHE_KEY, { posts: next, hasMore })
+      return next
+    })
   }
 
   return (

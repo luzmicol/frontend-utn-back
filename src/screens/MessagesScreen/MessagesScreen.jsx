@@ -7,6 +7,7 @@ import {
   getConversations
 } from '../../services/conversationService'
 import { searchUsers } from '../../services/userService'
+import { fetchWithCache, getCachedData, setCachedData } from '../../utils/memoryCache'
 import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import ConversationView from '../../Components/Messages/ConversationView'
@@ -22,12 +23,15 @@ function formatShortDate(dateString) {
   })
 }
 
+const CONVERSATIONS_CACHE_KEY = 'messages:conversations'
+
 export default function MessagesScreen() {
   const { user: currentUser } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [conversations, setConversations] = useState([])
+  const cachedConversations = getCachedData(CONVERSATIONS_CACHE_KEY)?.data
+  const [conversations, setConversations] = useState(() => cachedConversations ?? [])
   const [selectedId, setSelectedId] = useState(() => location.state?.conversationId || null)
 
   // Detecta cambios posteriores en location.state.conversationId y limpia el estado de navegacion
@@ -42,7 +46,7 @@ export default function MessagesScreen() {
 
     return () => cancelAnimationFrame(frame)
   }, [location.state?.conversationId, navigate])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !cachedConversations)
   const [error, setError] = useState(null)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -57,14 +61,18 @@ export default function MessagesScreen() {
     async function fetchInbox(silent) {
       if (inboxInFlightRef.current) return
       inboxInFlightRef.current = true
+      const hasCached = Boolean(getCachedData(CONVERSATIONS_CACHE_KEY)?.data)
       try {
-        const res = await getConversations()
+        const list = await fetchWithCache(CONVERSATIONS_CACHE_KEY, async () => {
+          const res = await getConversations()
+          return res.data?.conversations ?? []
+        })
         if (isMounted) {
-          setConversations(res.data?.conversations ?? [])
+          setConversations(list)
           if (!silent) setError(null)
         }
       } catch (err) {
-        if (isMounted && !silent) {
+        if (isMounted && !silent && !hasCached) {
           setError(err.message || 'No se pudieron cargar las conversaciones.')
         }
       } finally {
@@ -162,9 +170,11 @@ export default function MessagesScreen() {
   }, [])
 
   const handleConversationRead = useCallback((conversationId) => {
-    setConversations((prev) =>
-      prev.map((c) => (c._id === conversationId ? { ...c, unread_count: 0 } : c))
-    )
+    setConversations((prev) => {
+      const next = prev.map((c) => (c._id === conversationId ? { ...c, unread_count: 0 } : c))
+      setCachedData(CONVERSATIONS_CACHE_KEY, next)
+      return next
+    })
   }, [])
 
   const selectedConversation =
