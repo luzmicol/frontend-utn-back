@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -6,6 +6,8 @@ import { getPostComments, createComment, deleteComment } from '../../services/po
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
 import MentionTextarea from '../UI/MentionTextarea'
+import EmojiPicker from '../UI/EmojiPicker'
+import { insertEmojiAtCursor } from '../../utils/emojiUtils'
 import RichTextWithMentions from '../UI/RichTextWithMentions'
 import './CommentSection.css'
 
@@ -28,6 +30,7 @@ export default function CommentSection({ postId, onCountChange }) {
   const [error, setError] = useState(null)
 
   const [contenido, setContenido] = useState('')
+  const commentTextareaRef = useRef(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -175,6 +178,7 @@ export default function CommentSection({ postId, onCountChange }) {
 
       <form className='comment-form' onSubmit={handleSubmit}>
         <MentionTextarea
+          textareaRef={commentTextareaRef}
           className='comment-form__input'
           placeholder='Escribi un comentario...'
           value={contenido}
@@ -190,9 +194,22 @@ export default function CommentSection({ postId, onCountChange }) {
         {submitError && <Alert variant='error'>{submitError}</Alert>}
 
         <div className='comment-form__footer'>
-          <span className='comment-form__counter'>
-            {contenido.length} / {MAX_COMMENT_LENGTH}
-          </span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <EmojiPicker
+              placement='top'
+              align='left'
+              disabled={submitting}
+              onSelect={(emoji) => {
+                insertEmojiAtCursor(commentTextareaRef, contenido, emoji, MAX_COMMENT_LENGTH, (nextVal) => {
+                  setContenido(nextVal)
+                  if (submitError) setSubmitError(null)
+                })
+              }}
+            />
+            <span className='comment-form__counter'>
+              {contenido.length} / {MAX_COMMENT_LENGTH}
+            </span>
+          </div>
           <button
             type='submit'
             className='comment-form__submit'

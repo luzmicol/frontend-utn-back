@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -7,6 +7,8 @@ import { preparePostImageFile } from '../../utils/imageOptimizer'
 import Alert from '../Alert/Alert'
 import Avatar from '../UI/Avatar'
 import MentionTextarea from '../UI/MentionTextarea'
+import EmojiPicker from '../UI/EmojiPicker'
+import { insertEmojiAtCursor } from '../../utils/emojiUtils'
 import RichTextWithMentions from '../UI/RichTextWithMentions'
 import LikeButton from './LikeButton'
 import RepostButton from './RepostButton'
@@ -42,6 +44,7 @@ export default function PostCard({
 
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.contenido || '')
+  const editTextareaRef = useRef(null)
   const [editImageFile, setEditImageFile] = useState(null)
   const [editPreviewUrl, setEditPreviewUrl] = useState('')
   const [removeImagePending, setRemoveImagePending] = useState(false)
@@ -245,6 +248,7 @@ export default function PostCard({
       {isEditing ? (
         <form className='post-card__edit-form' onSubmit={handleSaveEdit}>
           <MentionTextarea
+            textareaRef={editTextareaRef}
             className='post-card__edit-textarea'
             value={editContent}
             onChange={(nextVal) => setEditContent(nextVal)}
@@ -264,6 +268,15 @@ export default function PostCard({
           )}
 
           <div className='post-card__edit-image-tools'>
+            <EmojiPicker
+              placement='top'
+              align='left'
+              disabled={actionLoading}
+              onSelect={(emoji) => {
+                insertEmojiAtCursor(editTextareaRef, editContent, emoji, MAX_LENGTH, setEditContent)
+              }}
+            />
+
             <label className='post-card__btn post-card__btn--ghost'>
               <ImagePlus size={14} />
               <span>{editPreviewUrl || (!removeImagePending && post.imagen_url) ? 'Cambiar imagen' : 'Agregar imagen'}</span>

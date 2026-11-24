@@ -10,6 +10,8 @@ import {
   sendMessage
 } from '../../services/conversationService'
 import Avatar from '../UI/Avatar'
+import EmojiPicker from '../UI/EmojiPicker'
+import { insertEmojiAtCursor } from '../../utils/emojiUtils'
 import Alert from '../Alert/Alert'
 import './ConversationView.css'
 
@@ -532,6 +534,14 @@ export default function ConversationView({
           submitMessage()
         }}
       >
+        <EmojiPicker
+          placement='top'
+          align='left'
+          disabled={sending}
+          onSelect={(emoji) => {
+            insertEmojiAtCursor(inputRef, text, emoji, MAX_MESSAGE_LENGTH, setText)
+          }}
+        />
         <textarea
           ref={inputRef}
           className='chat-view__input'

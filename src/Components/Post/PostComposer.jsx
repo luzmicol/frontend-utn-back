@@ -4,6 +4,8 @@ import { createPost } from '../../services/postService'
 import { preparePostImageFile } from '../../utils/imageOptimizer'
 import Alert from '../Alert/Alert'
 import MentionTextarea from '../UI/MentionTextarea'
+import EmojiPicker from '../UI/EmojiPicker'
+import { insertEmojiAtCursor } from '../../utils/emojiUtils'
 import './PostComposer.css'
 
 const MAX_LENGTH = 2000
@@ -145,6 +147,18 @@ export default function PostComposer({
               hidden
             />
           </label>
+
+          <EmojiPicker
+            placement='bottom'
+            align='left'
+            disabled={loading}
+            onSelect={(emoji) => {
+              insertEmojiAtCursor(textareaRef, contenido, emoji, MAX_LENGTH, (nextVal) => {
+                setContenido(nextVal)
+                if (error) setError(null)
+              })
+            }}
+          />
 
           <span className={`post-composer__counter${remaining < 100 ? ' post-composer__counter--warn' : ''}`}>
             {contenido.length} / {MAX_LENGTH}
