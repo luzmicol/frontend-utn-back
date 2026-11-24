@@ -12,6 +12,21 @@
       rel="stylesheet"
     />
     <title>LOOP</title>
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('loop_theme_preference');
+          var theme =
+            pref === 'light' || pref === 'dark'
+              ? pref
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -16,6 +16,7 @@ const CommunityDetailScreen = lazy(() => import('./screens/CommunityDetailScreen
 const MessagesScreen = lazy(() => import('./screens/MessagesScreen/MessagesScreen'))
 const NotificationsScreen = lazy(() => import('./screens/NotificationsScreen/NotificationsScreen'))
 const ProfileScreen = lazy(() => import('./screens/ProfileScreen/ProfileScreen'))
+const SettingsScreen = lazy(() => import('./screens/SettingsScreen/SettingsScreen'))
 const PostDetailScreen = lazy(() => import('./screens/PostDetailScreen/PostDetailScreen'))
 const NotFoundScreen = lazy(() => import('./screens/NotFoundScreen/NotFoundScreen'))
 
@@ -42,6 +43,7 @@ const App = () => {
             <Route path='/notifications' element={<NotificationsScreen />} />
             <Route path='/profile' element={<ProfileScreen />} />
             <Route path='/users/:user_id' element={<ProfileScreen />} />
+            <Route path='/settings' element={<SettingsScreen />} />
           </Route>
         </Route>
 

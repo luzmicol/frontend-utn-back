@@ -258,7 +258,7 @@
   padding: 10px;
   margin-bottom: 4px;
   border-radius: 12px;
-  background-color: rgba(15, 13, 24, 0.55);
+  background-color: var(--surface);
   border: 1px solid var(--border);
   text-decoration: none;
   color: var(--text);
@@ -267,7 +267,7 @@
 
 .chat-shared-post:hover {
   border-color: var(--primary);
-  background-color: rgba(15, 13, 24, 0.78);
+  background-color: var(--surface-elevated);
 }
 
 .chat-shared-post--unavailable {
@@ -277,7 +277,7 @@
 
 .chat-shared-post--unavailable:hover {
   border-color: var(--border);
-  background-color: rgba(15, 13, 24, 0.55);
+  background-color: var(--surface);
 }
 
 .chat-shared-post__badge {

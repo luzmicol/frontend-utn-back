@@ -1,15 +1,18 @@
 /* Paleta global de LOOP - estetica oscura, moderna y minimalista */
 :root {
-  /* Superficies */
+  /* Superficies (modo oscuro por defecto) */
   --bg: #0b0b10;
+  --sidebar-bg: #14141c;
   --surface: #14141c;
   --surface-elevated: #1c1b27;
+  --card-shadow: none;
 
   /* Acentos violeta y lavanda */
   --primary: #8b5cf6;
   --primary-dark: #7c3aed;
   --primary-soft: #b9a3ff;
   --primary-halo: rgba(139, 92, 246, 0.22);
+  --on-primary: #ffffff;
 
   /* Texto y bordes */
   --text: #f5f3ff;
@@ -40,6 +43,67 @@
   /* Tipografia */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Paleta de modo claro - limpia, luminosa y minimalista */
+:root[data-theme='light'] {
+  --bg: #F1F4F9;
+  --sidebar-bg: #F7F8FC;
+  --surface: #FFFFFF;
+  --surface-elevated: #F4F6FB;
+  --card-shadow: 0 1px 3px rgba(32, 32, 42, 0.06), 0 1px 2px rgba(32, 32, 42, 0.04);
+
+  --primary: #7546E8;
+  --primary-dark: #6234D6;
+  --primary-soft: #6234D6;
+  --primary-halo: rgba(117, 70, 232, 0.12);
+  --on-primary: #FFFFFF;
+
+  --text: #20202A;
+  --text-muted: #737585;
+  --border: #E5E7EF;
+
+  --error: #dc2626;
+  --error-bg: rgba(220, 38, 38, 0.08);
+  --error-border: rgba(220, 38, 38, 0.28);
+
+  --success: #059669;
+  --success-bg: rgba(5, 150, 105, 0.08);
+  --success-border: rgba(5, 150, 105, 0.28);
+}
+
+/* Asegura texto blanco sobre botones primarios violeta en ambos temas */
+:root[data-theme='light'] .post-composer__submit,
+:root[data-theme='light'] .post-card__btn--primary,
+:root[data-theme='light'] .comment-form__submit,
+:root[data-theme='light'] .profile-edit-form__btn--primary,
+:root[data-theme='light'] .profile-follow-btn:not(.profile-follow-btn--following),
+:root[data-theme='light'] .share-modal__btn--primary,
+:root[data-theme='light'] .chat-view__send,
+:root[data-theme='light'] .chat-bubble--mine,
+:root[data-theme='light'] .form-button {
+  color: var(--on-primary);
+}
+
+:root[data-theme='light'] .sidebar {
+  background-color: var(--sidebar-bg);
+}
+
+:root[data-theme='light'] .post-card,
+:root[data-theme='light'] .post-composer,
+:root[data-theme='light'] .profile-header,
+:root[data-theme='light'] .community-card,
+:root[data-theme='light'] .settings-card {
+  box-shadow: var(--card-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 *,
