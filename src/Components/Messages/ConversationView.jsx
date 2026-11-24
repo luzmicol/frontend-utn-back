@@ -4,6 +4,8 @@ import { ArrowLeft, Check, CheckCheck, Send, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
+  acceptConversationRequest,
+  deleteConversationRequest,
   deleteMessage,
   getConversationMessages,
   markConversationAsRead,
@@ -67,7 +69,9 @@ export default function ConversationView({
   conversation,
   onBack,
   onConversationActivity,
-  onConversationRead
+  onConversationRead,
+  onRequestAccepted,
+  onRequestDeleted
 }) {
   const { user: currentUser } = useAuth()
   const { setUnreadMessagesCount } = useUnreadMessages()
@@ -577,6 +581,12 @@ export default function ConversationView({
 
       <form
         className='chat-view__composer'
+        style={
+          conversation?.estado === 'pending' &&
+          (String(conversation?.solicitada_por) !== String(currentUser?._id) || messages.length >= 1)
+            ? { display: 'none' }
+            : undefined
+        }
         onSubmit={(e) => {
           e.preventDefault()
           submitMessage()
@@ -610,6 +620,67 @@ export default function ConversationView({
           <Send size={16} />
         </button>
       </form>
+
+      {conversation?.estado === 'pending' &&
+        String(conversation?.solicitada_por) !== String(currentUser?._id) && (
+          <div className='chat-request-bar'>
+            <p className='chat-request-bar__text'>
+              Solicitud de mensaje. Acepta para responder o eliminala sin notificar al remitente.
+            </p>
+            <div className='chat-request-bar__actions'>
+              <button
+                type='button'
+                className='chat-request-bar__btn chat-request-bar__btn--danger'
+                disabled={sending}
+                onClick={async () => {
+                  try {
+                    setSending(true)
+                    setError(null)
+                    await deleteConversationRequest(conversation._id)
+                    if (onRequestDeleted) onRequestDeleted(conversation._id)
+                  } catch (err) {
+                    setError(err.message || 'No se pudo eliminar la solicitud.')
+                  } finally {
+                    setSending(false)
+                  }
+                }}
+              >
+                Eliminar
+              </button>
+              <button
+                type='button'
+                className='chat-request-bar__btn chat-request-bar__btn--primary'
+                disabled={sending}
+                onClick={async () => {
+                  try {
+                    setSending(true)
+                    setError(null)
+                    const res = await acceptConversationRequest(conversation._id)
+                    if (onRequestAccepted && res.data?.conversation) {
+                      onRequestAccepted(res.data.conversation)
+                    }
+                  } catch (err) {
+                    setError(err.message || 'No se pudo aceptar la solicitud.')
+                  } finally {
+                    setSending(false)
+                  }
+                }}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        )}
+
+      {conversation?.estado === 'pending' &&
+        String(conversation?.solicitada_por) === String(currentUser?._id) &&
+        messages.length >= 1 && (
+          <div className='chat-request-bar'>
+            <p className='chat-request-bar__text'>
+              Solicitud enviada. Podras enviar mas mensajes cuando la acepten.
+            </p>
+          </div>
+        )}
     </div>
   )
 }

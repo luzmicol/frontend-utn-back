@@ -282,3 +282,51 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+.messages-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.messages-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background-color: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.messages-tab:hover {
+  background-color: var(--surface-elevated);
+  color: var(--text);
+}
+
+.messages-tab--active {
+  background-color: var(--primary-halo);
+  border-color: var(--primary);
+  color: var(--primary-soft);
+}
+
+.messages-tab__badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background-color: var(--primary);
+  color: var(--on-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

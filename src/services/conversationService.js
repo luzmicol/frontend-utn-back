@@ -59,3 +59,19 @@ export async function markConversationAsRead(conversation_id) {
     method: 'PATCH'
   })
 }
+
+export async function acceptConversationRequest(conversation_id) {
+  const response = await apiRequest(`/api/conversations/${conversation_id}/accept`, {
+    method: 'PATCH'
+  })
+  invalidateCache('messages:')
+  return response
+}
+
+export async function deleteConversationRequest(conversation_id) {
+  const response = await apiRequest(`/api/conversations/${conversation_id}/request`, {
+    method: 'DELETE'
+  })
+  invalidateCache('messages:')
+  return response
+}

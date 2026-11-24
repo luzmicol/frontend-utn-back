@@ -52,6 +52,7 @@ export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [startingChat, setStartingChat] = useState(false)
+  const [inboxTab, setInboxTab] = useState('primary')
 
   const inboxInFlightRef = useRef(false)
 
@@ -177,6 +178,19 @@ export default function MessagesScreen() {
     })
   }, [])
 
+  const receivedRequests = conversations.filter(
+    (c) =>
+      c.estado === 'pending' &&
+      String(c.solicitada_por) !== String(currentUser?._id)
+  )
+  const primaryConversations = conversations.filter(
+    (c) =>
+      c.estado !== 'pending' ||
+      String(c.solicitada_por) === String(currentUser?._id)
+  )
+  const displayedConversations =
+    inboxTab === 'requests' ? receivedRequests : primaryConversations
+
   const selectedConversation =
     conversations.find((c) => c._id === selectedId) || null
 
@@ -234,6 +248,29 @@ export default function MessagesScreen() {
                 )}
               </div>
             )}
+            <div className='messages-tabs' role='tablist' aria-label='Bandejas de mensajes'>
+              <button
+                type='button'
+                role='tab'
+                aria-selected={inboxTab === 'primary'}
+                className={`messages-tab${inboxTab === 'primary' ? ' messages-tab--active' : ''}`}
+                onClick={() => setInboxTab('primary')}
+              >
+                <span>Principal</span>
+              </button>
+              <button
+                type='button'
+                role='tab'
+                aria-selected={inboxTab === 'requests'}
+                className={`messages-tab${inboxTab === 'requests' ? ' messages-tab--active' : ''}`}
+                onClick={() => setInboxTab('requests')}
+              >
+                <span>Solicitudes</span>
+                {receivedRequests.length > 0 && (
+                  <span className='messages-tab__badge'>{receivedRequests.length}</span>
+                )}
+              </button>
+            </div>
           </header>
 
           {error && (
@@ -244,14 +281,18 @@ export default function MessagesScreen() {
 
           {loading ? (
             <p className='messages-inbox__empty'>Cargando conversaciones...</p>
-          ) : conversations.length === 0 ? (
+          ) : displayedConversations.length === 0 ? (
             <div className='messages-inbox__empty'>
               <MessageSquare size={22} />
-              <p>Todavia no tenes conversaciones. Busca un usuario arriba para empezar.</p>
+              <p>
+                {inboxTab === 'requests'
+                  ? 'No tenes solicitudes de mensajes pendientes.'
+                  : 'Todavia no tenes conversaciones. Busca un usuario arriba para empezar.'}
+              </p>
             </div>
           ) : (
             <ul className='messages-list'>
-              {conversations.map((conv) => {
+              {displayedConversations.map((conv) => {
                 const other = conv.participantes?.find(
                   (p) => p._id !== currentUser?._id
                 )
@@ -306,6 +347,24 @@ export default function MessagesScreen() {
               onBack={() => setSelectedId(null)}
               onConversationActivity={handleConversationActivity}
               onConversationRead={handleConversationRead}
+              onRequestAccepted={(acceptedConv) => {
+                setConversations((prev) => {
+                  const next = prev.map((c) =>
+                    c._id === acceptedConv._id ? { ...c, ...acceptedConv, estado: 'accepted', solicitada_por: null } : c
+                  )
+                  setCachedData(CONVERSATIONS_CACHE_KEY, next)
+                  return next
+                })
+                setInboxTab('primary')
+              }}
+              onRequestDeleted={(deletedId) => {
+                setConversations((prev) => {
+                  const next = prev.filter((c) => c._id !== deletedId)
+                  setCachedData(CONVERSATIONS_CACHE_KEY, next)
+                  return next
+                })
+                setSelectedId(null)
+              }}
             />
           ) : (
             <div className='messages-placeholder'>
