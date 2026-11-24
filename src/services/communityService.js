@@ -71,3 +71,15 @@ export async function deleteCommunity(community_id) {
     method: 'DELETE'
   })
 }
+
+export async function pinCommunityPost(community_id, post_id) {
+  return await apiRequest(`/api/communities/${community_id}/pin/${post_id}`, {
+    method: 'PUT'
+  })
+}
+
+export async function unpinCommunityPost(community_id) {
+  return await apiRequest(`/api/communities/${community_id}/pin`, {
+    method: 'DELETE'
+  })
+}

@@ -253,3 +253,56 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+.community-post-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.community-post-item--pinned .post-card {
+  border-color: var(--primary);
+}
+
+.community-post-pin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.community-post-pin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary-soft);
+}
+
+.community-post-pin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.community-post-pin-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary-soft);
+  background-color: var(--primary-halo);
+}
+
+.community-post-pin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

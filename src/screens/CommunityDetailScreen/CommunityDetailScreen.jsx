@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Pencil, Trash2, UserPlus, X } from 'lucide-react'
+import { ArrowLeft, Calendar, Camera, Check, Lock, LogOut, Pencil, Pin, PinOff, Trash2, UserPlus, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
   deleteCommunity,
@@ -10,6 +10,8 @@ import {
   getMyCommunities,
   joinCommunity,
   leaveCommunity,
+  pinCommunityPost,
+  unpinCommunityPost,
   updateCommunity,
   updateCommunityImage
 } from '../../services/communityService'
@@ -67,6 +69,8 @@ export default function CommunityDetailScreen() {
   const [editDescription, setEditDescription] = useState('')
   const [savingDetails, setSavingDetails] = useState(false)
   const [editDetailsError, setEditDetailsError] = useState(null)
+  const [pinBusyId, setPinBusyId] = useState(null)
+  const [pinError, setPinError] = useState(null)
 
   useEffect(() => {
     return () => {
@@ -597,14 +601,88 @@ export default function CommunityDetailScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {posts.map((post) => (
-                  <PostCard
-                    key={post._id}
-                    post={post}
-                    onPostUpdated={handlePostUpdated}
-                    onPostDeleted={handlePostDeleted}
-                  />
-                ))}
+                {pinError && <Alert variant='error'>{pinError}</Alert>}
+
+                {(() => {
+                  const pinnedId = community?.fk_id_publicacion_fijada
+                    ? String(community.fk_id_publicacion_fijada._id || community.fk_id_publicacion_fijada)
+                    : null
+                  const pinnedPost = pinnedId ? posts.find((p) => String(p._id) === pinnedId) : null
+                  const regularPosts = pinnedPost
+                    ? posts.filter((p) => String(p._id) !== pinnedId)
+                    : posts
+                  const orderedPosts = pinnedPost ? [pinnedPost, ...regularPosts] : regularPosts
+
+                  return orderedPosts.map((post) => {
+                    const isPinned = Boolean(pinnedId && String(post._id) === pinnedId)
+                    const isBusy = pinBusyId === post._id
+                    return (
+                      <div
+                        key={post._id}
+                        className={`community-post-item${isPinned ? ' community-post-item--pinned' : ''}`}
+                      >
+                        {(isPinned || isOwner) && (
+                          <div className='community-post-pin-bar'>
+                            {isPinned ? (
+                              <span className='community-post-pin-badge'>
+                                <Pin size={13} strokeWidth={2.2} />
+                                <span>Publicacion fijada</span>
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+
+                            {isOwner && (
+                              <button
+                                type='button'
+                                className='community-post-pin-btn'
+                                disabled={Boolean(pinBusyId)}
+                                onClick={async () => {
+                                  try {
+                                    setPinBusyId(post._id)
+                                    setPinError(null)
+                                    const res = isPinned
+                                      ? await unpinCommunityPost(community_id)
+                                      : await pinCommunityPost(community_id, post._id)
+                                    if (res.data?.community) {
+                                      setCommunity(res.data.community)
+                                    }
+                                  } catch (err) {
+                                    setPinError(err.message || 'No se pudo actualizar la publicacion fijada.')
+                                  } finally {
+                                    setPinBusyId(null)
+                                  }
+                                }}
+                              >
+                                {isPinned ? <PinOff size={13} /> : <Pin size={13} />}
+                                <span>
+                                  {isBusy
+                                    ? 'Actualizando...'
+                                    : isPinned
+                                      ? 'Desfijar'
+                                      : 'Fijar'}
+                                </span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        <PostCard
+                          post={post}
+                          onPostUpdated={handlePostUpdated}
+                          onPostDeleted={(deletedId) => {
+                            handlePostDeleted(deletedId)
+                            if (pinnedId && String(deletedId) === pinnedId) {
+                              setCommunity((prev) =>
+                                prev ? { ...prev, fk_id_publicacion_fijada: null } : prev
+                              )
+                            }
+                          }}
+                        />
+                      </div>
+                    )
+                  })
+                })()}
 
                 {hasMorePosts && (
                   <div className='loop-empty'>
