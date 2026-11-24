@@ -1,4 +1,5 @@
 import { apiRequest } from './apiClient'
+import { invalidateCache } from '../utils/memoryCache'
 
 export async function getConversations() {
   return await apiRequest('/api/conversations', {
@@ -24,11 +25,21 @@ export async function getConversationMessages(conversation_id, { page = 1, limit
   )
 }
 
-export async function sendMessage(conversation_id, contenido) {
-  return await apiRequest(`/api/conversations/${conversation_id}/messages`, {
+export async function sendMessage(conversation_id, contenido = '', { shared_post_id = null } = {}) {
+  const body = {}
+  if (contenido !== undefined && contenido !== null) {
+    body.contenido = contenido
+  }
+  if (shared_post_id) {
+    body.shared_post_id = shared_post_id
+  }
+
+  const response = await apiRequest(`/api/conversations/${conversation_id}/messages`, {
     method: 'POST',
-    body: { contenido }
+    body
   })
+  invalidateCache('messages:')
+  return response
 }
 
 export async function deleteMessage(message_id) {

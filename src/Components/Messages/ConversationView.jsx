@@ -454,7 +454,55 @@ export default function ConversationView({
                 className={`chat-bubble-row${isMine ? ' chat-bubble-row--mine' : ''}`}
               >
                 <div className={`chat-bubble${isMine ? ' chat-bubble--mine' : ''}`}>
-                  <p className='chat-bubble__text'>{msg.contenido}</p>
+                  {msg.tipo === 'shared_post' && (
+                    msg.fk_id_publicacion_compartida ? (
+                      <Link
+                        to={`/posts/${msg.fk_id_publicacion_compartida._id}`}
+                        className='chat-shared-post'
+                      >
+                        <span className='chat-shared-post__badge'>Publicacion compartida</span>
+                        <div className='chat-shared-post__author'>
+                          <Avatar
+                            name={msg.fk_id_publicacion_compartida.fk_id_usuario?.nombre || 'Usuario'}
+                            avatarUrl={msg.fk_id_publicacion_compartida.fk_id_usuario?.avatar_url}
+                            size='xs'
+                          />
+                          <div className='chat-shared-post__author-meta'>
+                            <span className='chat-shared-post__author-name'>
+                              {msg.fk_id_publicacion_compartida.fk_id_usuario?.nombre || 'Usuario'}
+                            </span>
+                            {msg.fk_id_publicacion_compartida.fk_id_usuario?.username && (
+                              <span className='chat-shared-post__author-handle'>
+                                @{msg.fk_id_publicacion_compartida.fk_id_usuario.username}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {msg.fk_id_publicacion_compartida.contenido && (
+                          <p className='chat-shared-post__text'>
+                            {msg.fk_id_publicacion_compartida.contenido}
+                          </p>
+                        )}
+                        {msg.fk_id_publicacion_compartida.imagen_url && (
+                          <img
+                            src={msg.fk_id_publicacion_compartida.imagen_url}
+                            alt='Publicacion compartida'
+                            className='chat-shared-post__image'
+                          />
+                        )}
+                      </Link>
+                    ) : (
+                      <div className='chat-shared-post chat-shared-post--unavailable'>
+                        <span className='chat-shared-post__badge'>Publicacion compartida</span>
+                        <p className='chat-shared-post__unavailable-text'>
+                          Esta publicacion ya no esta disponible.
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {msg.contenido && (
+                    <p className='chat-bubble__text'>{msg.contenido}</p>
+                  )}
                   <div className='chat-bubble__meta'>
                     <time className='chat-bubble__time'>{formatTime(msg.fecha_creacion)}</time>
                     {isMine && (

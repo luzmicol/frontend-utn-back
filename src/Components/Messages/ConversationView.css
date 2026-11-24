@@ -250,3 +250,99 @@
 .chat-bubble__status--read {
   color: #53c7f7;
 }
+
+.chat-shared-post {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background-color: rgba(15, 13, 24, 0.55);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chat-shared-post:hover {
+  border-color: var(--primary);
+  background-color: rgba(15, 13, 24, 0.78);
+}
+
+.chat-shared-post--unavailable {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.chat-shared-post--unavailable:hover {
+  border-color: var(--border);
+  background-color: rgba(15, 13, 24, 0.55);
+}
+
+.chat-shared-post__badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-soft);
+}
+
+.chat-shared-post__author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chat-shared-post__author-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chat-shared-post__author-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-shared-post__author-handle {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-shared-post__text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-shared-post__image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: block;
+}
+
+.chat-shared-post__unavailable-text {
+  margin: 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--text-muted);
+}

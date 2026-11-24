@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff } from 'lucide-react'
+import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff, Send } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { updatePost, deletePost } from '../../services/postService'
 import { preparePostImageFile } from '../../utils/imageOptimizer'
@@ -13,6 +13,7 @@ import RichTextWithMentions from '../UI/RichTextWithMentions'
 import LikeButton from './LikeButton'
 import RepostButton from './RepostButton'
 import BookmarkButton from './BookmarkButton'
+import SharePostModal from './SharePostModal'
 import CommentSection from './CommentSection'
 import './PostCard.css'
 
@@ -56,6 +57,7 @@ export default function PostCard({
     }
   }, [editPreviewUrl])
   const [showComments, setShowComments] = useState(defaultShowComments)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [commentsCount, setCommentsCount] = useState(null)
   const [repostInfo, setRepostInfo] = useState({
     reposts_count: post.reposts_count ?? 0,
@@ -415,6 +417,17 @@ export default function PostCard({
           <span>{commentsCount !== null ? `Comentarios (${commentsCount})` : 'Comentarios'}</span>
         </button>
 
+        <button
+          type='button'
+          className='post-card__action-pill'
+          onClick={() => setShowShareModal(true)}
+          aria-label='Compartir publicacion'
+          title='Compartir por mensaje'
+        >
+          <Send size={15} strokeWidth={2} />
+          <span>Compartir</span>
+        </button>
+
         <BookmarkButton
           postId={post._id}
           initialBookmarked={post.is_bookmarked}
@@ -425,6 +438,10 @@ export default function PostCard({
 
       {showComments && (
         <CommentSection postId={post._id} onCountChange={setCommentsCount} />
+      )}
+
+      {showShareModal && (
+        <SharePostModal post={post} onClose={() => setShowShareModal(false)} />
       )}
     </article>
   )
