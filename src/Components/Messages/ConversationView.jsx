@@ -160,7 +160,6 @@ export default function ConversationView({
       rafId = null
       const focused = isComposerFocused()
       const currentHeight = vv ? vv.height : window.innerHeight
-      const currentOffsetTop = vv ? vv.offsetTop : 0
 
       if (!focused && currentHeight > baselineHeight) {
         baselineHeight = currentHeight
@@ -171,13 +170,15 @@ export default function ConversationView({
 
       if (keyboardOpen) {
         root.style.setProperty('--chat-viewport-height', `${Math.round(currentHeight)}px`)
-        root.style.setProperty('--chat-viewport-offset-top', `${Math.round(currentOffsetTop)}px`)
       } else {
         root.style.removeProperty('--chat-viewport-height')
-        root.style.removeProperty('--chat-viewport-offset-top')
       }
 
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
+
+      if ((vv && vv.offsetTop > 0) || window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
 
       if (keyboardOpen && !wasKeyboardOpen && listRef.current) {
         const container = listRef.current
@@ -186,8 +187,6 @@ export default function ConversationView({
         if (distanceFromBottom < 140) {
           container.scrollTop = container.scrollHeight
         }
-      } else if (!keyboardOpen && wasKeyboardOpen && window.scrollY !== 0) {
-        window.scrollTo(0, 0)
       }
 
       wasKeyboardOpen = keyboardOpen
@@ -226,7 +225,6 @@ export default function ConversationView({
       document.removeEventListener('focusin', handleFocusChange)
       document.removeEventListener('focusout', handleFocusChange)
       root.style.removeProperty('--chat-viewport-height')
-      root.style.removeProperty('--chat-viewport-offset-top')
       root.classList.remove('chat-keyboard-open')
       root.classList.remove('chat-route-active')
     }

@@ -150,8 +150,11 @@
 @media (max-width: 767px) {
   html.chat-route-active,
   html.chat-route-active body {
-    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    width: 100%;
     height: 100%;
+    overflow: hidden;
     overscroll-behavior: none;
   }
 
@@ -165,12 +168,8 @@
     overscroll-behavior: none;
   }
 
-  html.chat-keyboard-open .mobile-header {
-    top: var(--chat-viewport-offset-top, 0px);
-  }
-
   html.chat-keyboard-open .app-layout__main--messages {
-    top: var(--chat-viewport-offset-top, 0px);
+    top: 0;
     bottom: auto;
     height: var(--chat-viewport-height, 100dvh);
     padding-bottom: 0;
