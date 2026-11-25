@@ -168,7 +168,8 @@
     padding-bottom: 0;
   }
 
-  html.chat-keyboard-open .mobile-nav {
+  html.chat-keyboard-open .mobile-nav,
+  html.chat-route-active .app-layout:has(.chat-view__input:focus) .mobile-nav {
     display: none;
   }
 }
