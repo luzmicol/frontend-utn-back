@@ -134,6 +134,28 @@ export default function ConversationView({
     (p) => p._id !== currentUser?._id
   )
 
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    function syncViewportHeight() {
+      document.documentElement.style.setProperty('--chat-viewport-height', `${vv.height}px`)
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
+    }
+
+    syncViewportHeight()
+    vv.addEventListener('resize', syncViewportHeight)
+    vv.addEventListener('scroll', syncViewportHeight)
+
+    return () => {
+      vv.removeEventListener('resize', syncViewportHeight)
+      vv.removeEventListener('scroll', syncViewportHeight)
+      document.documentElement.style.removeProperty('--chat-viewport-height')
+    }
+  }, [])
+
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       if (listRef.current) {
@@ -692,6 +714,7 @@ export default function ConversationView({
         <button
           type='submit'
           className='chat-view__send'
+          onMouseDown={(e) => e.preventDefault()}
           disabled={sending || !text.trim()}
           aria-label='Enviar mensaje'
         >
