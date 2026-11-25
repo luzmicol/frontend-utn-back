@@ -979,12 +979,6 @@ export default function ConversationView({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          onTouchStart={(e) => {
-            if (inputRef.current && document.activeElement !== inputRef.current) {
-              e.preventDefault()
-              inputRef.current.focus({ preventScroll: true })
-            }
-          }}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           readOnly={sending}
