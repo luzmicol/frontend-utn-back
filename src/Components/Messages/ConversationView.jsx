@@ -98,7 +98,9 @@ export default function ConversationView({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
-  const isGroup = conversation?.tipo === 'group'
+  const isGroup =
+    conversation?.tipo === 'group' ||
+    (Array.isArray(conversation?.miembros_grupo) && conversation.miembros_grupo.length > 0)
 
   const otherUser = conversation?.participantes?.find(
     (p) => p._id !== currentUser?._id
@@ -415,7 +417,12 @@ export default function ConversationView({
         </button>
 
         {isGroup ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+          <button
+            type='button'
+            className='chat-view__group-header-btn'
+            onClick={() => setShowGroupInfo(true)}
+            aria-label='Ver informacion del grupo'
+          >
             {conversation.imagen_url ? (
               <Avatar name={conversation.nombre || 'Grupo'} avatarUrl={conversation.imagen_url} size='sm' />
             ) : (
@@ -423,23 +430,14 @@ export default function ConversationView({
                 <Users size={18} />
               </span>
             )}
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className='chat-view__name'>{conversation.nombre || 'Grupo'}</div>
-              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                {conversation.participantes?.length || 0} miembros
+            <div className='chat-view__user-meta'>
+              <span className='chat-view__name'>{conversation.nombre || 'Grupo'}</span>
+              <span className='chat-view__username'>
+                {conversation.participantes?.length || 0} integrantes · Toca para ver info
               </span>
             </div>
-            <button
-              type='button'
-              className='chat-view__back'
-              style={{ display: 'inline-flex' }}
-              onClick={() => setShowGroupInfo(true)}
-              aria-label='Informacion del grupo'
-              title='Informacion del grupo'
-            >
-              <Info size={18} />
-            </button>
-          </div>
+            <Info size={18} className='chat-view__group-info-icon' aria-hidden='true' />
+          </button>
         ) : otherUser && (
           <Link to={`/users/${otherUser._id}`} className='chat-view__user'>
             <Avatar name={otherUser.nombre} avatarUrl={otherUser.avatar_url} size='sm' />

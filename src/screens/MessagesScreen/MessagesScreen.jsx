@@ -307,7 +307,9 @@ export default function MessagesScreen() {
           ) : (
             <ul className='messages-list'>
               {displayedConversations.map((conv) => {
-                const isGroup = conv.tipo === 'group'
+                const isGroup =
+                  conv.tipo === 'group' ||
+                  (Array.isArray(conv.miembros_grupo) && conv.miembros_grupo.length > 0)
                 const other = !isGroup
                   ? conv.participantes?.find((p) => p._id !== currentUser?._id)
                   : null

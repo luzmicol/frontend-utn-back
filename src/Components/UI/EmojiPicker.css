@@ -172,8 +172,24 @@
   color: var(--text-muted);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .emoji-picker__panel,
+  .emoji-picker__panel--top,
+  .emoji-picker__panel--bottom,
+  .emoji-picker__panel--align-left,
+  .emoji-picker__panel--align-right {
+    position: fixed;
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 68px);
+    width: auto;
+    max-height: 44dvh;
+    z-index: 80;
+  }
+
   .emoji-picker__grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
+    max-height: 26dvh;
   }
 }

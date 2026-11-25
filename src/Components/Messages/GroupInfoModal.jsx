@@ -225,7 +225,8 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
           )}
 
           <div className='group-modal__section-label'>
-            Participantes ({members.length})
+            Integrantes ({members.length}) · Tu rol:{' '}
+            {isOwner ? 'Owner' : isAdmin ? 'Administrador' : 'Miembro'}
           </div>
 
           <div className='group-modal__list'>
@@ -243,9 +244,12 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
                     <span className='group-modal__user-name'>
                       {u.nombre || 'Usuario'} {isMe && '(Vos)'}
                     </span>
+                    {u.username && (
+                      <span className='group-modal__user-handle'>@{u.username}</span>
+                    )}
                     <span className='group-modal__role-badge'>
                       {m.rol === 'owner' && <><Crown size={11} /> Owner</>}
-                      {m.rol === 'admin' && <><Shield size={11} /> Admin</>}
+                      {m.rol === 'admin' && <><Shield size={11} /> Administrador</>}
                       {m.rol === 'member' && 'Miembro'}
                     </span>
                   </div>
