@@ -150,8 +150,19 @@
 @media (max-width: 767px) {
   .app-layout__main--messages {
     position: fixed;
-    inset: 0;
+    top: var(--chat-viewport-offset-top, 0px);
+    left: 0;
+    right: 0;
+    bottom: auto;
     height: var(--chat-viewport-height, 100dvh);
+  }
+
+  html.chat-keyboard-open .app-layout__main--messages {
+    padding-bottom: 0;
+  }
+
+  html.chat-keyboard-open .mobile-nav {
+    display: none;
   }
 }
 
