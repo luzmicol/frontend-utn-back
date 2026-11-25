@@ -1,12 +1,13 @@
 import { apiRequest } from './apiClient'
 import { invalidateCache } from '../utils/memoryCache'
 
-export async function getPosts({ user_id, community_id, page, limit } = {}) {
+export async function getPosts({ user_id, community_id, page, limit, fresh = false } = {}) {
   const params = new URLSearchParams()
   if (user_id) params.set('user_id', user_id)
   if (community_id) params.set('community_id', community_id)
   if (page !== undefined && page !== null) params.set('page', String(page))
   if (limit !== undefined && limit !== null) params.set('limit', String(limit))
+  if (fresh) params.set('_t', String(Date.now()))
   const query = params.toString()
 
   return await apiRequest(query ? `/api/posts?${query}` : '/api/posts', {

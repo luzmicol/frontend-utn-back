@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, PenSquare, LogOut } from 'lucide-react'
 import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
@@ -8,6 +8,7 @@ import './Sidebar.css'
 
 export default function Sidebar({ onLogoutRequest, onBrandClick }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { unreadCount } = useNotifications()
   const { unreadMessagesCount } = useUnreadMessages()
   const { resolvedTheme } = useTheme()
@@ -42,6 +43,13 @@ export default function Sidebar({ onLogoutRequest, onBrandClick }) {
               key={to}
               to={to}
               end={end}
+              onClick={(event) => {
+                if (to === '/' && location.pathname === '/') {
+                  event.preventDefault()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  window.dispatchEvent(new CustomEvent('loop:feed-refresh'))
+                }
+              }}
               className={({ isActive }) =>
                 `sidebar__link${isActive ? ' sidebar__link--active' : ''}`
               }

@@ -45,9 +45,10 @@ export default function FeedScreen() {
       if (refreshingRef.current) return
       refreshingRef.current = true
       invalidateCache(FEED_CACHE_KEY)
+      setError(null)
 
       try {
-        const res = await getPosts({ page: 1, limit: PAGE_LIMIT })
+        const res = await getPosts({ page: 1, limit: PAGE_LIMIT, fresh: true })
         if (!isMounted) return
         const nextPosts = res.data?.posts ?? []
         const nextHasMore = Boolean(res.data?.pagination?.has_more)

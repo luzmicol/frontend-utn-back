@@ -146,12 +146,14 @@ export default function ConversationView({
       }
     }
 
-    function syncViewport() {
-      const isInputFocused = document.activeElement === inputRef.current
-      const keyboardOpen = isInputFocused || window.innerHeight - vv.height > 100
+    let rafId = null
+
+    function applyViewport() {
+      rafId = null
+      const keyboardOpen = window.innerHeight - vv.height > 100
       if (keyboardOpen) {
-        root.style.setProperty('--chat-viewport-height', `${vv.height}px`)
-        root.style.setProperty('--chat-viewport-offset-top', `${vv.offsetTop}px`)
+        root.style.setProperty('--chat-viewport-height', `${Math.round(vv.height)}px`)
+        root.style.setProperty('--chat-viewport-offset-top', `${Math.round(vv.offsetTop)}px`)
       } else {
         root.style.removeProperty('--chat-viewport-height')
         root.style.removeProperty('--chat-viewport-offset-top')
@@ -159,13 +161,17 @@ export default function ConversationView({
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
     }
 
-    syncViewport()
-    vv.addEventListener('resize', syncViewport)
-    vv.addEventListener('scroll', syncViewport)
+    function scheduleSync() {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(applyViewport)
+    }
+
+    applyViewport()
+    vv.addEventListener('resize', scheduleSync)
 
     return () => {
-      vv.removeEventListener('resize', syncViewport)
-      vv.removeEventListener('scroll', syncViewport)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      vv.removeEventListener('resize', scheduleSync)
       root.style.removeProperty('--chat-viewport-height')
       root.style.removeProperty('--chat-viewport-offset-top')
       root.classList.remove('chat-keyboard-open')
@@ -723,24 +729,6 @@ export default function ConversationView({
           placeholder='Escribi un mensaje...'
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onFocus={() => {
-            document.documentElement.classList.add('chat-keyboard-open')
-            if (window.visualViewport) {
-              document.documentElement.style.setProperty('--chat-viewport-height', `${window.visualViewport.height}px`)
-              document.documentElement.style.setProperty('--chat-viewport-offset-top', `${window.visualViewport.offsetTop}px`)
-            }
-          }}
-          onBlur={() => {
-            setTimeout(() => {
-              if (document.activeElement !== inputRef.current) {
-                document.documentElement.classList.remove('chat-keyboard-open')
-                if (window.visualViewport) {
-                  document.documentElement.style.setProperty('--chat-viewport-height', `${window.visualViewport.height}px`)
-                  document.documentElement.style.setProperty('--chat-viewport-offset-top', `${window.visualViewport.offsetTop}px`)
-                }
-              }
-            }, 80)
-          }}
           onKeyDown={handleKeyDown}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}

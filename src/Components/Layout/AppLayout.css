@@ -169,11 +169,9 @@
     top: var(--chat-viewport-offset-top, 0px);
     bottom: auto;
     height: var(--chat-viewport-height, 100dvh);
-    padding-top: env(safe-area-inset-top);
     padding-bottom: 0;
   }
 
-  html.chat-keyboard-open .mobile-header,
   html.chat-keyboard-open .mobile-nav {
     display: none;
   }
