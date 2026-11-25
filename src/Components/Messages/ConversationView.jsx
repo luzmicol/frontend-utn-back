@@ -176,10 +176,6 @@ export default function ConversationView({
 
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
 
-      if ((vv && vv.offsetTop > 0) || window.scrollY !== 0) {
-        window.scrollTo(0, 0)
-      }
-
       if (keyboardOpen && !wasKeyboardOpen && listRef.current) {
         const container = listRef.current
         const distanceFromBottom =
@@ -209,7 +205,6 @@ export default function ConversationView({
     applyViewport()
     if (vv) {
       vv.addEventListener('resize', scheduleSync)
-      vv.addEventListener('scroll', scheduleSync)
     }
     window.addEventListener('orientationchange', handleOrientationChange)
     document.addEventListener('focusin', handleFocusChange)
@@ -219,7 +214,6 @@ export default function ConversationView({
       if (rafId !== null) cancelAnimationFrame(rafId)
       if (vv) {
         vv.removeEventListener('resize', scheduleSync)
-        vv.removeEventListener('scroll', scheduleSync)
       }
       window.removeEventListener('orientationchange', handleOrientationChange)
       document.removeEventListener('focusin', handleFocusChange)
@@ -985,6 +979,12 @@ export default function ConversationView({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onTouchStart={(e) => {
+            if (inputRef.current && document.activeElement !== inputRef.current) {
+              e.preventDefault()
+              inputRef.current.focus({ preventScroll: true })
+            }
+          }}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
           readOnly={sending}
