@@ -147,6 +147,19 @@ export default function ConversationView({
     const root = document.documentElement
     root.classList.add('chat-route-active')
 
+    // Bandera diagnostica temporal (?diag=no-kb-js): desactiva los ajustes JS de teclado/altura/scroll
+    const diagNoKbJs =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('diag') === 'no-kb-js'
+
+    if (diagNoKbJs) {
+      return () => {
+        root.style.removeProperty('--chat-viewport-height')
+        root.classList.remove('chat-keyboard-open')
+        root.classList.remove('chat-route-active')
+      }
+    }
+
     const vv = window.visualViewport
     let rafId = null
     let baselineHeight = Math.max(window.innerHeight, vv ? vv.height : 0)
