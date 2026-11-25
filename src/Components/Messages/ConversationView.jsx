@@ -24,6 +24,24 @@ const PAGE_LIMIT = 30
 const POLL_INTERVAL_MS = 6000
 const MAX_MESSAGE_LENGTH = 2000
 
+function isMobileSafari() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  const isIOSDevice =
+    /iP(hone|od|ad)/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isSafariBrowser =
+    /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Android/i.test(ua)
+  const isCoarsePointer =
+    typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+  const isWebKitTouch =
+    typeof window.CSS !== 'undefined' &&
+    typeof window.CSS.supports === 'function' &&
+    window.CSS.supports('-webkit-touch-callout', 'none')
+
+  return isIOSDevice && isSafariBrowser && isCoarsePointer && isWebKitTouch
+}
+
 function formatTime(dateString) {
   if (!dateString) return ''
   return new Date(dateString).toLocaleTimeString('es-AR', {
@@ -157,7 +175,7 @@ export default function ConversationView({
     const diagNoClass = diagParam === 'no-class'
     const diagNoAutoscroll = diagParam === 'no-autoscroll'
 
-    if (diagNoKbJs) {
+    if (diagNoKbJs || isMobileSafari()) {
       return () => {
         root.style.removeProperty('--chat-viewport-height')
         root.classList.remove('chat-keyboard-open')
