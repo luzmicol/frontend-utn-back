@@ -147,18 +147,23 @@ export default function ConversationView({
     const root = document.documentElement
     root.classList.add('chat-route-active')
 
-    // Bandera diagnostica temporal (?diag=no-kb-js): desactiva los ajustes JS de teclado/altura/scroll
-    const diagNoKbJs =
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('diag') === 'no-kb-js'
+    // Banderas diagnosticas temporales (?diag=no-kb-js | no-height | no-class | no-autoscroll)
+    const diagMode =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('diag')
+        : null
 
-    if (diagNoKbJs) {
+    if (diagMode === 'no-kb-js') {
       return () => {
         root.style.removeProperty('--chat-viewport-height')
         root.classList.remove('chat-keyboard-open')
         root.classList.remove('chat-route-active')
       }
     }
+
+    const disableHeight = diagMode === 'no-height'
+    const disableClass = diagMode === 'no-class'
+    const disableAutoscroll = diagMode === 'no-autoscroll'
 
     const vv = window.visualViewport
     let rafId = null
@@ -181,15 +186,19 @@ export default function ConversationView({
       const heightDelta = baselineHeight - currentHeight
       const keyboardOpen = focused || heightDelta > 100
 
-      if (keyboardOpen) {
-        root.style.setProperty('--chat-viewport-height', `${Math.round(currentHeight)}px`)
-      } else {
-        root.style.removeProperty('--chat-viewport-height')
+      if (!disableHeight) {
+        if (keyboardOpen) {
+          root.style.setProperty('--chat-viewport-height', `${Math.round(currentHeight)}px`)
+        } else {
+          root.style.removeProperty('--chat-viewport-height')
+        }
       }
 
-      root.classList.toggle('chat-keyboard-open', keyboardOpen)
+      if (!disableClass) {
+        root.classList.toggle('chat-keyboard-open', keyboardOpen)
+      }
 
-      if (keyboardOpen && !wasKeyboardOpen && listRef.current) {
+      if (!disableAutoscroll && keyboardOpen && !wasKeyboardOpen && listRef.current) {
         const container = listRef.current
         const distanceFromBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight
