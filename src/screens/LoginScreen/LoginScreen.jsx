@@ -27,7 +27,7 @@ function LoginScreen() {
     const password = formState.password
 
     if (!email || !password) {
-      setValidationError('Completa tu email y contraseña para iniciar sesion.')
+      setValidationError('Completá tu correo electrónico y contraseña para iniciar sesión.')
       return
     }
 
@@ -45,42 +45,42 @@ function LoginScreen() {
 
   return (
     <AuthLayout
-      title='Iniciar sesion'
+      title='Iniciar sesión'
       footer={
         <span>
-          ¿No tienes una cuenta? <Link to='/register'>Registrate</Link>
+          ¿No tenés una cuenta? <Link to='/register'>Registrate</Link>
           <br />
-          ¿No recibiste el email de verificacion? <Link to='/resend-email-verification'>Reenviar</Link>
+          ¿No recibiste el correo de verificación? <Link to='/resend-email-verification'>Reenviar</Link>
         </span>
       }
     >
       <Form onSubmit={handleSubmit}>
         <FormField
-          label='Email'
+          label='Correo electrónico'
           name='email'
           type='email'
-          placeholder='Email'
+          placeholder='Correo electrónico'
           value={formState.email}
           onChange={handleFieldChange}
           required
         />
         <FormField
-          label='Password'
+          label='Contraseña'
           name='password'
           type='password'
-          placeholder='Password'
+          placeholder='Contraseña'
           value={formState.password}
           onChange={handleFieldChange}
           required
         />
-        <FormButton loading={loading}>Iniciar sesion</FormButton>
+        <FormButton loading={loading}>Iniciar sesión</FormButton>
         <Link className='form__link' to='/forgot-password'>
-          Olvide mi contrasena
+          Olvidé mi contraseña
         </Link>
         {validationError && <Alert variant='error'>{validationError}</Alert>}
         {!validationError && error && !loading && <Alert variant='error'>{error}</Alert>}
         {response && !loading && (
-          <Alert variant='success'>Inicio de sesion exitoso</Alert>
+          <Alert variant='success'>Inicio de sesión exitoso</Alert>
         )}
       </Form>
     </AuthLayout>

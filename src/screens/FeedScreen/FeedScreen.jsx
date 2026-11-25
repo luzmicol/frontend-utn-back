@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import { getPosts } from '../../services/postService'
-import { fetchWithCache, getCachedData, setCachedData } from '../../utils/memoryCache'
+import { fetchWithCache, getCachedData, invalidateCache, setCachedData } from '../../utils/memoryCache'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
 import FeedSuggestionsSidebar from '../../Components/Feed/FeedSuggestionsSidebar'
@@ -36,6 +36,40 @@ export default function FeedScreen() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const [highlightedPostId, setHighlightedPostId] = useState(null)
+  const refreshingRef = useRef(false)
+
+  useEffect(() => {
+    const refreshTrigger = location.state?.refreshFeed
+    if (!refreshTrigger || refreshingRef.current) return
+
+    let isMounted = true
+    refreshingRef.current = true
+    invalidateCache(FEED_CACHE_KEY)
+
+    getPosts({ page: 1, limit: PAGE_LIMIT })
+      .then((res) => {
+        if (!isMounted) return
+        const nextPosts = res.data?.posts ?? []
+        const nextHasMore = Boolean(res.data?.pagination?.has_more)
+        setPosts(nextPosts)
+        setPage(1)
+        setHasMore(nextHasMore)
+        setCachedData(FEED_CACHE_KEY, { posts: nextPosts, hasMore: nextHasMore })
+      })
+      .catch(() => {
+        // Mantiene el feed actual si falla el refresco
+      })
+      .finally(() => {
+        refreshingRef.current = false
+        if (isMounted) {
+          navigate('/', { replace: true, state: null })
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [location.state?.refreshFeed, navigate])
 
   useEffect(() => {
     let isMounted = true

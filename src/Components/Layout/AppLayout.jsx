@@ -166,6 +166,13 @@ export default function AppLayout() {
             key={to}
             to={to}
             end={end}
+            onClick={(event) => {
+              if (to === '/' && location.pathname === '/') {
+                event.preventDefault()
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                navigate('/', { replace: true, state: { refreshFeed: Date.now() } })
+              }
+            }}
             className={({ isActive }) =>
               `mobile-nav__link${isActive ? ' mobile-nav__link--active' : ''}`
             }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { MessageSquare, Search, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -30,22 +30,29 @@ export default function MessagesScreen() {
   const { user: currentUser } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const cachedConversations = getCachedData(CONVERSATIONS_CACHE_KEY)?.data
   const [conversations, setConversations] = useState(() => cachedConversations ?? [])
-  const [selectedId, setSelectedId] = useState(() => location.state?.conversationId || null)
+  const selectedId = searchParams.get('chat') || null
+
+  const setSelectedId = useCallback(
+    (nextId) => {
+      if (nextId) {
+        setSearchParams({ chat: nextId })
+      } else {
+        setSearchParams({})
+      }
+    },
+    [setSearchParams]
+  )
 
   // Detecta cambios posteriores en location.state.conversationId y limpia el estado de navegacion
   useEffect(() => {
     const incomingId = location.state?.conversationId
     if (!incomingId) return
 
-    const frame = requestAnimationFrame(() => {
-      setSelectedId(incomingId)
-    })
-    navigate('/messages', { replace: true, state: null })
-
-    return () => cancelAnimationFrame(frame)
+    navigate(`/messages?chat=${encodeURIComponent(incomingId)}`, { replace: true, state: null })
   }, [location.state?.conversationId, navigate])
   const [loading, setLoading] = useState(() => !cachedConversations)
   const [error, setError] = useState(null)

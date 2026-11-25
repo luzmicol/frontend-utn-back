@@ -8,7 +8,7 @@ import Alert from '../../Components/Alert/Alert'
 import { Form, FormField, FormButton } from '../../Components/Form/Form'
 
 function RegisterScreen() {
-  const initial_state = { name: '', email: '', password: '' }
+  const initial_state = { name: '', email: '', password: '', confirmPassword: '' }
   const { formState, handleChangeInput } = useForm(initial_state)
   const { loading, response, error, sendRequest } = useRequest()
   const [validationError, setValidationError] = useState(null)
@@ -23,14 +23,20 @@ function RegisterScreen() {
     const name = formState.name.trim()
     const email = formState.email.trim()
     const password = formState.password
+    const confirmPassword = formState.confirmPassword
 
-    if (!name || !email || !password) {
-      setValidationError('Completa todos los campos obligatorios para registrarte.')
+    if (!name || !email || !password || !confirmPassword) {
+      setValidationError('Completá todos los campos obligatorios para registrarte.')
       return
     }
 
     if (password.length < 8) {
       setValidationError('La contraseña debe tener al menos 8 caracteres.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setValidationError('Las contraseñas no coinciden.')
       return
     }
 
@@ -42,10 +48,10 @@ function RegisterScreen() {
 
   return (
     <AuthLayout
-      title='Registro de usuario'
+      title='Crear cuenta'
       footer={
         <span>
-          ¿Ya tienes cuenta? <Link to='/login'>Inicia sesion</Link>
+          ¿Ya tenés una cuenta? <Link to='/login'>Iniciar sesión</Link>
         </span>
       }
     >
@@ -60,20 +66,29 @@ function RegisterScreen() {
           required
         />
         <FormField
-          label='Email'
+          label='Correo electrónico'
           name='email'
           type='email'
-          placeholder='Email'
+          placeholder='Correo electrónico'
           value={formState.email}
           onChange={handleFieldChange}
           required
         />
         <FormField
-          label='Password'
+          label='Contraseña'
           name='password'
           type='password'
-          placeholder='Password'
+          placeholder='Contraseña'
           value={formState.password}
+          onChange={handleFieldChange}
+          required
+        />
+        <FormField
+          label='Repetir contraseña'
+          name='confirmPassword'
+          type='password'
+          placeholder='Repetir contraseña'
+          value={formState.confirmPassword}
           onChange={handleFieldChange}
           required
         />
@@ -82,8 +97,7 @@ function RegisterScreen() {
         {!validationError && error && !loading && <Alert variant='error'>{error}</Alert>}
         {response && !loading && (
           <Alert variant='success'>
-            Registro exitoso, revisa tu correo electronico para verificar la
-            cuenta
+            Registro exitoso. Revisá tu correo electrónico para verificar tu cuenta.
           </Alert>
         )}
       </Form>

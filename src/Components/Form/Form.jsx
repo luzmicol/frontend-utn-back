@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import './Form.css'
 
 /* Piezas de formulario reutilizables (Register, Login, y futuros formularios).
@@ -12,20 +14,37 @@ export function Form({ onSubmit, children }) {
 }
 
 export function FormField({ label, type = 'text', name, value, onChange, ...inputProps }) {
+  const [showPassword, setShowPassword] = useState(false)
+  const isPassword = type === 'password'
+  const resolvedType = isPassword ? (showPassword ? 'text' : 'password') : type
+
   return (
     <div className='form__field'>
       <label className='form__label' htmlFor={name}>
         {label}
       </label>
-      <input
-        className='form__input'
-        name={name}
-        id={name}
-        type={type}
-        value={value}
-        onChange={onChange}
-        {...inputProps}
-      />
+      <div className={isPassword ? 'form__input-wrap' : undefined}>
+        <input
+          className={`form__input${isPassword ? ' form__input--password' : ''}`}
+          name={name}
+          id={name}
+          type={resolvedType}
+          value={value}
+          onChange={onChange}
+          {...inputProps}
+        />
+        {isPassword && (
+          <button
+            type='button'
+            className='form__password-toggle'
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

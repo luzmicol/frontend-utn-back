@@ -158,9 +158,11 @@
   }
 
   html.chat-keyboard-open .app-layout__main--messages {
+    padding-top: env(safe-area-inset-top);
     padding-bottom: 0;
   }
 
+  html.chat-keyboard-open .mobile-header,
   html.chat-keyboard-open .mobile-nav {
     display: none;
   }

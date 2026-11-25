@@ -140,7 +140,8 @@ export default function ConversationView({
 
     function syncViewport() {
       const root = document.documentElement
-      const keyboardOpen = window.innerHeight - vv.height > 120
+      const isInputFocused = document.activeElement === inputRef.current
+      const keyboardOpen = isInputFocused || window.innerHeight - vv.height > 100
       root.style.setProperty('--chat-viewport-height', `${vv.height}px`)
       root.style.setProperty('--chat-viewport-offset-top', `${vv.offsetTop}px`)
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
@@ -710,6 +711,24 @@ export default function ConversationView({
           placeholder='Escribi un mensaje...'
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onFocus={() => {
+            document.documentElement.classList.add('chat-keyboard-open')
+            if (window.visualViewport) {
+              document.documentElement.style.setProperty('--chat-viewport-height', `${window.visualViewport.height}px`)
+              document.documentElement.style.setProperty('--chat-viewport-offset-top', `${window.visualViewport.offsetTop}px`)
+            }
+          }}
+          onBlur={() => {
+            setTimeout(() => {
+              if (document.activeElement !== inputRef.current) {
+                document.documentElement.classList.remove('chat-keyboard-open')
+                if (window.visualViewport) {
+                  document.documentElement.style.setProperty('--chat-viewport-height', `${window.visualViewport.height}px`)
+                  document.documentElement.style.setProperty('--chat-viewport-offset-top', `${window.visualViewport.offsetTop}px`)
+                }
+              }
+            }, 80)
+          }}
           onKeyDown={handleKeyDown}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={1}
