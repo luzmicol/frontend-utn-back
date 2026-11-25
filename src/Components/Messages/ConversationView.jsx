@@ -30,6 +30,34 @@ function formatTime(dateString) {
   })
 }
 
+function formatSystemEventText(msg) {
+  const actor = msg.fk_id_remitente?.nombre || 'Un usuario'
+  const target = msg.fk_id_usuario_objetivo?.nombre || 'un participante'
+
+  switch (msg.evento_sistema) {
+    case 'group_created':
+      return `${actor} creo el grupo`
+    case 'member_added':
+      return `${actor} agrego a ${target}`
+    case 'member_removed':
+      return `${actor} elimino a ${target}`
+    case 'member_left':
+      return `${actor} abandono el grupo`
+    case 'group_renamed':
+      return `${actor} cambio el nombre del grupo`
+    case 'group_image_updated':
+      return `${actor} cambio la imagen del grupo`
+    case 'admin_assigned':
+      return `${actor} nombro administrador a ${target}`
+    case 'admin_removed':
+      return `${actor} quito el rol de administrador a ${target}`
+    case 'owner_changed':
+      return `${actor} ahora es el propietario del grupo`
+    default:
+      return msg.contenido || 'Evento del grupo'
+  }
+}
+
 function sortMessagesChronologically(list) {
   return [...list].sort((a, b) => {
     const diff = new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
@@ -479,6 +507,16 @@ export default function ConversationView({
 
         {!loading &&
           messages.map((msg) => {
+            if (msg.tipo === 'system') {
+              return (
+                <div key={msg._id} className='chat-system-event' role='status'>
+                  <span className='chat-system-event__pill'>
+                    {formatSystemEventText(msg)}
+                  </span>
+                </div>
+              )
+            }
+
             const isMine = msg.fk_id_remitente?._id === currentUser?._id
             const otherId = otherUser?._id
             const isReadByOther = Boolean(
