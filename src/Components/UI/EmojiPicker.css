@@ -140,6 +140,8 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  contain: content;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
@@ -154,10 +156,10 @@
   cursor: pointer;
   font-size: 1.15rem;
   line-height: 1;
+  touch-action: manipulation;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.12s ease;
 }
 
 .emoji-picker__item:hover {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Smile } from 'lucide-react'
 import './EmojiPicker.css'
 
@@ -165,6 +165,32 @@ function saveRecentEmoji(emoji) {
   }
 }
 
+const EmojiGrid = memo(function EmojiGrid({ emojis, categoryKey, onPick }) {
+  if (emojis.length === 0) {
+    return (
+      <div className='emoji-picker__grid'>
+        <p className='emoji-picker__empty'>Sin resultados</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className='emoji-picker__grid'>
+      {emojis.map((item) => (
+        <button
+          key={`${categoryKey}-${item.e}`}
+          type='button'
+          className='emoji-picker__item'
+          onClick={() => onPick(item.e)}
+          aria-label={`Insertar ${item.e}`}
+        >
+          {item.e}
+        </button>
+      ))}
+    </div>
+  )
+})
+
 export default function EmojiPicker({
   onSelect,
   disabled = false,
@@ -176,6 +202,11 @@ export default function EmojiPicker({
   const [search, setSearch] = useState('')
   const [recent, setRecent] = useState(() => loadRecentEmojis())
   const containerRef = useRef(null)
+  const onSelectRef = useRef(onSelect)
+
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
 
   useEffect(() => {
     if (!open) return
@@ -193,7 +224,7 @@ export default function EmojiPicker({
     }
 
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('touchstart', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside, { passive: true })
     document.addEventListener('keydown', handleKeyDown)
 
     return () => {
@@ -217,13 +248,15 @@ export default function EmojiPicker({
     return found ? found.items : []
   }, [search, activeCategory, recent])
 
-  function handleSelectEmoji(emoji) {
-    const nextRecent = saveRecentEmoji(emoji)
-    setRecent(nextRecent)
-    if (onSelect) {
-      onSelect(emoji)
+  const handleSelectEmoji = useCallback((emoji) => {
+    if (onSelectRef.current) {
+      onSelectRef.current(emoji)
     }
-  }
+    setTimeout(() => {
+      const nextRecent = saveRecentEmoji(emoji)
+      setRecent((prev) => (prev[0] === nextRecent[0] && prev.length === nextRecent.length ? prev : nextRecent))
+    }, 0)
+  }, [])
 
   return (
     <div className='emoji-picker' ref={containerRef}>
@@ -290,23 +323,11 @@ export default function EmojiPicker({
             </div>
           )}
 
-          <div className='emoji-picker__grid'>
-            {visibleEmojis.length === 0 ? (
-              <p className='emoji-picker__empty'>Sin resultados</p>
-            ) : (
-              visibleEmojis.map((item) => (
-                <button
-                  key={`${activeCategory}-${item.e}`}
-                  type='button'
-                  className='emoji-picker__item'
-                  onClick={() => handleSelectEmoji(item.e)}
-                  aria-label={`Insertar ${item.e}`}
-                >
-                  {item.e}
-                </button>
-              ))
-            )}
-          </div>
+          <EmojiGrid
+            emojis={visibleEmojis}
+            categoryKey={search.trim() ? 'search' : activeCategory}
+            onPick={handleSelectEmoji}
+          />
         </div>
       )}
     </div>

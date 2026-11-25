@@ -17,6 +17,8 @@ import './GroupModals.css'
 export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, onGroupLeft }) {
   const { user: currentUser } = useAuth()
   const [nombre, setNombre] = useState(conversation?.nombre || '')
+  const [pendingImageFile, setPendingImageFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
   const [savingInfo, setSavingInfo] = useState(false)
   const [busyId, setBusyId] = useState(null)
   const [confirmLeave, setConfirmLeave] = useState(false)
@@ -24,7 +26,12 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
   const [addQuery, setAddQuery] = useState('')
   const [addResults, setAddResults] = useState([])
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   const rawMembers = conversation?.miembros_grupo
   const members = useMemo(() => rawMembers || [], [rawMembers])
@@ -57,40 +64,57 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
     }
   }, [addQuery, canManageParticipants, members])
 
-  async function handleSaveName(event) {
+  async function handleSaveGroupInfo(event) {
     event.preventDefault()
-    if (savingInfo || !nombre.trim()) return
+    if (savingInfo) return
+
+    const trimmedName = nombre.trim()
+    const currentName = (conversation?.nombre || '').trim()
+    const nameChanged = trimmedName !== currentName
+    const imageChanged = Boolean(pendingImageFile)
+
+    if (!trimmedName) {
+      setError('El nombre del grupo no puede estar vacio.')
+      return
+    }
+
+    if (trimmedName.length > 60) {
+      setError('El nombre del grupo no puede superar los 60 caracteres.')
+      return
+    }
+
+    if (!nameChanged && !imageChanged) {
+      setError('No realizaste ningun cambio para guardar.')
+      return
+    }
+
     setSavingInfo(true)
     setError(null)
-    setSuccess(null)
     try {
-      const res = await updateGroupConversation(conversation._id, { nombre: nombre.trim() })
-      if (res.data?.conversation && onGroupUpdated) onGroupUpdated(res.data.conversation)
-      setSuccess('Nombre del grupo actualizado.')
+      const payload = {}
+      if (nameChanged) payload.nombre = trimmedName
+      if (imageChanged) payload.imageFile = await prepareAvatarFile(pendingImageFile)
+
+      const res = await updateGroupConversation(conversation._id, payload)
+      if (res.data?.conversation && onGroupUpdated) {
+        onGroupUpdated(res.data.conversation)
+      }
+      onClose()
     } catch (err) {
-      setError(err.message || 'No se pudo actualizar el nombre.')
+      setError(err.message || 'No se pudieron guardar los cambios del grupo.')
     } finally {
       setSavingInfo(false)
     }
   }
 
-  async function handleImageChange(event) {
+  function handleImageChange(event) {
     const file = event.target.files?.[0]
     if (!file || savingInfo) return
-    setSavingInfo(true)
     setError(null)
-    setSuccess(null)
-    try {
-      const optimized = await prepareAvatarFile(file)
-      const res = await updateGroupConversation(conversation._id, { imageFile: optimized })
-      if (res.data?.conversation && onGroupUpdated) onGroupUpdated(res.data.conversation)
-      setSuccess('Imagen del grupo actualizada.')
-    } catch (err) {
-      setError(err.message || 'No se pudo actualizar la imagen.')
-    } finally {
-      setSavingInfo(false)
-      event.target.value = ''
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPendingImageFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+    event.target.value = ''
   }
 
   async function handleAddUser(userId) {
@@ -164,10 +188,14 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
         </header>
 
         <div className='group-modal__body'>
-          <form className='group-modal__identity' onSubmit={handleSaveName}>
+          <form className='group-modal__identity' onSubmit={handleSaveGroupInfo}>
             <label className='group-modal__avatar-pick' title='Cambiar imagen del grupo'>
-              {conversation.imagen_url ? (
-                <img src={conversation.imagen_url} alt={conversation.nombre} className='group-modal__avatar-img' />
+              {previewUrl || conversation.imagen_url ? (
+                <img
+                  src={previewUrl || conversation.imagen_url}
+                  alt={conversation.nombre}
+                  className='group-modal__avatar-img'
+                />
               ) : (
                 <Users size={22} />
               )}
@@ -179,17 +207,19 @@ export default function GroupInfoModal({ conversation, onClose, onGroupUpdated, 
               type='text'
               className='group-modal__input'
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => {
+                setNombre(e.target.value)
+                if (error) setError(null)
+              }}
               maxLength={60}
               disabled={savingInfo}
             />
-            <button type='submit' className='group-modal__btn group-modal__btn--primary' disabled={savingInfo || !nombre.trim()}>
-              Guardar
+            <button type='submit' className='group-modal__btn group-modal__btn--primary' disabled={savingInfo}>
+              {savingInfo ? 'Guardando...' : 'Guardar'}
             </button>
           </form>
 
           {error && <Alert variant='error'>{error}</Alert>}
-          {success && <Alert variant='success'>{success}</Alert>}
 
           {canManageParticipants && (
             <div className='group-modal__add-section'>
