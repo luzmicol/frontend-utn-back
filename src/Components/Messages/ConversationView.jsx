@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, CheckCheck, Info, Send, Trash2, Users } from 'lucide-react'
+import { ArrowLeft, Check, CheckCheck, ChevronDown, Copy, Forward, Info, Reply, Send, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
@@ -15,6 +15,7 @@ import Avatar from '../UI/Avatar'
 import EmojiPicker from '../UI/EmojiPicker'
 import { insertEmojiAtCursor } from '../../utils/emojiUtils'
 import GroupInfoModal from './GroupInfoModal'
+import ForwardMessageModal from './ForwardMessageModal'
 import Alert from '../Alert/Alert'
 import './ConversationView.css'
 
@@ -126,6 +127,13 @@ export default function ConversationView({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [forwardingMsg, setForwardingMsg] = useState(null)
+  const [contextMenu, setContextMenu] = useState(null)
+  const [highlightedId, setHighlightedId] = useState(null)
+  const [copyToast, setCopyToast] = useState(null)
+  const longPressTimerRef = useRef(null)
+  const touchStartPosRef = useRef({ x: 0, y: 0 })
   const isGroup =
     conversation?.tipo === 'group' ||
     (Array.isArray(conversation?.miembros_grupo) && conversation.miembros_grupo.length > 0)
@@ -429,16 +437,141 @@ export default function ConversationView({
     }
   }
 
+  useEffect(() => {
+    if (!contextMenu) return
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setContextMenu(null)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [contextMenu])
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+    }
+  }, [])
+
+  function openContextMenuAt(msg, clientX, clientY) {
+    if (!msg || msg.tipo === 'system') return
+    const menuWidth = 188
+    const menuHeight = 196
+    const maxX = Math.max(12, window.innerWidth - menuWidth - 12)
+    const maxY = Math.max(12, window.innerHeight - menuHeight - 16)
+    const x = Math.min(Math.max(12, clientX), maxX)
+    const y = Math.min(Math.max(12, clientY), maxY)
+    setContextMenu({ msg, x, y })
+  }
+
+  function handleBubbleTouchStart(event, msg) {
+    if (msg.tipo === 'system') return
+    const touch = event.touches?.[0]
+    if (!touch) return
+    touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = setTimeout(() => {
+      openContextMenuAt(msg, touch.clientX - 80, touch.clientY - 24)
+    }, 450)
+  }
+
+  function handleBubbleTouchMove(event) {
+    if (!longPressTimerRef.current) return
+    const touch = event.touches?.[0]
+    if (!touch) return
+    const dx = Math.abs(touch.clientX - touchStartPosRef.current.x)
+    const dy = Math.abs(touch.clientY - touchStartPosRef.current.y)
+    if (dx > 10 || dy > 10) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  function handleBubbleTouchEnd() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  function getMessageSnippet(msg) {
+    if (!msg) return 'Mensaje no disponible'
+    if (msg.contenido && msg.contenido.trim()) return msg.contenido.trim()
+    if (msg.tipo === 'shared_post') return 'Publicacion compartida'
+    return 'Mensaje'
+  }
+
+  async function handleCopyMessage(msg) {
+    let textToCopy
+    if (msg.tipo === 'shared_post') {
+      const post = msg.fk_id_publicacion_compartida
+      const postUrl = post?._id ? `${window.location.origin}/posts/${post._id}` : ''
+      const parts = []
+      if (msg.contenido) parts.push(msg.contenido)
+      if (post?.contenido) parts.push(post.contenido)
+      if (postUrl) parts.push(postUrl)
+      textToCopy = parts.join('\n') || 'Publicacion compartida'
+    } else {
+      textToCopy = msg.contenido || ''
+    }
+
+    if (!textToCopy) return
+
+    let copied = false
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(textToCopy)
+        copied = true
+      }
+    } catch {
+      copied = false
+    }
+
+    if (!copied) {
+      try {
+        const helper = document.createElement('textarea')
+        helper.value = textToCopy
+        helper.setAttribute('readonly', '')
+        helper.style.position = 'fixed'
+        helper.style.opacity = '0'
+        document.body.appendChild(helper)
+        helper.select()
+        copied = document.execCommand('copy')
+        document.body.removeChild(helper)
+      } catch {
+        copied = false
+      }
+    }
+
+    setCopyToast(copied ? 'Mensaje copiado' : 'No se pudo copiar al portapapeles')
+    setTimeout(() => setCopyToast(null), 1800)
+  }
+
+  function handleJumpToMessage(targetId) {
+    if (!targetId || !listRef.current) return
+    const targetEl = listRef.current.querySelector(`[data-message-id="${targetId}"]`)
+    if (!targetEl) return
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setHighlightedId(targetId)
+    setTimeout(() => {
+      setHighlightedId((prev) => (prev === targetId ? null : prev))
+    }, 1500)
+  }
+
   async function submitMessage() {
     const trimmed = text.trim()
     if (!trimmed || sending || !conversation?._id) return
 
+    const replyId = replyingTo?._id || null
+
     try {
       setSending(true)
       setError(null)
-      const res = await sendMessage(conversation._id, trimmed)
+      const res = await sendMessage(conversation._id, trimmed, {
+        reply_to_message_id: replyId
+      })
       const created = res.data?.message
       setText('')
+      setReplyingTo(null)
       if (created) {
         setMessages((prev) => mergeMessagesUnique(prev, [created]))
         scrollToBottom()
@@ -573,14 +706,63 @@ export default function ConversationView({
             return (
               <div
                 key={msg._id}
+                data-message-id={msg._id}
                 className={`chat-bubble-row${isMine ? ' chat-bubble-row--mine' : ''}`}
               >
-                <div className={`chat-bubble${isMine ? ' chat-bubble--mine' : ''}`}>
+                <div
+                  className={`chat-bubble${isMine ? ' chat-bubble--mine' : ''}${highlightedId === msg._id ? ' chat-bubble--highlighted' : ''}`}
+                  onTouchStart={(e) => handleBubbleTouchStart(e, msg)}
+                  onTouchMove={handleBubbleTouchMove}
+                  onTouchEnd={handleBubbleTouchEnd}
+                  onTouchCancel={handleBubbleTouchEnd}
+                >
+                  <button
+                    type='button'
+                    className='chat-bubble__menu-trigger'
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      openContextMenuAt(msg, isMine ? rect.right - 188 : rect.left, rect.bottom + 4)
+                    }}
+                    aria-label='Opciones del mensaje'
+                    title='Opciones'
+                  >
+                    <ChevronDown size={15} />
+                  </button>
+
+                  {msg.reenviado && (
+                    <span className='chat-bubble__forwarded'>
+                      <Forward size={11} /> Reenviado
+                    </span>
+                  )}
+
                   {isGroup && !isMine && msg.fk_id_remitente?.nombre && (
                     <span className='chat-bubble__sender'>
                       {msg.fk_id_remitente.nombre}
                     </span>
                   )}
+
+                  {msg.fk_id_mensaje_respondido !== null && msg.fk_id_mensaje_respondido !== undefined && (
+                    msg.fk_id_mensaje_respondido && msg.fk_id_mensaje_respondido.activo !== false ? (
+                      <button
+                        type='button'
+                        className='chat-reply-quote'
+                        onClick={() => handleJumpToMessage(msg.fk_id_mensaje_respondido._id)}
+                      >
+                        <span className='chat-reply-quote__author'>
+                          {msg.fk_id_mensaje_respondido.fk_id_remitente?.nombre || 'Usuario'}
+                        </span>
+                        <span className='chat-reply-quote__text'>
+                          {getMessageSnippet(msg.fk_id_mensaje_respondido)}
+                        </span>
+                      </button>
+                    ) : (
+                      <div className='chat-reply-quote chat-reply-quote--unavailable'>
+                        <span className='chat-reply-quote__text'>Mensaje no disponible</span>
+                      </div>
+                    )
+                  )}
+
                   {msg.tipo === 'shared_post' && (
                     msg.fk_id_publicacion_compartida ? (
                       <Link
@@ -657,16 +839,6 @@ export default function ConversationView({
                         )}
                       </span>
                     )}
-                    {isMine && confirmDeleteId !== msg._id && (
-                      <button
-                        type='button'
-                        className='chat-bubble__delete'
-                        onClick={() => setConfirmDeleteId(msg._id)}
-                        aria-label='Eliminar mensaje'
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
                   </div>
 
                   {isMine && confirmDeleteId === msg._id && (
@@ -699,6 +871,33 @@ export default function ConversationView({
       {error && (
         <div className='chat-view__error'>
           <Alert variant='error'>{error}</Alert>
+        </div>
+      )}
+
+      {copyToast && (
+        <div className='chat-copy-toast' role='status'>
+          {copyToast}
+        </div>
+      )}
+
+      {replyingTo && (
+        <div className='chat-reply-preview'>
+          <div className='chat-reply-preview__body'>
+            <span className='chat-reply-preview__author'>
+              Respondiendo a {replyingTo.fk_id_remitente?.nombre || 'Usuario'}
+            </span>
+            <span className='chat-reply-preview__text'>
+              {getMessageSnippet(replyingTo)}
+            </span>
+          </div>
+          <button
+            type='button'
+            className='chat-reply-preview__close'
+            onClick={() => setReplyingTo(null)}
+            aria-label='Cancelar respuesta'
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
@@ -805,6 +1004,84 @@ export default function ConversationView({
             </p>
           </div>
         )}
+
+      {contextMenu && (
+        <>
+          <div
+            className='chat-context-menu__backdrop'
+            onClick={() => setContextMenu(null)}
+            aria-hidden='true'
+          />
+          <div
+            className='chat-context-menu'
+            role='menu'
+            aria-label='Acciones del mensaje'
+            style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
+          >
+            <button
+              type='button'
+              role='menuitem'
+              className='chat-context-menu__item'
+              onClick={() => {
+                setReplyingTo(contextMenu.msg)
+                setContextMenu(null)
+                requestAnimationFrame(() => inputRef.current?.focus())
+              }}
+            >
+              <Reply size={15} />
+              <span>Responder</span>
+            </button>
+            <button
+              type='button'
+              role='menuitem'
+              className='chat-context-menu__item'
+              onClick={() => {
+                setForwardingMsg(contextMenu.msg)
+                setContextMenu(null)
+              }}
+            >
+              <Forward size={15} />
+              <span>Reenviar</span>
+            </button>
+            {(contextMenu.msg.contenido || contextMenu.msg.tipo === 'shared_post') && (
+              <button
+                type='button'
+                role='menuitem'
+                className='chat-context-menu__item'
+                onClick={() => {
+                  const target = contextMenu.msg
+                  setContextMenu(null)
+                  handleCopyMessage(target)
+                }}
+              >
+                <Copy size={15} />
+                <span>Copiar</span>
+              </button>
+            )}
+            {contextMenu.msg.fk_id_remitente?._id === currentUser?._id && (
+              <button
+                type='button'
+                role='menuitem'
+                className='chat-context-menu__item chat-context-menu__item--danger'
+                onClick={() => {
+                  setConfirmDeleteId(contextMenu.msg._id)
+                  setContextMenu(null)
+                }}
+              >
+                <Trash2 size={15} />
+                <span>Eliminar</span>
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {forwardingMsg && (
+        <ForwardMessageModal
+          message={forwardingMsg}
+          onClose={() => setForwardingMsg(null)}
+        />
+      )}
 
       {isGroup && showGroupInfo && (
         <GroupInfoModal

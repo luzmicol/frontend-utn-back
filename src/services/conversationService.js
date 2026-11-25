@@ -25,13 +25,23 @@ export async function getConversationMessages(conversation_id, { page = 1, limit
   )
 }
 
-export async function sendMessage(conversation_id, contenido = '', { shared_post_id = null } = {}) {
+export async function sendMessage(
+  conversation_id,
+  contenido = '',
+  { shared_post_id = null, reply_to_message_id = null, forwarded = false } = {}
+) {
   const body = {}
   if (contenido !== undefined && contenido !== null) {
     body.contenido = contenido
   }
   if (shared_post_id) {
     body.shared_post_id = shared_post_id
+  }
+  if (reply_to_message_id) {
+    body.reply_to_message_id = reply_to_message_id
+  }
+  if (forwarded) {
+    body.forwarded = true
   }
 
   const response = await apiRequest(`/api/conversations/${conversation_id}/messages`, {
