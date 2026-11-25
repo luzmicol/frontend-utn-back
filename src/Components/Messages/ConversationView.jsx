@@ -147,7 +147,7 @@ export default function ConversationView({
     const root = document.documentElement
     root.classList.add('chat-route-active')
 
-    // Bandera diagnostica temporal (?diag=no-kb-js | ?diag=no-height | ?diag=no-class)
+    // Bandera diagnostica temporal (?diag=no-kb-js | ?diag=no-height | ?diag=no-class | ?diag=no-autoscroll)
     const diagParam =
       typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('diag')
@@ -155,6 +155,7 @@ export default function ConversationView({
     const diagNoKbJs = diagParam === 'no-kb-js'
     const diagNoHeight = diagParam === 'no-height'
     const diagNoClass = diagParam === 'no-class'
+    const diagNoAutoscroll = diagParam === 'no-autoscroll'
 
     if (diagNoKbJs) {
       return () => {
@@ -197,7 +198,7 @@ export default function ConversationView({
         root.classList.toggle('chat-keyboard-open', keyboardOpen)
       }
 
-      if (keyboardOpen && !wasKeyboardOpen && listRef.current) {
+      if (!diagNoAutoscroll && keyboardOpen && !wasKeyboardOpen && listRef.current) {
         const container = listRef.current
         const distanceFromBottom =
           container.scrollHeight - container.scrollTop - container.clientHeight
