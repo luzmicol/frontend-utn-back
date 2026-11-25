@@ -1,0 +1,316 @@
+.group-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.group-modal {
+  width: min(460px, 100%);
+  max-height: min(600px, calc(100dvh - 32px));
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.group-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.group-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.group-modal__close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.group-modal__body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.group-modal__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.group-modal__avatar-pick {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--primary-halo);
+  color: var(--primary-soft);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.group-modal__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.group-modal__avatar-cam {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--on-primary, #ffffff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-modal__input {
+  flex: 1;
+  min-width: 0;
+  background-color: var(--input-bg, var(--surface-elevated));
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.group-modal__input:focus {
+  border-color: var(--primary);
+}
+
+.group-modal__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.group-modal__search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.group-modal__input--search {
+  padding-left: 34px;
+}
+
+.group-modal__section-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.group-modal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.group-modal__empty {
+  margin: 16px 0;
+  text-align: center;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.group-modal__user,
+.group-modal__member-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.group-modal__user {
+  cursor: pointer;
+}
+
+.group-modal__user:hover {
+  background-color: var(--surface-elevated);
+}
+
+.group-modal__user--selected {
+  background-color: var(--primary-halo);
+  border-color: var(--primary);
+}
+
+.group-modal__user-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.group-modal__user-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-modal__user-handle,
+.group-modal__role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.group-modal__check {
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-modal__check--active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary, #ffffff);
+}
+
+.group-modal__member-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.group-modal__mini-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.group-modal__mini-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary-soft);
+}
+
+.group-modal__mini-btn--danger:hover {
+  border-color: var(--error-border);
+  color: var(--error);
+  background-color: var(--error-bg);
+}
+
+.group-modal__add-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-modal__add-results {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  background-color: var(--surface-elevated);
+}
+
+.group-modal__footer,
+.group-modal__leave-box,
+.group-modal__confirm-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.group-modal__leave-box {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  justify-content: flex-start;
+}
+
+.group-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.group-modal__btn--primary {
+  background-color: var(--primary);
+  color: var(--on-primary, #ffffff);
+}
+
+.group-modal__btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.group-modal__btn--danger {
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.group-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Search, Send, X } from 'lucide-react'
+import { Check, Search, Send, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { searchUsers } from '../../services/userService'
-import { createOrGetConversation, sendMessage } from '../../services/conversationService'
+import { createOrGetConversation, getConversations, sendMessage } from '../../services/conversationService'
 import Avatar from '../UI/Avatar'
 import Alert from '../Alert/Alert'
 import './SharePostModal.css'
@@ -11,6 +11,8 @@ export default function SharePostModal({ post, onClose }) {
   const { user: currentUser } = useAuth()
   const [query, setQuery] = useState('')
   const [users, setUsers] = useState([])
+  const [groups, setGroups] = useState([])
+  const [selectedGroupIds, setSelectedGroupIds] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [selectedIds, setSelectedIds] = useState([])
   const [note, setNote] = useState('')
@@ -52,6 +54,30 @@ export default function SharePostModal({ post, onClose }) {
     }
   }, [query, currentUser?._id])
 
+  useEffect(() => {
+    let cancelled = false
+    getConversations()
+      .then((res) => {
+        if (!cancelled) {
+          setGroups((res.data?.conversations ?? []).filter((c) => c.tipo === 'group'))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setGroups([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function toggleGroup(groupId) {
+    if (sending) return
+    setError(null)
+    setSelectedGroupIds((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    )
+  }
+
   function toggleRecipient(userId) {
     if (sending) return
     setError(null)
@@ -62,13 +88,13 @@ export default function SharePostModal({ post, onClose }) {
 
   async function handleShare(event) {
     event.preventDefault()
-    if (sending || selectedIds.length === 0) return
+    if (sending || (selectedIds.length === 0 && selectedGroupIds.length === 0)) return
 
     const validRecipients = selectedIds.filter(
       (id) => String(id) !== String(currentUser?._id)
     )
-    if (validRecipients.length === 0) {
-      setError('Selecciona al menos un destinatario valido.')
+    if (validRecipients.length === 0 && selectedGroupIds.length === 0) {
+      setError('Selecciona al menos un destinatario o grupo valido.')
       return
     }
 
@@ -77,16 +103,20 @@ export default function SharePostModal({ post, onClose }) {
     setSuccess(null)
 
     try {
-      const results = await Promise.allSettled(
-        validRecipients.map(async (recipientId) => {
-          const convRes = await createOrGetConversation(recipientId)
-          const convId = convRes.data?.conversation?._id
-          if (!convId) {
-            throw new Error('No se pudo abrir la conversacion.')
-          }
-          await sendMessage(convId, note.trim(), { shared_post_id: post._id })
-        })
-      )
+      const userTasks = validRecipients.map(async (recipientId) => {
+        const convRes = await createOrGetConversation(recipientId)
+        const convId = convRes.data?.conversation?._id
+        if (!convId) {
+          throw new Error('No se pudo abrir la conversacion.')
+        }
+        await sendMessage(convId, note.trim(), { shared_post_id: post._id })
+      })
+
+      const groupTasks = selectedGroupIds.map(async (groupId) => {
+        await sendMessage(groupId, note.trim(), { shared_post_id: post._id })
+      })
+
+      const results = await Promise.allSettled([...userTasks, ...groupTasks])
 
       const succeeded = results.filter((r) => r.status === 'fulfilled').length
       const failed = results.length - succeeded
@@ -161,6 +191,38 @@ export default function SharePostModal({ post, onClose }) {
         </div>
 
         <div className='share-modal__list'>
+          {groups
+            .filter((g) => !query.trim() || (g.nombre || '').toLowerCase().includes(query.trim().toLowerCase()))
+            .map((group) => {
+              const isSelected = selectedGroupIds.includes(group._id)
+              return (
+                <button
+                  key={`group-${group._id}`}
+                  type='button'
+                  className={`share-modal__user${isSelected ? ' share-modal__user--selected' : ''}`}
+                  onClick={() => toggleGroup(group._id)}
+                  disabled={sending}
+                  aria-pressed={isSelected}
+                >
+                  {group.imagen_url ? (
+                    <Avatar name={group.nombre || 'Grupo'} avatarUrl={group.imagen_url} size='sm' />
+                  ) : (
+                    <span className='group-avatar-fallback' aria-hidden='true'>
+                      <Users size={16} />
+                    </span>
+                  )}
+                  <div className='share-modal__user-info'>
+                    <span className='share-modal__user-name'>{group.nombre || 'Grupo'}</span>
+                    <span className='share-modal__user-handle'>
+                      Grupo · {group.participantes?.length || 0} miembros
+                    </span>
+                  </div>
+                  <span className={`share-modal__check${isSelected ? ' share-modal__check--active' : ''}`}>
+                    {isSelected && <Check size={13} strokeWidth={3} />}
+                  </span>
+                </button>
+              )
+            })}
           {loadingUsers ? (
             <p className='share-modal__empty'>Buscando usuarios...</p>
           ) : users.length === 0 ? (
@@ -219,14 +281,14 @@ export default function SharePostModal({ post, onClose }) {
             <button
               type='submit'
               className='share-modal__btn share-modal__btn--primary'
-              disabled={sending || selectedIds.length === 0}
+              disabled={sending || (selectedIds.length === 0 && selectedGroupIds.length === 0)}
             >
               <Send size={14} />
               <span>
                 {sending
                   ? 'Enviando...'
-                  : selectedIds.length > 0
-                    ? `Enviar (${selectedIds.length})`
+                  : selectedIds.length + selectedGroupIds.length > 0
+                    ? `Enviar (${selectedIds.length + selectedGroupIds.length})`
                     : 'Enviar'}
               </span>
             </button>

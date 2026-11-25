@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, CheckCheck, Send, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, CheckCheck, Info, Send, Trash2, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
@@ -14,6 +14,7 @@ import {
 import Avatar from '../UI/Avatar'
 import EmojiPicker from '../UI/EmojiPicker'
 import { insertEmojiAtCursor } from '../../utils/emojiUtils'
+import GroupInfoModal from './GroupInfoModal'
 import Alert from '../Alert/Alert'
 import './ConversationView.css'
 
@@ -71,7 +72,9 @@ export default function ConversationView({
   onConversationActivity,
   onConversationRead,
   onRequestAccepted,
-  onRequestDeleted
+  onRequestDeleted,
+  onGroupUpdated,
+  onGroupLeft
 }) {
   const { user: currentUser } = useAuth()
   const { setUnreadMessagesCount } = useUnreadMessages()
@@ -94,6 +97,8 @@ export default function ConversationView({
   const [sending, setSending] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [showGroupInfo, setShowGroupInfo] = useState(false)
+  const isGroup = conversation?.tipo === 'group'
 
   const otherUser = conversation?.participantes?.find(
     (p) => p._id !== currentUser?._id
@@ -409,7 +414,33 @@ export default function ConversationView({
           <ArrowLeft size={18} />
         </button>
 
-        {otherUser && (
+        {isGroup ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+            {conversation.imagen_url ? (
+              <Avatar name={conversation.nombre || 'Grupo'} avatarUrl={conversation.imagen_url} size='sm' />
+            ) : (
+              <span className='group-avatar-fallback' aria-hidden='true'>
+                <Users size={18} />
+              </span>
+            )}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className='chat-view__name'>{conversation.nombre || 'Grupo'}</div>
+              <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                {conversation.participantes?.length || 0} miembros
+              </span>
+            </div>
+            <button
+              type='button'
+              className='chat-view__back'
+              style={{ display: 'inline-flex' }}
+              onClick={() => setShowGroupInfo(true)}
+              aria-label='Informacion del grupo'
+              title='Informacion del grupo'
+            >
+              <Info size={18} />
+            </button>
+          </div>
+        ) : otherUser && (
           <Link to={`/users/${otherUser._id}`} className='chat-view__user'>
             <Avatar name={otherUser.nombre} avatarUrl={otherUser.avatar_url} size='sm' />
             <div className='chat-view__user-meta'>
@@ -458,6 +489,11 @@ export default function ConversationView({
                 className={`chat-bubble-row${isMine ? ' chat-bubble-row--mine' : ''}`}
               >
                 <div className={`chat-bubble${isMine ? ' chat-bubble--mine' : ''}`}>
+                  {isGroup && !isMine && msg.fk_id_remitente?.nombre && (
+                    <span className='chat-bubble__sender'>
+                      {msg.fk_id_remitente.nombre}
+                    </span>
+                  )}
                   {msg.tipo === 'shared_post' && (
                     msg.fk_id_publicacion_compartida ? (
                       <Link
@@ -681,6 +717,15 @@ export default function ConversationView({
             </p>
           </div>
         )}
+
+      {isGroup && showGroupInfo && (
+        <GroupInfoModal
+          conversation={conversation}
+          onClose={() => setShowGroupInfo(false)}
+          onGroupUpdated={onGroupUpdated}
+          onGroupLeft={onGroupLeft}
+        />
+      )}
     </div>
   )
 }

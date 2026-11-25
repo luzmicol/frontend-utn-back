@@ -398,3 +398,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.chat-bubble__sender {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--primary-soft);
+  margin-bottom: 3px;
+}

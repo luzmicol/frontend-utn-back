@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { MessageSquare, Search } from 'lucide-react'
+import { MessageSquare, Search, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import {
   createOrGetConversation,
@@ -11,6 +11,7 @@ import { fetchWithCache, getCachedData, setCachedData } from '../../utils/memory
 import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
 import ConversationView from '../../Components/Messages/ConversationView'
+import CreateGroupModal from '../../Components/Messages/CreateGroupModal'
 import './MessagesScreen.css'
 
 const INBOX_POLL_MS = 10000
@@ -53,6 +54,7 @@ export default function MessagesScreen() {
   const [searchResults, setSearchResults] = useState([])
   const [startingChat, setStartingChat] = useState(false)
   const [inboxTab, setInboxTab] = useState('primary')
+  const [showCreateGroup, setShowCreateGroup] = useState(false)
 
   const inboxInFlightRef = useRef(false)
 
@@ -201,7 +203,19 @@ export default function MessagesScreen() {
       >
         <aside className='messages-inbox'>
           <header className='messages-inbox__header'>
-            <h1 className='messages-inbox__title'>Mensajes</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <h1 className='messages-inbox__title'>Mensajes</h1>
+              <button
+                type='button'
+                className='messages-tab'
+                style={{ flex: 'none', padding: '5px 10px' }}
+                onClick={() => setShowCreateGroup(true)}
+                aria-label='Crear grupo'
+              >
+                <Users size={14} />
+                <span>Nuevo grupo</span>
+              </button>
+            </div>
 
             <div className='messages-search'>
               <Search size={15} className='messages-search__icon' />
@@ -293,9 +307,10 @@ export default function MessagesScreen() {
           ) : (
             <ul className='messages-list'>
               {displayedConversations.map((conv) => {
-                const other = conv.participantes?.find(
-                  (p) => p._id !== currentUser?._id
-                )
+                const isGroup = conv.tipo === 'group'
+                const other = !isGroup
+                  ? conv.participantes?.find((p) => p._id !== currentUser?._id)
+                  : null
                 const isActive = conv._id === selectedId
                 return (
                   <li key={conv._id}>
@@ -304,22 +319,38 @@ export default function MessagesScreen() {
                       className={`messages-list__item${isActive ? ' messages-list__item--active' : ''}`}
                       onClick={() => setSelectedId(conv._id)}
                     >
-                      <Avatar
-                        name={other?.nombre || 'Usuario'}
-                        avatarUrl={other?.avatar_url}
-                        size='sm'
-                      />
+                      {isGroup ? (
+                        conv.imagen_url ? (
+                          <Avatar name={conv.nombre || 'Grupo'} avatarUrl={conv.imagen_url} size='sm' />
+                        ) : (
+                          <span className='group-avatar-fallback' aria-hidden='true'>
+                            <Users size={18} />
+                          </span>
+                        )
+                      ) : (
+                        <Avatar
+                          name={other?.nombre || 'Usuario'}
+                          avatarUrl={other?.avatar_url}
+                          size='sm'
+                        />
+                      )}
                       <div className='messages-list__meta'>
                         <div className='messages-list__top'>
                           <span className='messages-list__name'>
-                            {other?.nombre || 'Usuario'}
+                            {isGroup ? conv.nombre || 'Grupo' : other?.nombre || 'Usuario'}
                           </span>
                           <time className='messages-list__date'>
                             {formatShortDate(conv.ultima_actualizacion)}
                           </time>
                         </div>
-                        {other?.username && (
-                          <span className='messages-list__username'>@{other.username}</span>
+                        {isGroup ? (
+                          <span className='messages-list__username'>
+                            Grupo · {conv.participantes?.length || 0} miembros
+                          </span>
+                        ) : (
+                          other?.username && (
+                            <span className='messages-list__username'>@{other.username}</span>
+                          )
                         )}
                         <div className='messages-list__bottom'>
                           <span className='messages-list__preview'>
@@ -365,6 +396,23 @@ export default function MessagesScreen() {
                 })
                 setSelectedId(null)
               }}
+              onGroupUpdated={(updatedGroup) => {
+                setConversations((prev) => {
+                  const next = prev.map((c) =>
+                    c._id === updatedGroup._id ? { ...c, ...updatedGroup } : c
+                  )
+                  setCachedData(CONVERSATIONS_CACHE_KEY, next)
+                  return next
+                })
+              }}
+              onGroupLeft={(leftId) => {
+                setConversations((prev) => {
+                  const next = prev.filter((c) => c._id !== leftId)
+                  setCachedData(CONVERSATIONS_CACHE_KEY, next)
+                  return next
+                })
+                setSelectedId(null)
+              }}
             />
           ) : (
             <div className='messages-placeholder'>
@@ -374,6 +422,21 @@ export default function MessagesScreen() {
           )}
         </div>
       </div>
+
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onGroupCreated={(newGroup) => {
+            setConversations((prev) => {
+              const next = [newGroup, ...prev]
+              setCachedData(CONVERSATIONS_CACHE_KEY, next)
+              return next
+            })
+            setInboxTab('primary')
+            setSelectedId(newGroup._id)
+          }}
+        />
+      )}
     </section>
   )
 }
