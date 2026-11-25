@@ -170,7 +170,7 @@ export default function AppLayout() {
               if (to === '/' && location.pathname === '/') {
                 event.preventDefault()
                 window.scrollTo({ top: 0, behavior: 'smooth' })
-                navigate('/', { replace: true, state: { refreshFeed: Date.now() } })
+                window.dispatchEvent(new CustomEvent('loop:feed-refresh'))
               }
             }}
             className={({ isActive }) =>

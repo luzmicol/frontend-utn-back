@@ -135,15 +135,27 @@ export default function ConversationView({
   )
 
   useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('chat-route-active')
+
     const vv = window.visualViewport
-    if (!vv) return
+    if (!vv) {
+      return () => {
+        root.classList.remove('chat-route-active')
+        root.classList.remove('chat-keyboard-open')
+      }
+    }
 
     function syncViewport() {
-      const root = document.documentElement
       const isInputFocused = document.activeElement === inputRef.current
       const keyboardOpen = isInputFocused || window.innerHeight - vv.height > 100
-      root.style.setProperty('--chat-viewport-height', `${vv.height}px`)
-      root.style.setProperty('--chat-viewport-offset-top', `${vv.offsetTop}px`)
+      if (keyboardOpen) {
+        root.style.setProperty('--chat-viewport-height', `${vv.height}px`)
+        root.style.setProperty('--chat-viewport-offset-top', `${vv.offsetTop}px`)
+      } else {
+        root.style.removeProperty('--chat-viewport-height')
+        root.style.removeProperty('--chat-viewport-offset-top')
+      }
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
     }
 
@@ -154,10 +166,10 @@ export default function ConversationView({
     return () => {
       vv.removeEventListener('resize', syncViewport)
       vv.removeEventListener('scroll', syncViewport)
-      const root = document.documentElement
       root.style.removeProperty('--chat-viewport-height')
       root.style.removeProperty('--chat-viewport-offset-top')
       root.classList.remove('chat-keyboard-open')
+      root.classList.remove('chat-route-active')
     }
   }, [])
 

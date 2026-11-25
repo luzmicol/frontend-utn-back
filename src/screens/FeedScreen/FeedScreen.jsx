@@ -39,15 +39,15 @@ export default function FeedScreen() {
   const refreshingRef = useRef(false)
 
   useEffect(() => {
-    const refreshTrigger = location.state?.refreshFeed
-    if (!refreshTrigger || refreshingRef.current) return
-
     let isMounted = true
-    refreshingRef.current = true
-    invalidateCache(FEED_CACHE_KEY)
 
-    getPosts({ page: 1, limit: PAGE_LIMIT })
-      .then((res) => {
+    async function handleRefreshFeed() {
+      if (refreshingRef.current) return
+      refreshingRef.current = true
+      invalidateCache(FEED_CACHE_KEY)
+
+      try {
+        const res = await getPosts({ page: 1, limit: PAGE_LIMIT })
         if (!isMounted) return
         const nextPosts = res.data?.posts ?? []
         const nextHasMore = Boolean(res.data?.pagination?.has_more)
@@ -55,21 +55,19 @@ export default function FeedScreen() {
         setPage(1)
         setHasMore(nextHasMore)
         setCachedData(FEED_CACHE_KEY, { posts: nextPosts, hasMore: nextHasMore })
-      })
-      .catch(() => {
+      } catch {
         // Mantiene el feed actual si falla el refresco
-      })
-      .finally(() => {
+      } finally {
         refreshingRef.current = false
-        if (isMounted) {
-          navigate('/', { replace: true, state: null })
-        }
-      })
+      }
+    }
 
+    window.addEventListener('loop:feed-refresh', handleRefreshFeed)
     return () => {
       isMounted = false
+      window.removeEventListener('loop:feed-refresh', handleRefreshFeed)
     }
-  }, [location.state?.refreshFeed, navigate])
+  }, [])
 
   useEffect(() => {
     let isMounted = true

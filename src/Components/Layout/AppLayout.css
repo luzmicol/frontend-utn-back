@@ -148,16 +148,27 @@
 }
 
 @media (max-width: 767px) {
+  html.chat-route-active,
+  html.chat-route-active body {
+    overflow: hidden;
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
   .app-layout__main--messages {
     position: fixed;
-    top: var(--chat-viewport-offset-top, 0px);
+    top: 0;
     left: 0;
     right: 0;
-    bottom: auto;
-    height: var(--chat-viewport-height, 100dvh);
+    bottom: 0;
+    height: auto;
+    overscroll-behavior: none;
   }
 
   html.chat-keyboard-open .app-layout__main--messages {
+    top: var(--chat-viewport-offset-top, 0px);
+    bottom: auto;
+    height: var(--chat-viewport-height, 100dvh);
     padding-top: env(safe-area-inset-top);
     padding-bottom: 0;
   }
