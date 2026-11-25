@@ -165,6 +165,10 @@
     overscroll-behavior: none;
   }
 
+  html.chat-keyboard-open .mobile-header {
+    top: var(--chat-viewport-offset-top, 0px);
+  }
+
   html.chat-keyboard-open .app-layout__main--messages {
     top: var(--chat-viewport-offset-top, 0px);
     bottom: auto;

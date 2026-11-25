@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
 import {
   acceptConversationRequest,
+  clearActiveConversation,
   deleteConversationRequest,
   deleteMessage,
   getConversationMessages,
@@ -147,26 +148,49 @@ export default function ConversationView({
     root.classList.add('chat-route-active')
 
     const vv = window.visualViewport
-    if (!vv) {
-      return () => {
-        root.classList.remove('chat-route-active')
-        root.classList.remove('chat-keyboard-open')
-      }
-    }
-
     let rafId = null
+    let baselineHeight = Math.max(window.innerHeight, vv ? vv.height : 0)
+    let wasKeyboardOpen = false
+
+    function isComposerFocused() {
+      return Boolean(inputRef.current && document.activeElement === inputRef.current)
+    }
 
     function applyViewport() {
       rafId = null
-      const keyboardOpen = window.innerHeight - vv.height > 100
+      const focused = isComposerFocused()
+      const currentHeight = vv ? vv.height : window.innerHeight
+      const currentOffsetTop = vv ? vv.offsetTop : 0
+
+      if (!focused && currentHeight > baselineHeight) {
+        baselineHeight = currentHeight
+      }
+
+      const heightDelta = baselineHeight - currentHeight
+      const keyboardOpen = focused || heightDelta > 100
+
       if (keyboardOpen) {
-        root.style.setProperty('--chat-viewport-height', `${Math.round(vv.height)}px`)
-        root.style.setProperty('--chat-viewport-offset-top', `${Math.round(vv.offsetTop)}px`)
+        root.style.setProperty('--chat-viewport-height', `${Math.round(currentHeight)}px`)
+        root.style.setProperty('--chat-viewport-offset-top', `${Math.round(currentOffsetTop)}px`)
       } else {
         root.style.removeProperty('--chat-viewport-height')
         root.style.removeProperty('--chat-viewport-offset-top')
       }
+
       root.classList.toggle('chat-keyboard-open', keyboardOpen)
+
+      if (keyboardOpen && !wasKeyboardOpen && listRef.current) {
+        const container = listRef.current
+        const distanceFromBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight
+        if (distanceFromBottom < 140) {
+          container.scrollTop = container.scrollHeight
+        }
+      } else if (!keyboardOpen && wasKeyboardOpen && window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
+
+      wasKeyboardOpen = keyboardOpen
     }
 
     function scheduleSync() {
@@ -174,12 +198,33 @@ export default function ConversationView({
       rafId = requestAnimationFrame(applyViewport)
     }
 
+    function handleFocusChange() {
+      scheduleSync()
+    }
+
+    function handleOrientationChange() {
+      baselineHeight = Math.max(window.innerHeight, vv ? vv.height : 0)
+      scheduleSync()
+    }
+
     applyViewport()
-    vv.addEventListener('resize', scheduleSync)
+    if (vv) {
+      vv.addEventListener('resize', scheduleSync)
+      vv.addEventListener('scroll', scheduleSync)
+    }
+    window.addEventListener('orientationchange', handleOrientationChange)
+    document.addEventListener('focusin', handleFocusChange)
+    document.addEventListener('focusout', handleFocusChange)
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId)
-      vv.removeEventListener('resize', scheduleSync)
+      if (vv) {
+        vv.removeEventListener('resize', scheduleSync)
+        vv.removeEventListener('scroll', scheduleSync)
+      }
+      window.removeEventListener('orientationchange', handleOrientationChange)
+      document.removeEventListener('focusin', handleFocusChange)
+      document.removeEventListener('focusout', handleFocusChange)
       root.style.removeProperty('--chat-viewport-height')
       root.style.removeProperty('--chat-viewport-offset-top')
       root.classList.remove('chat-keyboard-open')
@@ -384,6 +429,10 @@ export default function ConversationView({
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
         pollLatest()
+      } else {
+        clearActiveConversation().catch(() => {
+          // Silencioso
+        })
       }
     }
 
@@ -395,6 +444,15 @@ export default function ConversationView({
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [conversation?._id, currentUser?._id, setUnreadMessagesCount, onConversationRead])
+
+  // Limpia la conversacion activa al cerrar el chat o navegar a otra seccion
+  useEffect(() => {
+    return () => {
+      clearActiveConversation().catch(() => {
+        // Silencioso
+      })
+    }
+  }, [])
 
   async function handleLoadPrevious() {
     const conversationId = conversation?._id

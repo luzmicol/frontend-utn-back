@@ -159,3 +159,9 @@ export async function leaveGroupConversation(conversation_id) {
   invalidateCache('messages:')
   return response
 }
+
+export async function clearActiveConversation() {
+  return apiRequest('/api/conversations/active', {
+    method: 'DELETE'
+  })
+}
