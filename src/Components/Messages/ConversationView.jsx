@@ -417,12 +417,7 @@ export default function ConversationView({
         </button>
 
         {isGroup ? (
-          <button
-            type='button'
-            className='chat-view__group-header-btn'
-            onClick={() => setShowGroupInfo(true)}
-            aria-label='Ver informacion del grupo'
-          >
+          <div className='chat-view__group-header'>
             {conversation.imagen_url ? (
               <Avatar name={conversation.nombre || 'Grupo'} avatarUrl={conversation.imagen_url} size='sm' />
             ) : (
@@ -430,14 +425,25 @@ export default function ConversationView({
                 <Users size={18} />
               </span>
             )}
-            <div className='chat-view__user-meta'>
+            <div className='chat-view__group-meta'>
               <span className='chat-view__name'>{conversation.nombre || 'Grupo'}</span>
-              <span className='chat-view__username'>
-                {conversation.participantes?.length || 0} integrantes · Toca para ver info
+              <span className='chat-view__group-members'>
+                {(conversation.participantes || [])
+                  .map((p) => p?.nombre)
+                  .filter(Boolean)
+                  .join(', ')}
               </span>
             </div>
-            <Info size={18} className='chat-view__group-info-icon' aria-hidden='true' />
-          </button>
+            <button
+              type='button'
+              className='chat-view__group-info-btn'
+              onClick={() => setShowGroupInfo(true)}
+              aria-label='Ver informacion del grupo'
+              title='Informacion del grupo'
+            >
+              <Info size={18} strokeWidth={2} />
+            </button>
+          </div>
         ) : otherUser && (
           <Link to={`/users/${otherUser._id}`} className='chat-view__user'>
             <Avatar name={otherUser.nombre} avatarUrl={otherUser.avatar_url} size='sm' />
