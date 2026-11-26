@@ -4,6 +4,8 @@ import { Bell, LogOut, Menu, PenSquare, Settings, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
+import { PostViewerProvider } from '../../context/PostViewerContext'
+import PostViewerModal from '../Post/PostViewerModal'
 import Sidebar from './Sidebar'
 import { NAV_ITEMS } from './navItems'
 import LogoutConfirmModal from './LogoutConfirmModal'
@@ -52,6 +54,7 @@ export default function AppLayout() {
   }
 
   return (
+    <PostViewerProvider>
     <div className='app-layout'>
       <Sidebar
         onLogoutRequest={() => setShowLogoutModal(true)}
@@ -193,6 +196,9 @@ export default function AppLayout() {
         onCancel={() => setShowLogoutModal(false)}
         onConfirm={handleConfirmLogout}
       />
+
+      <PostViewerModal />
     </div>
+    </PostViewerProvider>
   )
 }

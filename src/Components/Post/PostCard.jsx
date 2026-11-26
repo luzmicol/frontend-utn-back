@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff, Send } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { usePostViewer } from '../../context/PostViewerContext'
 import { updatePost, deletePost } from '../../services/postService'
 import { preparePostImageFile } from '../../utils/imageOptimizer'
 import Alert from '../Alert/Alert'
@@ -41,6 +42,7 @@ export default function PostCard({
   defaultShowComments = false
 }) {
   const { user } = useAuth()
+  const postViewer = usePostViewer()
   const isAuthor = Boolean(user?._id && post.fk_id_usuario?._id === user._id)
 
   const [isEditing, setIsEditing] = useState(false)
@@ -347,14 +349,27 @@ export default function PostCard({
                   <span>No se pudo cargar la imagen</span>
                 </div>
               ) : (
-                <img
-                  src={post.imagen_url}
-                  alt='Imagen de la publicacion'
-                  className='post-card__image'
-                  loading='lazy'
-                  decoding='async'
-                  onError={() => setFailedImageUrl(post.imagen_url)}
-                />
+                <button
+                  type='button'
+                  className='post-card__media-btn'
+                  onClick={() =>
+                    postViewer?.openPostViewer({
+                      post,
+                      onPostUpdated,
+                      onPostDeleted
+                    })
+                  }
+                  aria-label='Ver imagen en grande'
+                >
+                  <img
+                    src={post.imagen_url}
+                    alt='Imagen de la publicacion'
+                    className='post-card__image'
+                    loading='lazy'
+                    decoding='async'
+                    onError={() => setFailedImageUrl(post.imagen_url)}
+                  />
+                </button>
               )}
             </div>
           )}

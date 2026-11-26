@@ -38,6 +38,18 @@
   color: var(--primary-soft);
 }
 
+@media (max-width: 360px) {
+  .explore-tabs {
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .explore-tab {
+    font-size: 0.72rem;
+    padding: 8px 2px;
+  }
+}
+
 @media (min-width: 560px) {
   .explore-tab {
     font-size: 0.88rem;

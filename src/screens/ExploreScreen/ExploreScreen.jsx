@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { followUser, getUsers, unfollowUser } from '../../services/userService'
 import { getTrendingPosts } from '../../services/exploreService'
 import { getCommunities, getMyCommunities, joinCommunity } from '../../services/communityService'
+import { invalidateCache } from '../../utils/memoryCache'
 import PostCard from '../../Components/Post/PostCard'
 import Avatar from '../../Components/UI/Avatar'
 import Alert from '../../Components/Alert/Alert'
@@ -74,6 +75,8 @@ export default function ExploreScreen() {
   const [peopleLoadingMore, setPeopleLoadingMore] = useState(false)
   const [peopleError, setPeopleError] = useState(null)
   const peopleLoadedQueryRef = useRef(null)
+  const latestPeopleQueryRef = useRef('')
+  const peopleRequestIdRef = useRef(0)
 
   // Estado de "Comunidades"
   const [communities, setCommunities] = useState([])
@@ -153,7 +156,9 @@ export default function ExploreScreen() {
   // Debounce de busqueda en Personas
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedPeopleQuery(peopleQuery.trim())
+      const next = peopleQuery.trim()
+      latestPeopleQueryRef.current = next
+      setDebouncedPeopleQuery(next)
     }, 300)
     return () => clearTimeout(timer)
   }, [peopleQuery])
@@ -251,6 +256,8 @@ export default function ExploreScreen() {
     if (activeTab !== 'people') return
     if (peopleLoadedQueryRef.current === debouncedPeopleQuery) return
     let isMounted = true
+    const reqId = ++peopleRequestIdRef.current
+    const requestQuery = debouncedPeopleQuery
 
     async function loadPeople() {
       try {
@@ -259,9 +266,9 @@ export default function ExploreScreen() {
         const res = await getUsers({
           page: 1,
           limit: PEOPLE_PAGE_LIMIT,
-          q: debouncedPeopleQuery
+          q: requestQuery
         })
-        if (!isMounted) return
+        if (!isMounted || peopleRequestIdRef.current !== reqId) return
 
         const list = (res.data?.users ?? []).filter(
           (u) => String(u._id) !== String(currentUserId)
@@ -269,13 +276,15 @@ export default function ExploreScreen() {
         setPeople(list)
         setPeoplePage(1)
         setPeopleHasMore(Boolean(res.data?.pagination?.has_more))
-        peopleLoadedQueryRef.current = debouncedPeopleQuery
+        peopleLoadedQueryRef.current = requestQuery
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && peopleRequestIdRef.current === reqId) {
           setPeopleError(err.message || 'No se pudieron cargar las personas.')
         }
       } finally {
-        if (isMounted) setPeopleLoading(false)
+        if (isMounted && peopleRequestIdRef.current === reqId) {
+          setPeopleLoading(false)
+        }
       }
     }
 
@@ -335,13 +344,21 @@ export default function ExploreScreen() {
   async function handleLoadMorePeople() {
     if (peopleLoadingMore || !peopleHasMore) return
     const nextPage = peoplePage + 1
+    const requestQuery = debouncedPeopleQuery
+    const reqId = ++peopleRequestIdRef.current
     try {
       setPeopleLoadingMore(true)
       const res = await getUsers({
         page: nextPage,
         limit: PEOPLE_PAGE_LIMIT,
-        q: debouncedPeopleQuery
+        q: requestQuery
       })
+      if (
+        peopleRequestIdRef.current !== reqId ||
+        latestPeopleQueryRef.current !== requestQuery
+      ) {
+        return
+      }
       const incoming = (res.data?.users ?? []).filter(
         (u) => String(u._id) !== String(currentUserId)
       )
@@ -349,9 +366,16 @@ export default function ExploreScreen() {
       setPeoplePage(nextPage)
       setPeopleHasMore(Boolean(res.data?.pagination?.has_more))
     } catch (err) {
-      setPeopleError(err.message || 'No se pudieron cargar más personas.')
+      if (
+        peopleRequestIdRef.current === reqId &&
+        latestPeopleQueryRef.current === requestQuery
+      ) {
+        setPeopleError(err.message || 'No se pudieron cargar más personas.')
+      }
     } finally {
-      setPeopleLoadingMore(false)
+      if (peopleRequestIdRef.current === reqId) {
+        setPeopleLoadingMore(false)
+      }
     }
   }
 
@@ -374,6 +398,9 @@ export default function ExploreScreen() {
 
       setPeople(updateList)
       setForYouPeople(updateList)
+      if (currentUserId) {
+        invalidateCache(`suggestions:following:${currentUserId}`)
+      }
     } catch {
       // Mantiene estado anterior si falla
     } finally {
@@ -393,6 +420,7 @@ export default function ExploreScreen() {
     try {
       await joinCommunity(id)
       setMyCommunityIds((prev) => new Set(prev).add(id))
+      invalidateCache('communities:me')
     } catch {
       // Mantiene estado anterior si falla
     } finally {

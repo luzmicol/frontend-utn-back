@@ -281,6 +281,20 @@
   background-color: var(--surface-elevated);
 }
 
+.post-card__media-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.post-card__media-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
 .post-card__image {
   width: 100%;
   max-height: 520px;
