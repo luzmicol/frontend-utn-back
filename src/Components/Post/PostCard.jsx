@@ -19,6 +19,19 @@ import CommentSection from './CommentSection'
 import './PostCard.css'
 
 const MAX_LENGTH = 2000
+const MAX_ORIGINAL_IMAGE_BYTES = 15 * 1024 * 1024
+const LONG_POST_TRUNCATE_LIMIT = 380
+
+function truncatePreservingWords(text, limit = LONG_POST_TRUNCATE_LIMIT) {
+  if (!text || text.length <= limit) return text
+  let cut = text.slice(0, limit)
+  // Evita cortar en medio de una palabra, mencion (@usuario), hashtag o enlace
+  const lastBreak = Math.max(cut.lastIndexOf(' '), cut.lastIndexOf('\n'))
+  if (lastBreak > Math.floor(limit * 0.6)) {
+    cut = cut.slice(0, lastBreak)
+  }
+  return `${cut.trimEnd()}…`
+}
 
 function formatDate(dateString) {
   if (!dateString) return ''
@@ -62,7 +75,18 @@ export default function PostCard({
   }, [editPreviewUrl])
   const [showComments, setShowComments] = useState(defaultShowComments)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [commentsCount, setCommentsCount] = useState(null)
+  const [isExpanded, setIsExpanded] = useState(defaultShowComments)
+  const [prevPostCommentsCount, setPrevPostCommentsCount] = useState(post.comments_count ?? null)
+  const [commentsCount, setCommentsCount] = useState(post.comments_count ?? null)
+
+  if (
+    post.comments_count !== undefined &&
+    post.comments_count !== null &&
+    post.comments_count !== prevPostCommentsCount
+  ) {
+    setPrevPostCommentsCount(post.comments_count)
+    setCommentsCount(post.comments_count)
+  }
   const [repostInfo, setRepostInfo] = useState({
     reposts_count: post.reposts_count ?? 0,
     reposted_by_me: Boolean(post.reposted_by_me),
@@ -123,8 +147,8 @@ export default function PostCard({
       event.target.value = ''
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setActionError('La imagen no puede superar los 5 MB.')
+    if (file.size > MAX_ORIGINAL_IMAGE_BYTES) {
+      setActionError('La imagen original no puede superar los 15 MB.')
       event.target.value = ''
       return
     }
@@ -157,7 +181,7 @@ export default function PostCard({
     const willHaveImage = Boolean(editImageFile) || (Boolean(post.imagen_url) && !removeImagePending)
 
     if (!trimmed && !willHaveImage) {
-      setActionError('La publicacion debe tener texto o una imagen.')
+      setActionError('La publicación debe tener texto o una imagen.')
       return
     }
 
@@ -379,9 +403,32 @@ export default function PostCard({
       ) : (
         <>
           {post.contenido && (
-            <p className='post-card__content'>
-              <RichTextWithMentions text={post.contenido} mentions={post.menciones} />
-            </p>
+            <div className='post-card__content-wrap'>
+              <p className='post-card__content'>
+                <RichTextWithMentions
+                  text={
+                    !defaultShowComments &&
+                    !isExpanded &&
+                    post.contenido.length > LONG_POST_TRUNCATE_LIMIT
+                      ? truncatePreservingWords(post.contenido, LONG_POST_TRUNCATE_LIMIT)
+                      : post.contenido
+                  }
+                  mentions={post.menciones}
+                />
+              </p>
+              {!defaultShowComments && post.contenido.length > LONG_POST_TRUNCATE_LIMIT && (
+                <button
+                  type='button'
+                  className='post-card__expand-btn'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsExpanded((prev) => !prev)
+                  }}
+                >
+                  {isExpanded ? 'Ver menos' : 'Ver más'}
+                </button>
+              )}
+            </div>
           )}
           {post.imagen_url && (
             <div className='post-card__image-wrap'>
@@ -408,7 +455,7 @@ export default function PostCard({
       {confirmDelete && (
         <div className='post-card__confirm'>
           <span className='post-card__confirm-text'>
-            ¿Seguro que queres eliminar esta publicacion?
+            ¿Seguro que querés eliminar esta publicación?
           </span>
           <div className='post-card__confirm-buttons'>
             <button

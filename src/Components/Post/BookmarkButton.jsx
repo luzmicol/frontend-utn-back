@@ -6,6 +6,7 @@ export default function BookmarkButton({
   postId,
   initialBookmarked = false,
   onUnbookmarked,
+  onBookmarkChange,
   onError
 }) {
   const [prevInitial, setPrevInitial] = useState(Boolean(initialBookmarked))
@@ -38,6 +39,9 @@ export default function BookmarkButton({
           : nextBookmarked
 
       setBookmarked(finalBookmarked)
+      if (onBookmarkChange) {
+        onBookmarkChange({ is_bookmarked: finalBookmarked })
+      }
 
       if (!finalBookmarked && onUnbookmarked) {
         onUnbookmarked(postId)

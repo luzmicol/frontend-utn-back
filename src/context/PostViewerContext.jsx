@@ -79,6 +79,27 @@ export function PostViewerProvider({ children }) {
     })
   }, [])
 
+  const updateViewerPost = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') return
+    setViewerState((prev) => {
+      if (!prev?.post) return prev
+      const updatedPost = { ...prev.post, ...patch }
+      const nextPosts = prev.posts
+        ? prev.posts.map((item) =>
+            String(item._id) === String(updatedPost._id) ? updatedPost : item
+          )
+        : null
+      if (prev.onPostUpdated) {
+        prev.onPostUpdated(updatedPost)
+      }
+      return {
+        ...prev,
+        post: updatedPost,
+        posts: nextPosts
+      }
+    })
+  }, [])
+
   // Si el usuario navega a otra ruta (ej. perfil o comunidad), el visor se cierra automaticamente
   const activeViewerState =
     viewerState && viewerState.openedRoute === currentRoute ? viewerState : null
@@ -103,7 +124,8 @@ export function PostViewerProvider({ children }) {
         closePostViewer,
         goPrev,
         goNext,
-        removePostFromViewer
+        removePostFromViewer,
+        updateViewerPost
       }}
     >
       {children}

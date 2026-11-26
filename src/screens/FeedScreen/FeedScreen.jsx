@@ -35,6 +35,7 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(() => !initialCache)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
+  const [feedActionError, setFeedActionError] = useState(null)
   const [highlightedPostId, setHighlightedPostId] = useState(null)
   const refreshingRef = useRef(false)
 
@@ -46,6 +47,7 @@ export default function FeedScreen() {
       refreshingRef.current = true
       invalidateCache(FEED_CACHE_KEY)
       setError(null)
+      setFeedActionError(null)
 
       try {
         const res = await getPosts({ page: 1, limit: PAGE_LIMIT, fresh: true })
@@ -56,8 +58,12 @@ export default function FeedScreen() {
         setPage(1)
         setHasMore(nextHasMore)
         setCachedData(FEED_CACHE_KEY, { posts: nextPosts, hasMore: nextHasMore })
-      } catch {
-        // Mantiene el feed actual si falla el refresco
+      } catch (err) {
+        if (isMounted) {
+          setFeedActionError(
+            err.message || 'No se pudo actualizar el Feed. Intentá nuevamente.'
+          )
+        }
       } finally {
         refreshingRef.current = false
       }
@@ -115,6 +121,7 @@ export default function FeedScreen() {
 
     try {
       setLoadingMore(true)
+      setFeedActionError(null)
       const nextPage = page + 1
       const response = await getPosts({ page: nextPage, limit: PAGE_LIMIT })
       const incoming = response.data?.posts ?? []
@@ -122,7 +129,9 @@ export default function FeedScreen() {
       setPage(nextPage)
       setHasMore(Boolean(response.data?.pagination?.has_more))
     } catch (err) {
-      setError(err.message || 'No se pudieron cargar mas publicaciones.')
+      setFeedActionError(
+        err.message || 'No se pudieron cargar más publicaciones. Intentá nuevamente.'
+      )
     } finally {
       setLoadingMore(false)
     }
@@ -201,6 +210,10 @@ export default function FeedScreen() {
 
       {!loading && error && <Alert variant='error'>{error}</Alert>}
 
+      {!loading && !error && feedActionError && (
+        <Alert variant='error'>{feedActionError}</Alert>
+      )}
+
       {!loading && !error && posts.length === 0 && (
         <div className='loop-empty'>
           <span className='loop-empty__icon' aria-hidden='true'>
@@ -241,7 +254,7 @@ export default function FeedScreen() {
                 onClick={handleLoadMore}
                 disabled={loadingMore}
               >
-                {loadingMore ? 'Cargando...' : 'Cargar mas publicaciones'}
+                {loadingMore ? 'Cargando...' : 'Cargar más publicaciones'}
               </button>
             </div>
           )}

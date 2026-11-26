@@ -2,11 +2,30 @@ import { useEffect, useState } from 'react'
 import { Heart } from 'lucide-react'
 import { getPostLikes, likePost, unlikePost } from '../../services/postService'
 
-export default function LikeButton({ postId, initialLikesCount, initialLikedByMe, onError }) {
+export default function LikeButton({
+  postId,
+  initialLikesCount,
+  initialLikedByMe,
+  onLikeChange,
+  onError
+}) {
   const hasInitialData = initialLikesCount !== undefined
+  const [prevInitial, setPrevInitial] = useState({
+    count: initialLikesCount,
+    liked: initialLikedByMe
+  })
   const [likesCount, setLikesCount] = useState(initialLikesCount ?? 0)
   const [likedByMe, setLikedByMe] = useState(Boolean(initialLikedByMe))
   const [busy, setBusy] = useState(false)
+
+  if (
+    hasInitialData &&
+    (initialLikesCount !== prevInitial.count || initialLikedByMe !== prevInitial.liked)
+  ) {
+    setPrevInitial({ count: initialLikesCount, liked: initialLikedByMe })
+    setLikesCount(initialLikesCount ?? 0)
+    setLikedByMe(Boolean(initialLikedByMe))
+  }
 
   useEffect(() => {
     if (hasInitialData) return
@@ -48,8 +67,13 @@ export default function LikeButton({ postId, initialLikesCount, initialLikedByMe
     try {
       const response = nextLiked ? await likePost(postId) : await unlikePost(postId)
       if (response.data) {
-        setLikesCount(response.data.likes_count ?? nextCount)
-        setLikedByMe(Boolean(response.data.liked_by_me))
+        const finalCount = response.data.likes_count ?? nextCount
+        const finalLiked = Boolean(response.data.liked_by_me)
+        setLikesCount(finalCount)
+        setLikedByMe(finalLiked)
+        if (onLikeChange) {
+          onLikeChange({ likes_count: finalCount, liked_by_me: finalLiked })
+        }
       }
     } catch (err) {
       setLikedByMe(prevLiked)

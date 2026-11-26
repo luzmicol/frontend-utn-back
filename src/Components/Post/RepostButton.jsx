@@ -13,9 +13,22 @@ export default function RepostButton({
 }) {
   const { user: currentUser } = useAuth()
   const hasInitialData = initialRepostsCount !== undefined
+  const [prevInitial, setPrevInitial] = useState({
+    count: initialRepostsCount,
+    reposted: initialRepostedByMe
+  })
   const [repostsCount, setRepostsCount] = useState(initialRepostsCount ?? 0)
   const [repostedByMe, setRepostedByMe] = useState(Boolean(initialRepostedByMe))
   const [busy, setBusy] = useState(false)
+
+  if (
+    hasInitialData &&
+    (initialRepostsCount !== prevInitial.count || initialRepostedByMe !== prevInitial.reposted)
+  ) {
+    setPrevInitial({ count: initialRepostsCount, reposted: initialRepostedByMe })
+    setRepostsCount(initialRepostsCount ?? 0)
+    setRepostedByMe(Boolean(initialRepostedByMe))
+  }
 
   useEffect(() => {
     if (hasInitialData) return

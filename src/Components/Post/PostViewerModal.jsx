@@ -31,6 +31,7 @@ export default function PostViewerModal() {
   const closePostViewer = viewer?.closePostViewer
   const goPrev = viewer?.goPrev
   const goNext = viewer?.goNext
+  const updateViewerPost = viewer?.updateViewerPost
   const hasList = Boolean(viewer?.hasList)
   const hasPrev = Boolean(viewer?.hasPrev)
   const hasNext = Boolean(viewer?.hasNext)
@@ -216,6 +217,7 @@ export default function PostViewerModal() {
                 postId={post._id}
                 initialLikesCount={post.likes_count}
                 initialLikedByMe={post.liked_by_me}
+                onLikeChange={(patch) => updateViewerPost?.(patch)}
                 onError={setActionError}
               />
               <RepostButton
@@ -224,6 +226,7 @@ export default function PostViewerModal() {
                 initialRepostsCount={post.reposts_count}
                 initialRepostedByMe={post.reposted_by_me}
                 initialLatestRepostBy={post.latest_repost_by}
+                onRepostInfoChange={(info) => updateViewerPost?.(info)}
                 onError={setActionError}
               />
               <span
@@ -238,6 +241,7 @@ export default function PostViewerModal() {
                 key={`bookmark-${post._id}`}
                 postId={post._id}
                 initialBookmarked={post.is_bookmarked}
+                onBookmarkChange={(patch) => updateViewerPost?.(patch)}
                 onError={setActionError}
               />
             </div>
@@ -246,7 +250,10 @@ export default function PostViewerModal() {
               <CommentSection
                 key={`comments-${post._id}`}
                 postId={post._id}
-                onCountChange={setCommentsCount}
+                onCountChange={(count) => {
+                  setCommentsCount(count)
+                  updateViewerPost?.({ comments_count: count })
+                }}
               />
             </div>
           </div>

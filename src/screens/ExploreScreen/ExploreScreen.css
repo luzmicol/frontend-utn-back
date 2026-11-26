@@ -307,3 +307,28 @@
   font-size: 0.88rem;
   color: var(--text-muted);
 }
+
+.explore-error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.explore-retry-btn {
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.explore-retry-btn:hover {
+  border-color: var(--primary);
+  background-color: var(--surface-elevated);
+}

@@ -89,7 +89,21 @@ export default function ExploreScreen() {
   // Acciones en curso (seguir / unirse)
   const [busyFollowIds, setBusyFollowIds] = useState(() => new Set())
   const [busyJoinIds, setBusyJoinIds] = useState(() => new Set())
+  const [retryTick, setRetryTick] = useState({
+    for_you: 0,
+    trending: 0,
+    people: 0,
+    communities: 0
+  })
   const swipeStartRef = useRef(null)
+
+  function handleRetryTab(tabId) {
+    if (tabId === 'for_you') forYouLoadedRef.current = false
+    if (tabId === 'trending') trendingLoadedRef.current = false
+    if (tabId === 'people') peopleLoadedQueryRef.current = null
+    if (tabId === 'communities') communitiesLoadedRef.current = false
+    setRetryTick((prev) => ({ ...prev, [tabId]: prev[tabId] + 1 }))
+  }
 
   function handleSwipeTouchStart(event) {
     if (typeof window === 'undefined' || !window.matchMedia('(max-width: 767px)').matches) {
@@ -218,7 +232,7 @@ export default function ExploreScreen() {
     return () => {
       isMounted = false
     }
-  }, [activeTab, currentUserId])
+  }, [activeTab, currentUserId, retryTick.for_you])
 
   // Carga de "Tendencias"
   useEffect(() => {
@@ -249,7 +263,7 @@ export default function ExploreScreen() {
     return () => {
       isMounted = false
     }
-  }, [activeTab])
+  }, [activeTab, retryTick.trending])
 
   // Carga de "Personas" (paginada y con busqueda en backend)
   useEffect(() => {
@@ -292,7 +306,7 @@ export default function ExploreScreen() {
     return () => {
       isMounted = false
     }
-  }, [activeTab, debouncedPeopleQuery, currentUserId])
+  }, [activeTab, debouncedPeopleQuery, currentUserId, retryTick.people])
 
   // Carga de "Comunidades" si aun no se cargo
   useEffect(() => {
@@ -322,7 +336,7 @@ export default function ExploreScreen() {
     return () => {
       isMounted = false
     }
-  }, [activeTab])
+  }, [activeTab, retryTick.communities])
 
   async function handleLoadMoreTrending() {
     if (trendingLoadingMore || !trendingHasMore) return
@@ -419,7 +433,14 @@ export default function ExploreScreen() {
     setBusyJoinIds((prev) => new Set(prev).add(id))
     try {
       await joinCommunity(id)
-      setMyCommunityIds((prev) => new Set(prev).add(id))
+      const nextMySet = new Set(myCommunityIds)
+      nextMySet.add(id)
+      setMyCommunityIds(nextMySet)
+      setForYouCommunities(
+        communities
+          .filter((c) => !nextMySet.has(String(c._id)))
+          .slice(0, FOR_YOU_COMMUNITIES_LIMIT)
+      )
       invalidateCache('communities:me')
     } catch {
       // Mantiene estado anterior si falla
@@ -564,7 +585,18 @@ export default function ExploreScreen() {
             </div>
           )}
 
-          {!forYouLoading && forYouError && <Alert variant='error'>{forYouError}</Alert>}
+          {!forYouLoading && forYouError && (
+            <div className='explore-error-box'>
+              <Alert variant='error'>{forYouError}</Alert>
+              <button
+                type='button'
+                className='explore-retry-btn'
+                onClick={() => handleRetryTab('for_you')}
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
 
           {!forYouLoading && !forYouError && (
             <>
@@ -660,7 +692,18 @@ export default function ExploreScreen() {
             </div>
           )}
 
-          {!trendingLoading && trendingError && <Alert variant='error'>{trendingError}</Alert>}
+          {!trendingLoading && trendingError && (
+            <div className='explore-error-box'>
+              <Alert variant='error'>{trendingError}</Alert>
+              <button
+                type='button'
+                className='explore-retry-btn'
+                onClick={() => handleRetryTab('trending')}
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
 
           {!trendingLoading && !trendingError && trendingPosts.length === 0 && (
             <div className='loop-empty'>
@@ -724,7 +767,18 @@ export default function ExploreScreen() {
             </div>
           )}
 
-          {!peopleLoading && peopleError && <Alert variant='error'>{peopleError}</Alert>}
+          {!peopleLoading && peopleError && (
+            <div className='explore-error-box'>
+              <Alert variant='error'>{peopleError}</Alert>
+              <button
+                type='button'
+                className='explore-retry-btn'
+                onClick={() => handleRetryTab('people')}
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
 
           {!peopleLoading && !peopleError && people.length === 0 && (
             <div className='explore-empty'>
@@ -776,7 +830,16 @@ export default function ExploreScreen() {
           )}
 
           {!communitiesLoading && communitiesError && (
-            <Alert variant='error'>{communitiesError}</Alert>
+            <div className='explore-error-box'>
+              <Alert variant='error'>{communitiesError}</Alert>
+              <button
+                type='button'
+                className='explore-retry-btn'
+                onClick={() => handleRetryTab('communities')}
+              >
+                Reintentar
+              </button>
+            </div>
           )}
 
           {!communitiesLoading && !communitiesError && filteredCommunities.length === 0 && (

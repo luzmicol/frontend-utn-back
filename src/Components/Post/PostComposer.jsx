@@ -15,7 +15,7 @@ const MAX_ORIGINAL_BYTES = 15 * 1024 * 1024
 export default function PostComposer({
   onPostCreated,
   communityId = null,
-  placeholder = '¿Que esta pasando en LOOP?',
+  placeholder = '¿Qué está pasando en LOOP?',
   autoFocusTrigger = null
 }) {
   const textareaRef = useRef(null)
@@ -75,7 +75,7 @@ export default function PostComposer({
     event.preventDefault()
 
     if (!canSubmit) {
-      setError('Escribi un texto o adjunta una imagen antes de publicar.')
+      setError('Escribí un texto o adjuntá una imagen antes de publicar.')
       return
     }
 
