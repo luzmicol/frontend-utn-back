@@ -1,7 +1,13 @@
 import { apiRequest } from './apiClient'
 
-export async function getUsers() {
-  return await apiRequest('/api/users', {
+export async function getUsers({ page, limit, q } = {}) {
+  const params = new URLSearchParams()
+  if (page !== undefined && page !== null) params.set('page', String(page))
+  if (limit !== undefined && limit !== null) params.set('limit', String(limit))
+  if (typeof q === 'string' && q.trim()) params.set('q', q.trim())
+
+  const queryString = params.toString()
+  return await apiRequest(queryString ? `/api/users?${queryString}` : '/api/users', {
     method: 'GET'
   })
 }
