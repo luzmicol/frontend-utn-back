@@ -69,7 +69,8 @@ export default function LikeButton({ postId, initialLikesCount, initialLikedByMe
       onClick={handleToggle}
       disabled={busy}
       aria-pressed={likedByMe}
-      aria-label={likedByMe ? 'Quitar like' : 'Dar like'}
+      aria-label={likedByMe ? 'Quitar me gusta' : 'Me gusta'}
+      title={likedByMe ? 'Quitar me gusta' : 'Me gusta'}
     >
       <Heart
         size={16}

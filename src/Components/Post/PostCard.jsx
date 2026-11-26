@@ -75,6 +75,37 @@ export default function PostCard({
     setRepostInfo(info)
   }, [])
 
+  function openViewerIfAllowed(event) {
+    if (isEditing || confirmDelete || !postViewer) return
+    if (window.getSelection && window.getSelection().toString().trim()) return
+    if (
+      event.target?.closest?.(
+        'a, button, input, textarea, select, [role="button"], .comment-section, .post-card__edit-form'
+      )
+    ) {
+      return
+    }
+    postViewer.openPostViewer({
+      post,
+      onPostUpdated,
+      onPostDeleted
+    })
+  }
+
+  function handleCardKeyDown(event) {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      if (!isEditing && !confirmDelete && postViewer) {
+        postViewer.openPostViewer({
+          post,
+          onPostUpdated,
+          onPostDeleted
+        })
+      }
+    }
+  }
+
   function handleEditImageChange(event) {
     const file = event.target.files?.[0]
     setActionError(null)
@@ -172,7 +203,12 @@ export default function PostCard({
   const activeRepostLabel = repostedByLabel || feedRepostLabel
 
   return (
-    <article className='post-card'>
+    <article
+      className='post-card post-card--clickable'
+      tabIndex={isEditing ? undefined : 0}
+      onClick={openViewerIfAllowed}
+      onKeyDown={handleCardKeyDown}
+    >
       {activeRepostLabel && (
         <div className='post-card__repost-banner'>
           <Repeat2 size={14} strokeWidth={2} />
@@ -349,27 +385,14 @@ export default function PostCard({
                   <span>No se pudo cargar la imagen</span>
                 </div>
               ) : (
-                <button
-                  type='button'
-                  className='post-card__media-btn'
-                  onClick={() =>
-                    postViewer?.openPostViewer({
-                      post,
-                      onPostUpdated,
-                      onPostDeleted
-                    })
-                  }
-                  aria-label='Ver imagen en grande'
-                >
-                  <img
-                    src={post.imagen_url}
-                    alt='Imagen de la publicacion'
-                    className='post-card__image'
-                    loading='lazy'
-                    decoding='async'
-                    onError={() => setFailedImageUrl(post.imagen_url)}
-                  />
-                </button>
+                <img
+                  src={post.imagen_url}
+                  alt='Imagen de la publicacion'
+                  className='post-card__image'
+                  loading='lazy'
+                  decoding='async'
+                  onError={() => setFailedImageUrl(post.imagen_url)}
+                />
               )}
             </div>
           )}
@@ -427,20 +450,21 @@ export default function PostCard({
           className={`post-card__action-pill${showComments ? ' post-card__action-pill--active' : ''}`}
           onClick={() => setShowComments((prev) => !prev)}
           aria-expanded={showComments}
+          aria-label='Comentarios'
+          title='Comentarios'
         >
           <MessageCircle size={16} strokeWidth={2} />
-          <span>{commentsCount !== null ? `Comentarios (${commentsCount})` : 'Comentarios'}</span>
+          {commentsCount !== null && <span>{commentsCount}</span>}
         </button>
 
         <button
           type='button'
           className='post-card__action-pill'
           onClick={() => setShowShareModal(true)}
-          aria-label='Compartir publicacion'
+          aria-label='Compartir publicación'
           title='Compartir por mensaje'
         >
           <Send size={15} strokeWidth={2} />
-          <span>Compartir</span>
         </button>
 
         <BookmarkButton

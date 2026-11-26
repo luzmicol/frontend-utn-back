@@ -130,20 +130,22 @@ export default function PostViewerModal() {
           </header>
 
           <div className='post-viewer__scroll'>
-            {post.contenido && (
-              <div className='post-viewer__caption'>
-                <p className='post-viewer__text'>
-                  <RichTextWithMentions
-                    text={post.contenido}
-                    mentions={post.menciones}
-                  />
-                </p>
-              </div>
-            )}
+            <div className='post-viewer__caption-block'>
+              {post.contenido && (
+                <div className='post-viewer__caption'>
+                  <p className='post-viewer__text'>
+                    <RichTextWithMentions
+                      text={post.contenido}
+                      mentions={post.menciones}
+                    />
+                  </p>
+                </div>
+              )}
 
-            <time className='post-viewer__date' dateTime={post.fecha_creacion}>
-              {formatDate(post.fecha_creacion)}
-            </time>
+              <time className='post-viewer__date' dateTime={post.fecha_creacion}>
+                {formatDate(post.fecha_creacion)}
+              </time>
+            </div>
 
             {actionError && (
               <div className='post-viewer__error'>
@@ -165,17 +167,19 @@ export default function PostViewerModal() {
                 initialLatestRepostBy={post.latest_repost_by}
                 onError={setActionError}
               />
+              <span
+                className='post-viewer__comment-count'
+                aria-label='Comentarios'
+                title='Comentarios'
+              >
+                <MessageCircle size={15} />
+                {commentsCount !== null && <span>{commentsCount}</span>}
+              </span>
               <BookmarkButton
                 postId={post._id}
-                initialBookmarkedByMe={post.bookmarked_by_me}
+                initialBookmarked={post.is_bookmarked}
                 onError={setActionError}
               />
-              <span className='post-viewer__comment-count'>
-                <MessageCircle size={15} />
-                <span>
-                  {commentsCount !== null ? `${commentsCount} comentarios` : 'Comentarios'}
-                </span>
-              </span>
             </div>
 
             <div className='post-viewer__comments'>

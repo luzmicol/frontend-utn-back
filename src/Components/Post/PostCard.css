@@ -281,18 +281,13 @@
   background-color: var(--surface-elevated);
 }
 
-.post-card__media-btn {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: zoom-in;
+.post-card--clickable {
+  cursor: pointer;
 }
 
-.post-card__media-btn:focus-visible {
+.post-card--clickable:focus-visible {
   outline: 2px solid var(--primary);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 .post-card__image {
