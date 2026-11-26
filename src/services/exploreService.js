@@ -9,3 +9,12 @@ export async function getTrendingPosts({ page = 1, limit = 15 } = {}) {
     method: 'GET'
   })
 }
+
+export async function getForYouPosts({ limit = 5 } = {}) {
+  const params = new URLSearchParams()
+  params.set('limit', String(limit))
+
+  return await apiRequest('/api/explore/for-you?' + params.toString(), {
+    method: 'GET'
+  })
+}

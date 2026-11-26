@@ -264,6 +264,19 @@
   cursor: default;
 }
 
+.explore-action-btn--danger {
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.explore-leave-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .explore-posts {
   display: flex;
   flex-direction: column;

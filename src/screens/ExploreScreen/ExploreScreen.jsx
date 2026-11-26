@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom'
 import { Flame, Search, Sparkles, UserCheck, UserPlus, Users } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { followUser, getUsers, unfollowUser } from '../../services/userService'
-import { getTrendingPosts } from '../../services/exploreService'
-import { getCommunities, getMyCommunities, joinCommunity } from '../../services/communityService'
+import { getForYouPosts, getTrendingPosts } from '../../services/exploreService'
+import {
+  getCommunities,
+  getMyCommunities,
+  joinCommunity,
+  leaveCommunity
+} from '../../services/communityService'
 import { invalidateCache } from '../../utils/memoryCache'
 import PostCard from '../../Components/Post/PostCard'
 import Avatar from '../../Components/UI/Avatar'
@@ -86,9 +91,10 @@ export default function ExploreScreen() {
   const [communitiesError, setCommunitiesError] = useState(null)
   const communitiesLoadedRef = useRef(false)
 
-  // Acciones en curso (seguir / unirse)
+  // Acciones en curso (seguir / unirse / abandonar)
   const [busyFollowIds, setBusyFollowIds] = useState(() => new Set())
   const [busyJoinIds, setBusyJoinIds] = useState(() => new Set())
+  const [confirmLeaveCommunityId, setConfirmLeaveCommunityId] = useState(null)
   const [retryTick, setRetryTick] = useState({
     for_you: 0,
     trending: 0,
@@ -186,11 +192,11 @@ export default function ExploreScreen() {
       try {
         setForYouLoading(true)
         setForYouError(null)
-        const [usersRes, allCommsRes, myCommsRes, trendingRes] = await Promise.all([
+        const [usersRes, allCommsRes, myCommsRes, forYouPostsRes] = await Promise.all([
           getUsers({ page: 1, limit: 10 }),
           getCommunities(),
           getMyCommunities(),
-          getTrendingPosts({ page: 1, limit: FOR_YOU_POSTS_LIMIT })
+          getForYouPosts({ limit: FOR_YOU_POSTS_LIMIT })
         ])
 
         if (!isMounted) return
@@ -212,7 +218,7 @@ export default function ExploreScreen() {
 
         setForYouPeople(fallbackUsers)
         setForYouCommunities(suggestedComms)
-        setForYouPosts(trendingRes.data?.posts ?? [])
+        setForYouPosts(forYouPostsRes.data?.posts ?? [])
 
         // Aprovechamos los datos de comunidades ya descargados
         setCommunities(allComms)
@@ -442,8 +448,37 @@ export default function ExploreScreen() {
           .slice(0, FOR_YOU_COMMUNITIES_LIMIT)
       )
       invalidateCache('communities:me')
-    } catch {
-      // Mantiene estado anterior si falla
+    } catch (err) {
+      setCommunitiesError(err.message || 'No se pudo unir a la comunidad.')
+    } finally {
+      setBusyJoinIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  async function handleLeaveCommunity(communityId) {
+    const id = String(communityId)
+    if (busyJoinIds.has(id) || !myCommunityIds.has(id)) return
+
+    setBusyJoinIds((prev) => new Set(prev).add(id))
+    setCommunitiesError(null)
+    try {
+      await leaveCommunity(id)
+      const nextMySet = new Set(myCommunityIds)
+      nextMySet.delete(id)
+      setMyCommunityIds(nextMySet)
+      setConfirmLeaveCommunityId(null)
+      setForYouCommunities(
+        communities
+          .filter((c) => !nextMySet.has(String(c._id)))
+          .slice(0, FOR_YOU_COMMUNITIES_LIMIT)
+      )
+      invalidateCache('communities:me')
+    } catch (err) {
+      setCommunitiesError(err.message || 'No se pudo abandonar la comunidad.')
     } finally {
       setBusyJoinIds((prev) => {
         const next = new Set(prev)
@@ -509,7 +544,13 @@ export default function ExploreScreen() {
   function renderCommunityCard(community) {
     const id = String(community._id)
     const isMember = myCommunityIds.has(id)
+    const isOwner = Boolean(
+      currentUserId &&
+        String(community.fk_id_creador?._id || community.fk_id_creador || '') ===
+          String(currentUserId)
+    )
     const isBusy = busyJoinIds.has(id)
+    const isConfirmingLeave = confirmLeaveCommunityId === id
 
     return (
       <li key={id} className='explore-community-card'>
@@ -532,14 +573,51 @@ export default function ExploreScreen() {
             )}
           </div>
         </Link>
-        <button
-          type='button'
-          className={`explore-action-btn${isMember ? ' explore-action-btn--active' : ''}`}
-          disabled={isBusy || isMember}
-          onClick={() => handleJoinCommunity(id)}
-        >
-          <span>{isBusy ? '...' : isMember ? 'Miembro' : 'Unirse'}</span>
-        </button>
+        {isOwner ? (
+          <button
+            type='button'
+            className='explore-action-btn explore-action-btn--active'
+            disabled
+            title='Sos propietario de esta comunidad'
+          >
+            <span>Propietario</span>
+          </button>
+        ) : isConfirmingLeave ? (
+          <div className='explore-leave-confirm'>
+            <button
+              type='button'
+              className='explore-action-btn explore-action-btn--active'
+              disabled={isBusy}
+              onClick={() => setConfirmLeaveCommunityId(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              type='button'
+              className='explore-action-btn explore-action-btn--danger'
+              disabled={isBusy}
+              onClick={() => handleLeaveCommunity(id)}
+            >
+              {isBusy ? '...' : 'Salir'}
+            </button>
+          </div>
+        ) : (
+          <button
+            type='button'
+            className={`explore-action-btn${isMember ? ' explore-action-btn--active' : ''}`}
+            disabled={isBusy}
+            title={isMember ? 'Abandonar comunidad' : 'Unirse a la comunidad'}
+            onClick={() => {
+              if (isMember) {
+                setConfirmLeaveCommunityId(id)
+              } else {
+                handleJoinCommunity(id)
+              }
+            }}
+          >
+            <span>{isBusy ? '...' : isMember ? 'Miembro' : 'Unirse'}</span>
+          </button>
+        )}
       </li>
     )
   }

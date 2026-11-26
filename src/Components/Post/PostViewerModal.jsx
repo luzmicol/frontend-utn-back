@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, MessageCircle, Users, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageCircle, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { usePostViewer } from '../../context/PostViewerContext'
+import { deletePost } from '../../services/postService'
 import Avatar from '../UI/Avatar'
 import RichTextWithMentions from '../UI/RichTextWithMentions'
 import Alert from '../Alert/Alert'
@@ -32,6 +33,8 @@ export default function PostViewerModal() {
   const goPrev = viewer?.goPrev
   const goNext = viewer?.goNext
   const updateViewerPost = viewer?.updateViewerPost
+  const removePostFromViewer = viewer?.removePostFromViewer
+  const onPostDeleted = viewer?.viewerState?.onPostDeleted
   const hasList = Boolean(viewer?.hasList)
   const hasPrev = Boolean(viewer?.hasPrev)
   const hasNext = Boolean(viewer?.hasNext)
@@ -40,6 +43,8 @@ export default function PostViewerModal() {
 
   const [actionError, setActionError] = useState(null)
   const [commentsCount, setCommentsCount] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Bloquea el scroll del fondo mientras el visor esta abierto y escucha Escape / Flechas
   useEffect(() => {
@@ -76,8 +81,28 @@ export default function PostViewerModal() {
 
   const author = post.fk_id_usuario
   const authorId = author?._id
-  const authorLink = currentUser?._id === authorId ? '/profile' : `/users/${authorId}`
+  const isAuthor = Boolean(currentUser?._id && authorId && String(authorId) === String(currentUser._id))
+  const authorLink = isAuthor ? '/profile' : `/users/${authorId}`
   const hasImage = Boolean(post.imagen_url)
+  const isConfirmingDelete = confirmDeleteId === post._id
+
+  async function handleConfirmDelete() {
+    if (!isAuthor || deleting) return
+    try {
+      setDeleting(true)
+      setActionError(null)
+      await deletePost(post._id)
+      setConfirmDeleteId(null)
+      if (onPostDeleted) {
+        onPostDeleted(post._id)
+      }
+      removePostFromViewer?.(post._id)
+    } catch (err) {
+      setActionError(err.message || 'No se pudo eliminar la publicación.')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div
@@ -176,18 +201,60 @@ export default function PostViewerModal() {
               </div>
             </Link>
 
-            {post.fk_id_comunidad && (
-              <Link
-                to={`/communities/${post.fk_id_comunidad._id}`}
-                className='post-viewer__community'
-              >
-                <Users size={13} />
-                <span>{post.fk_id_comunidad.nombre}</span>
-              </Link>
-            )}
+            <div className='post-viewer__header-right'>
+              {post.fk_id_comunidad && (
+                <Link
+                  to={`/communities/${post.fk_id_comunidad._id}`}
+                  className='post-viewer__community'
+                >
+                  <Users size={13} />
+                  <span>{post.fk_id_comunidad.nombre}</span>
+                </Link>
+              )}
+              {isAuthor && (
+                <button
+                  type='button'
+                  className='post-viewer__delete-btn'
+                  onClick={() => {
+                    setActionError(null)
+                    setConfirmDeleteId((prev) => (prev === post._id ? null : post._id))
+                  }}
+                  disabled={deleting}
+                  aria-label='Eliminar publicación'
+                  title='Eliminar publicación'
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
           </header>
 
           <div className='post-viewer__scroll'>
+            {isConfirmingDelete && (
+              <div className='post-viewer__confirm'>
+                <span className='post-viewer__confirm-text'>
+                  ¿Seguro que querés eliminar esta publicación?
+                </span>
+                <div className='post-viewer__confirm-actions'>
+                  <button
+                    type='button'
+                    className='post-viewer__confirm-btn'
+                    onClick={() => setConfirmDeleteId(null)}
+                    disabled={deleting}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type='button'
+                    className='post-viewer__confirm-btn post-viewer__confirm-btn--danger'
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            )}
             <div className='post-viewer__caption-block'>
               {post.contenido && (
                 <div className='post-viewer__caption'>

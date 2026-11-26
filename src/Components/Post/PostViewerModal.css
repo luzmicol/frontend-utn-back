@@ -265,6 +265,74 @@
   color: var(--text);
 }
 
+.post-viewer__header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.post-viewer__delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.post-viewer__delete-btn:hover:not(:disabled) {
+  color: var(--error);
+  border-color: var(--error-border);
+  background-color: var(--error-bg);
+}
+
+.post-viewer__confirm {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 8px 16px 0;
+  border-radius: 10px;
+  border: 1px solid var(--error-border);
+  background-color: var(--surface-elevated);
+}
+
+.post-viewer__confirm-text {
+  font-size: 0.84rem;
+  color: var(--text);
+}
+
+.post-viewer__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.post-viewer__confirm-btn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.post-viewer__confirm-btn--danger {
+  border-color: var(--error-border);
+  background-color: var(--error-bg);
+  color: var(--error);
+}
+
 .post-viewer__scroll {
   display: contents;
 }
