@@ -78,7 +78,17 @@ function LoginScreen() {
           Olvidé mi contraseña
         </Link>
         {validationError && <Alert variant='error'>{validationError}</Alert>}
-        {!validationError && error && !loading && <Alert variant='error'>{error}</Alert>}
+        {!validationError && error && !loading && (
+          <Alert variant='error'>
+            {error}
+            {/verific/i.test(error) && (
+              <>
+                {' '}
+                <Link to='/resend-email-verification'>Reenviar correo de verificación</Link>.
+              </>
+            )}
+          </Alert>
+        )}
         {response && !loading && (
           <Alert variant='success'>Inicio de sesión exitoso</Alert>
         )}
