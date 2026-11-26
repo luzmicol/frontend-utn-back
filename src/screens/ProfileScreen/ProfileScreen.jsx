@@ -936,10 +936,12 @@ export default function ProfileScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {posts.map((post) => (
+                {posts.map((post, idx) => (
                   <PostCard
                     key={`post-${post._id}`}
                     post={post}
+                    viewerPosts={posts}
+                    viewerIndex={idx}
                     onPostUpdated={handlePostUpdated}
                     onPostDeleted={handlePostDeleted}
                   />
@@ -978,10 +980,12 @@ export default function ProfileScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {reposts.map((item) => (
+                {reposts.map((item, idx) => (
                   <PostCard
                     key={`repost-${item._id}`}
                     post={item.post}
+                    viewerPosts={reposts.map((r) => r.post).filter(Boolean)}
+                    viewerIndex={idx}
                     repostedByLabel={
                       item.fecha_repost
                         ? `Reposteado por ${profile.nombre} · ${formatRepostDate(item.fecha_repost)}`
@@ -1014,10 +1018,12 @@ export default function ProfileScreen() {
               </div>
             ) : (
               <div className='loop-page'>
-                {bookmarks.map((item) => (
+                {bookmarks.map((item, idx) => (
                   <PostCard
                     key={`bookmark-${item._id}`}
                     post={item.post}
+                    viewerPosts={bookmarks.map((b) => b.post).filter(Boolean)}
+                    viewerIndex={idx}
                     onUnbookmarked={handleUnbookmarkedFromProfile}
                     onPostUpdated={handlePostUpdated}
                     onPostDeleted={handlePostDeleted}

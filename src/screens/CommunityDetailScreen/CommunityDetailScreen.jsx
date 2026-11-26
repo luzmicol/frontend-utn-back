@@ -613,7 +613,7 @@ export default function CommunityDetailScreen() {
                     : posts
                   const orderedPosts = pinnedPost ? [pinnedPost, ...regularPosts] : regularPosts
 
-                  return orderedPosts.map((post) => {
+                  return orderedPosts.map((post, idx) => {
                     const isPinned = Boolean(pinnedId && String(post._id) === pinnedId)
                     const isBusy = pinBusyId === post._id
                     return (
@@ -669,6 +669,8 @@ export default function CommunityDetailScreen() {
 
                         <PostCard
                           post={post}
+                          viewerPosts={orderedPosts}
+                          viewerIndex={idx}
                           onPostUpdated={handlePostUpdated}
                           onPostDeleted={(deletedId) => {
                             handlePostDeleted(deletedId)

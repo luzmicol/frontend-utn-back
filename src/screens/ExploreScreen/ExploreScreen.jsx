@@ -631,10 +631,12 @@ export default function ExploreScreen() {
                         </button>
                       </div>
                       <div className='explore-posts'>
-                        {forYouPosts.map((post) => (
+                        {forYouPosts.map((post, idx) => (
                           <PostCard
                             key={post._id}
                             post={post}
+                            viewerPosts={forYouPosts}
+                            viewerIndex={idx}
                             onPostUpdated={handlePostUpdated}
                             onPostDeleted={handlePostDeleted}
                           />
@@ -675,10 +677,12 @@ export default function ExploreScreen() {
           {!trendingLoading && trendingPosts.length > 0 && (
             <>
               <div className='explore-posts'>
-                {trendingPosts.map((post) => (
+                {trendingPosts.map((post, idx) => (
                   <PostCard
                     key={post._id}
                     post={post}
+                    viewerPosts={trendingPosts}
+                    viewerIndex={idx}
                     onPostUpdated={handlePostUpdated}
                     onPostDeleted={handlePostDeleted}
                   />

@@ -215,7 +215,7 @@ export default function FeedScreen() {
 
       {!loading && !error && posts.length > 0 && (
         <div className='loop-page'>
-          {posts.map((post) => (
+          {posts.map((post, idx) => (
             <div
               key={post._id}
               id={`post-${post._id}`}
@@ -225,6 +225,8 @@ export default function FeedScreen() {
             >
               <PostCard
                 post={post}
+                viewerPosts={posts}
+                viewerIndex={idx}
                 onPostUpdated={handlePostUpdated}
                 onPostDeleted={handlePostDeleted}
               />

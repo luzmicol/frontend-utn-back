@@ -39,7 +39,9 @@ export default function PostCard({
   repostedByLabel = null,
   onUnreposted = null,
   onUnbookmarked = null,
-  defaultShowComments = false
+  defaultShowComments = false,
+  viewerPosts = null,
+  viewerIndex = null
 }) {
   const { user } = useAuth()
   const postViewer = usePostViewer()
@@ -87,6 +89,8 @@ export default function PostCard({
     }
     postViewer.openPostViewer({
       post,
+      posts: viewerPosts,
+      index: viewerIndex,
       onPostUpdated,
       onPostDeleted
     })
@@ -99,6 +103,8 @@ export default function PostCard({
       if (!isEditing && !confirmDelete && postViewer) {
         postViewer.openPostViewer({
           post,
+          posts: viewerPosts,
+          index: viewerIndex,
           onPostUpdated,
           onPostDeleted
         })
