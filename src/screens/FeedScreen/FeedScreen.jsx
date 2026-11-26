@@ -69,10 +69,18 @@ export default function FeedScreen() {
       }
     }
 
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && !getCachedData(FEED_CACHE_KEY)?.isFresh) {
+        handleRefreshFeed()
+      }
+    }
+
     window.addEventListener('loop:feed-refresh', handleRefreshFeed)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => {
       isMounted = false
       window.removeEventListener('loop:feed-refresh', handleRefreshFeed)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 

@@ -170,24 +170,43 @@ export default function NotificationsScreen() {
       }
     }
 
+    const actorId =
+      notification.fk_id_emisor && typeof notification.fk_id_emisor === 'object'
+        ? notification.fk_id_emisor._id
+        : notification.fk_id_emisor
+    const postId =
+      notification.fk_id_publicacion && typeof notification.fk_id_publicacion === 'object'
+        ? notification.fk_id_publicacion._id
+        : notification.fk_id_publicacion
+    const commentId =
+      notification.fk_id_comentario && typeof notification.fk_id_comentario === 'object'
+        ? notification.fk_id_comentario._id
+        : notification.fk_id_comentario
+    const conversationId =
+      notification.fk_id_conversacion && typeof notification.fk_id_conversacion === 'object'
+        ? notification.fk_id_conversacion._id
+        : notification.fk_id_conversacion
+
     if (notification.tipo === 'follow') {
-      if (notification.fk_id_emisor?._id) {
-        navigate(`/users/${notification.fk_id_emisor._id}`)
+      if (actorId) {
+        navigate(`/users/${actorId}`)
       }
       return
     }
 
     if (notification.tipo === 'message') {
       navigate('/messages', {
-        state: { conversationId: notification.fk_id_conversacion || null }
+        state: { conversationId: conversationId || null }
       })
       return
     }
 
-    if (notification.fk_id_publicacion) {
-      navigate('/', { state: { highlightPostId: notification.fk_id_publicacion } })
-    } else if (notification.fk_id_emisor?._id) {
-      navigate(`/users/${notification.fk_id_emisor._id}`)
+    if (postId) {
+      navigate(`/posts/${postId}`, {
+        state: commentId ? { highlightCommentId: String(commentId) } : undefined
+      })
+    } else if (actorId) {
+      navigate(`/users/${actorId}`)
     }
   }
 

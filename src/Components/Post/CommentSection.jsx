@@ -28,12 +28,18 @@ export default function CommentSection({ postId, onCountChange }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [retryTick, setRetryTick] = useState(0)
 
   const [contenido, setContenido] = useState('')
   const commentTextareaRef = useRef(null)
+  const onCountChangeRef = useRef(onCountChange)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+
+  useEffect(() => {
+    onCountChangeRef.current = onCountChange
+  }, [onCountChange])
 
   useEffect(() => {
     let isMounted = true
@@ -46,7 +52,7 @@ export default function CommentSection({ postId, onCountChange }) {
         const list = response.data?.comments ?? []
         if (isMounted) {
           setComments(list)
-          if (onCountChange) onCountChange(list.length)
+          onCountChangeRef.current?.(list.length)
         }
       } catch (err) {
         if (isMounted) {
@@ -64,7 +70,7 @@ export default function CommentSection({ postId, onCountChange }) {
     return () => {
       isMounted = false
     }
-  }, [postId, onCountChange])
+  }, [postId, retryTick])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -115,7 +121,18 @@ export default function CommentSection({ postId, onCountChange }) {
     <div className='comment-section'>
       {loading && <p className='comment-section__status'>Cargando comentarios...</p>}
 
-      {!loading && error && <Alert variant='error'>{error}</Alert>}
+      {!loading && error && (
+        <div className='comment-section__error'>
+          <Alert variant='error'>{error}</Alert>
+          <button
+            type='button'
+            className='post-card__action-pill'
+            onClick={() => setRetryTick((prev) => prev + 1)}
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
 
       {!loading && !error && comments.length === 0 && (
         <p className='comment-section__status'>Todavia no hay comentarios.</p>

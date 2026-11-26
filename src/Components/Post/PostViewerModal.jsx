@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, MessageCircle, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -45,6 +45,16 @@ export default function PostViewerModal() {
   const [commentsCount, setCommentsCount] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  const handleCommentsCountChange = useCallback(
+    (count) => {
+      setCommentsCount(count)
+      if (post && count !== post.comments_count) {
+        updateViewerPost?.({ comments_count: count })
+      }
+    },
+    [post, updateViewerPost]
+  )
 
   // Bloquea el scroll del fondo mientras el visor esta abierto y escucha Escape / Flechas
   useEffect(() => {
@@ -317,10 +327,7 @@ export default function PostViewerModal() {
               <CommentSection
                 key={`comments-${post._id}`}
                 postId={post._id}
-                onCountChange={(count) => {
-                  setCommentsCount(count)
-                  updateViewerPost?.({ comments_count: count })
-                }}
+                onCountChange={handleCommentsCountChange}
               />
             </div>
           </div>
