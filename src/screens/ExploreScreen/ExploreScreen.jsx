@@ -442,12 +442,19 @@ export default function ExploreScreen() {
       const nextMySet = new Set(myCommunityIds)
       nextMySet.add(id)
       setMyCommunityIds(nextMySet)
+      const nextCommunities = communities.map((c) =>
+        String(c._id) === id && typeof c.members_count === 'number'
+          ? { ...c, members_count: c.members_count + 1 }
+          : c
+      )
+      setCommunities(nextCommunities)
       setForYouCommunities(
-        communities
+        nextCommunities
           .filter((c) => !nextMySet.has(String(c._id)))
           .slice(0, FOR_YOU_COMMUNITIES_LIMIT)
       )
       invalidateCache('communities:me')
+      invalidateCache('feed:posts')
     } catch (err) {
       setCommunitiesError(err.message || 'No se pudo unir a la comunidad.')
     } finally {
@@ -471,12 +478,19 @@ export default function ExploreScreen() {
       nextMySet.delete(id)
       setMyCommunityIds(nextMySet)
       setConfirmLeaveCommunityId(null)
+      const nextCommunities = communities.map((c) =>
+        String(c._id) === id && typeof c.members_count === 'number'
+          ? { ...c, members_count: Math.max(0, c.members_count - 1) }
+          : c
+      )
+      setCommunities(nextCommunities)
       setForYouCommunities(
-        communities
+        nextCommunities
           .filter((c) => !nextMySet.has(String(c._id)))
           .slice(0, FOR_YOU_COMMUNITIES_LIMIT)
       )
       invalidateCache('communities:me')
+      invalidateCache('feed:posts')
     } catch (err) {
       setCommunitiesError(err.message || 'No se pudo abandonar la comunidad.')
     } finally {
@@ -568,6 +582,13 @@ export default function ExploreScreen() {
           )}
           <div className='explore-community-card__info'>
             <span className='explore-community-card__name'>{community.nombre}</span>
+            {typeof community.members_count === 'number' &&
+              Number.isFinite(community.members_count) && (
+                <span className='explore-community-card__members'>
+                  {community.members_count}{' '}
+                  {community.members_count === 1 ? 'integrante' : 'integrantes'}
+                </span>
+              )}
             {community.descripcion && (
               <p className='explore-community-card__desc'>{community.descripcion}</p>
             )}

@@ -23,7 +23,7 @@ export default function AuthMiddleware() {
               className='auth-content__brand-img'
             />
           </div>
-          <p className='auth-content__subtitle'>Verificando sesion...</p>
+          <p className='auth-content__subtitle'>Verificando sesión...</p>
         </div>
       </main>
     )
@@ -50,7 +50,7 @@ export default function AuthMiddleware() {
               className='auth-content__brand-img'
             />
           </div>
-          <h1 className='auth-content__title'>Problema de conexion</h1>
+          <h1 className='auth-content__title'>Problema de conexión</h1>
           <Alert variant='error'>{sessionError}</Alert>
           <button
             type='button'

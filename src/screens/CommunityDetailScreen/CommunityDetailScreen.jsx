@@ -16,6 +16,7 @@ import {
   updateCommunityImage
 } from '../../services/communityService'
 import { getPosts } from '../../services/postService'
+import { invalidateCache } from '../../utils/memoryCache'
 import { prepareAvatarFile } from '../../utils/imageOptimizer'
 import PostComposer from '../../Components/Post/PostComposer'
 import PostCard from '../../Components/Post/PostCard'
@@ -147,6 +148,8 @@ export default function CommunityDetailScreen() {
       setMembershipBusy(true)
       setMembershipError(null)
       await joinCommunity(community_id)
+      invalidateCache('feed:posts')
+      invalidateCache('communities:me')
       setMembershipRole('user')
       await loadMembers()
     } catch (err) {
@@ -161,6 +164,8 @@ export default function CommunityDetailScreen() {
       setMembershipBusy(true)
       setMembershipError(null)
       await leaveCommunity(community_id)
+      invalidateCache('feed:posts')
+      invalidateCache('communities:me')
       setMembershipRole(null)
       setMembers([])
       setMembersForbidden(true)
@@ -338,6 +343,9 @@ export default function CommunityDetailScreen() {
       setDeletingCommunity(true)
       setDeleteError(null)
       await deleteCommunity(community._id)
+      invalidateCache('feed:posts')
+      invalidateCache('communities:me')
+      invalidateCache('communities:all')
       setShowDeleteModal(false)
       navigate('/communities', { replace: true })
     } catch (err) {

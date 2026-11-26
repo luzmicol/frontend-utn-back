@@ -5,7 +5,7 @@ import './SettingsScreen.css'
 const THEME_OPTIONS = [
   {
     id: 'auto',
-    label: 'Automatico',
+    label: 'Automático',
     description: 'Sigue la preferencia de apariencia de tu sistema operativo.',
     icon: Monitor
   },
@@ -18,7 +18,7 @@ const THEME_OPTIONS = [
   {
     id: 'dark',
     label: 'Oscuro',
-    description: 'Tema oscuro clasico de LOOP.',
+    description: 'Tema oscuro clásico de LOOP.',
     icon: Moon
   }
 ]
@@ -29,9 +29,9 @@ export default function SettingsScreen() {
   return (
     <section className='loop-page settings-page'>
       <header className='settings-header'>
-        <h1 className='settings-header__title'>Configuracion</h1>
+        <h1 className='settings-header__title'>Configuración</h1>
         <p className='settings-header__subtitle'>
-          Personaliza como se ve LOOP en este dispositivo.
+          Personalizá cómo se ve LOOP en este dispositivo.
         </p>
       </header>
 
@@ -39,7 +39,7 @@ export default function SettingsScreen() {
         <div className='settings-card__header'>
           <h2 className='settings-card__title'>Apariencia</h2>
           <p className='settings-card__desc'>
-            Elegi entre modo automatico, claro u oscuro. Tu preferencia se guarda en este navegador.
+            Elegí entre modo automático, claro u oscuro. Tu preferencia se guarda en este navegador.
           </p>
         </div>
 

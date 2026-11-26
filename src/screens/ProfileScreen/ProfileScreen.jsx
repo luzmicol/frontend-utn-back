@@ -19,6 +19,7 @@ import {
 } from '../../services/userService'
 import { getPosts } from '../../services/postService'
 import { prepareAvatarFile } from '../../utils/imageOptimizer'
+import { invalidateCache } from '../../utils/memoryCache'
 import Avatar from '../../Components/UI/Avatar'
 import PostCard from '../../Components/Post/PostCard'
 import Alert from '../../Components/Alert/Alert'
@@ -478,6 +479,7 @@ export default function ProfileScreen() {
       }
 
       syncUpdatedUser(latestUser)
+      invalidateCache('feed:posts')
       setSelectedFile(null)
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl('')
@@ -488,6 +490,7 @@ export default function ProfileScreen() {
     } catch (err) {
       if (latestUser !== profile) {
         syncUpdatedUser(latestUser)
+        invalidateCache('feed:posts')
       }
       setEditError(err.message || 'No se pudieron guardar los cambios.')
     } finally {
@@ -521,6 +524,10 @@ export default function ProfileScreen() {
             ]
           })
         }
+      }
+      invalidateCache('feed:posts')
+      if (currentUser?._id) {
+        invalidateCache(`suggestions:following:${currentUser._id}`)
       }
     } catch (err) {
       setFollowError(err.message || 'No se pudo actualizar el seguimiento.')

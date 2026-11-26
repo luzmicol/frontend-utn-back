@@ -54,6 +54,7 @@ export function AuthProvider({ children }) {
             } catch (error) {
                 if (error?.status === 401) {
                     clearAuthToken()
+                    clearAllCache()
                     setUser(null)
                     setSessionError(null)
                     return null
@@ -78,6 +79,7 @@ export function AuthProvider({ children }) {
                         } catch (retryError) {
                             if (retryError?.status === 401) {
                                 clearAuthToken()
+                                clearAllCache()
                                 setUser(null)
                                 setSessionError(null)
                                 return null
@@ -110,6 +112,7 @@ export function AuthProvider({ children }) {
         const token = response.authentication_token || response.data?.authentication_token
 
         if (token) {
+            clearAllCache()
             setAuthToken(token)
             await refreshUser({ retryOnFailure: false })
         }

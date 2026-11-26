@@ -201,6 +201,11 @@
   white-space: nowrap;
 }
 
+.explore-community-card__members {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
 .explore-person-card__bio,
 .explore-community-card__desc {
   margin: 2px 0 0;
