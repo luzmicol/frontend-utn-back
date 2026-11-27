@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Check, CheckCheck, ChevronDown, Copy, Forward, Info, Reply, Send, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
 import { useUnreadMessages } from '../../context/UnreadMessagesContext'
+import { invalidateCache } from '../../utils/memoryCache'
 import {
   acceptConversationRequest,
   clearActiveConversation,
@@ -125,6 +127,7 @@ export default function ConversationView({
   onGroupLeft
 }) {
   const { user: currentUser } = useAuth()
+  const { setUnreadCount } = useNotifications()
   const { setUnreadMessagesCount } = useUnreadMessages()
   const listRef = useRef(null)
   const inputRef = useRef(null)
@@ -324,6 +327,10 @@ export default function ConversationView({
           .then((readRes) => {
             if (isMounted && activeConversationIdRef.current === conversationId) {
               setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+              if (typeof readRes.data?.notifications_unread_count === 'number') {
+                setUnreadCount(readRes.data.notifications_unread_count)
+                invalidateCache('notifications:list')
+              }
               if (onConversationRead) onConversationRead(conversationId)
             }
           })
@@ -346,7 +353,7 @@ export default function ConversationView({
     return () => {
       isMounted = false
     }
-  }, [conversation?._id, setUnreadMessagesCount, onConversationRead])
+  }, [conversation?._id, setUnreadMessagesCount, setUnreadCount, onConversationRead])
 
   // Posiciona en el ultimo mensaje al abrir un chat y acompaña mensajes nuevos si el usuario esta cerca del final
   useEffect(() => {
@@ -442,6 +449,10 @@ export default function ConversationView({
             .then((readRes) => {
               if (isMounted && activeConversationIdRef.current === conversationId) {
                 setUnreadMessagesCount(readRes.data?.unread_count ?? 0)
+                if (typeof readRes.data?.notifications_unread_count === 'number') {
+                  setUnreadCount(readRes.data.notifications_unread_count)
+                  invalidateCache('notifications:list')
+                }
                 if (onConversationRead) onConversationRead(conversationId)
               }
             })
@@ -475,7 +486,7 @@ export default function ConversationView({
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [conversation?._id, currentUser?._id, setUnreadMessagesCount, onConversationRead])
+  }, [conversation?._id, currentUser?._id, setUnreadMessagesCount, setUnreadCount, onConversationRead])
 
   // Limpia la conversacion activa al cerrar el chat o navegar a otra seccion
   useEffect(() => {

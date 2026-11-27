@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { Home } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Compass, Users } from 'lucide-react'
 import { getPosts } from '../../services/postService'
 import { fetchWithCache, getCachedData, invalidateCache, setCachedData } from '../../utils/memoryCache'
 import PostComposer from '../../Components/Post/PostComposer'
@@ -223,14 +223,24 @@ export default function FeedScreen() {
       )}
 
       {!loading && !error && posts.length === 0 && (
-        <div className='loop-empty'>
+        <div className='loop-empty feed-empty'>
           <span className='loop-empty__icon' aria-hidden='true'>
-            <Home size={22} />
+            <Compass size={22} />
           </span>
-          <h2 className='loop-empty__title'>Todavia no hay publicaciones</h2>
+          <h2 className='loop-empty__title'>Tu Feed todavía está vacío</h2>
           <p className='loop-empty__text'>
-            Se la primera persona en compartir algo en LOOP.
+            Acá vas a ver las publicaciones de las personas que seguís y las comunidades de las que formás parte. Empezá descubriendo perfiles y comunidades en LOOP.
           </p>
+          <div className='feed-empty__actions'>
+            <Link to='/explore' className='feed-empty__btn feed-empty__btn--primary'>
+              <Compass size={16} aria-hidden='true' />
+              <span>Ir a Explorar</span>
+            </Link>
+            <Link to='/communities' className='feed-empty__btn'>
+              <Users size={16} aria-hidden='true' />
+              <span>Descubrir comunidades</span>
+            </Link>
+          </div>
         </div>
       )}
 

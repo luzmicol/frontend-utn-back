@@ -98,13 +98,21 @@ function RegisterScreen() {
         {response && !loading && (
           response.data?.verification_email_sent === false ? (
             <Alert variant='error'>
-              Tu cuenta fue creada y quedó pendiente de verificación, pero ocurrió un error al enviar el correo. Podés solicitar uno nuevo desde{' '}
-              <Link to='/resend-email-verification'>Reenviar correo de verificación</Link>.
+              <div>
+                Tu cuenta fue creada y quedó pendiente de verificación, pero ocurrió un error al enviar el correo.
+              </div>
+              <Link className='alert__action' to='/resend-email-verification'>
+                Reenviar correo de verificación
+              </Link>
             </Alert>
           ) : (
             <Alert variant='success'>
-              Registro exitoso. Verificá tu dirección de correo electrónico para activar tu cuenta. Revisá tu bandeja de entrada y también la carpeta de Spam o Correo no deseado. Si no lo recibiste, podés{' '}
-              <Link to='/resend-email-verification'>solicitar otro correo de verificación</Link>.
+              <div>
+                Registro exitoso. Verificá tu correo electrónico para activar tu cuenta. Revisá tu bandeja de entrada y también Spam o Correo no deseado.
+              </div>
+              <Link className='alert__action' to='/resend-email-verification'>
+                Solicitar otro correo de verificación
+              </Link>
             </Alert>
           )
         )}
