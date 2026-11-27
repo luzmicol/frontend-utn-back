@@ -77,9 +77,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 16px;
+}
+
+.chat-view__messages-inner {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 100%;
 }
 
 .chat-view__load-more {

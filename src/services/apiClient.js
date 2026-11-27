@@ -45,7 +45,7 @@ function createApiError(response_body, status) {
     return error
 }
 
-export async function apiRequest(endpoint, { method = 'GET', body, headers = {}, auth = true } = {}) {
+export async function apiRequest(endpoint, { method = 'GET', body, headers = {}, auth = true, keepalive = false } = {}) {
     if (!API_URL) {
         const config_error = new Error('La configuracion del servidor no esta disponible.')
         config_error.status = null
@@ -73,7 +73,8 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
         response_http = await fetch(API_URL + endpoint, {
             method,
             headers: request_headers,
-            body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body)
+            body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+            ...(keepalive ? { keepalive: true } : {})
         })
     } catch {
         const network_error = new Error('No se pudo conectar con el servidor. Probá de nuevo en unos minutos.')

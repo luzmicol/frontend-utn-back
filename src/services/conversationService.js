@@ -1,6 +1,34 @@
 import { apiRequest } from './apiClient'
 import { invalidateCache } from '../utils/memoryCache'
 
+const CHAT_SESSION_STORAGE_KEY = 'loop_chat_session_id'
+let cachedChatSessionId = null
+
+export function getChatSessionId() {
+  if (cachedChatSessionId) return cachedChatSessionId
+  try {
+    const existing = window.sessionStorage.getItem(CHAT_SESSION_STORAGE_KEY)
+    if (existing) {
+      cachedChatSessionId = existing
+      return existing
+    }
+    const generated =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    window.sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, generated)
+    cachedChatSessionId = generated
+    return generated
+  } catch {
+    cachedChatSessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+    return cachedChatSessionId
+  }
+}
+
+function getSessionHeaders() {
+  return { 'X-Chat-Session-Id': getChatSessionId() }
+}
+
 export async function getConversations() {
   return await apiRequest('/api/conversations', {
     method: 'GET'
@@ -21,7 +49,7 @@ export async function getConversationMessages(conversation_id, { page = 1, limit
   })
   return await apiRequest(
     `/api/conversations/${conversation_id}/messages?${params.toString()}`,
-    { method: 'GET' }
+    { method: 'GET', headers: getSessionHeaders() }
   )
 }
 
@@ -46,6 +74,7 @@ export async function sendMessage(
 
   const response = await apiRequest(`/api/conversations/${conversation_id}/messages`, {
     method: 'POST',
+    headers: getSessionHeaders(),
     body
   })
   invalidateCache('messages:')
@@ -66,7 +95,8 @@ export async function getUnreadMessagesCount() {
 
 export async function markConversationAsRead(conversation_id) {
   return await apiRequest(`/api/conversations/${conversation_id}/read`, {
-    method: 'PATCH'
+    method: 'PATCH',
+    headers: getSessionHeaders()
   })
 }
 
@@ -160,8 +190,24 @@ export async function leaveGroupConversation(conversation_id) {
   return response
 }
 
-export async function clearActiveConversation() {
-  return apiRequest('/api/conversations/active', {
-    method: 'DELETE'
+export async function setActiveConversation(conversation_id) {
+  const session_id = getChatSessionId()
+  return apiRequest(`/api/conversations/${conversation_id}/active`, {
+    method: 'PUT',
+    headers: getSessionHeaders(),
+    body: { session_id }
+  })
+}
+
+export async function clearActiveConversation({ conversation_id = null, keepalive = false } = {}) {
+  const session_id = getChatSessionId()
+  const params = new URLSearchParams({ session_id })
+  if (conversation_id) {
+    params.set('conversation_id', conversation_id)
+  }
+  return apiRequest(`/api/conversations/active?${params.toString()}`, {
+    method: 'DELETE',
+    headers: getSessionHeaders(),
+    keepalive
   })
 }

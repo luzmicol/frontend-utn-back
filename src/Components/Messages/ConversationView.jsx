@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Check, CheckCheck, ChevronDown, Copy, Forward, Info, Reply, Send, Trash2, Users, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -12,7 +12,8 @@ import {
   deleteMessage,
   getConversationMessages,
   markConversationAsRead,
-  sendMessage
+  sendMessage,
+  setActiveConversation
 } from '../../services/conversationService'
 import Avatar from '../UI/Avatar'
 import EmojiPicker from '../UI/EmojiPicker'
@@ -24,6 +25,7 @@ import './ConversationView.css'
 
 const PAGE_LIMIT = 30
 const POLL_INTERVAL_MS = 6000
+const HEARTBEAT_INTERVAL_MS = 10000
 const MAX_MESSAGE_LENGTH = 2000
 
 function isMobileSafari() {
@@ -130,6 +132,7 @@ export default function ConversationView({
   const { setUnreadCount } = useNotifications()
   const { setUnreadMessagesCount } = useUnreadMessages()
   const listRef = useRef(null)
+  const messagesContentRef = useRef(null)
   const inputRef = useRef(null)
   const latestPageRef = useRef(1)
   const pollingInFlightRef = useRef(false)
@@ -270,15 +273,38 @@ export default function ConversationView({
   }, [])
 
   const scrollToBottom = useCallback(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (listRef.current) {
-          listRef.current.scrollTop = listRef.current.scrollHeight
-          isNearBottomRef.current = true
-        }
-      })
-    })
+    const apply = () => {
+      if (listRef.current) {
+        listRef.current.scrollTop = listRef.current.scrollHeight
+        isNearBottomRef.current = true
+      }
+    }
+    apply()
+    requestAnimationFrame(apply)
   }, [])
+
+  // Mantiene el scroll al fondo si el teclado virtual o el contenido (imagenes/multilinea) cambia de altura
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return
+    const listEl = listRef.current
+    const contentEl = messagesContentRef.current
+    if (!listEl) return
+
+    const observer = new ResizeObserver(() => {
+      if (isNearBottomRef.current || forceScrollBottomRef.current) {
+        listEl.scrollTop = listEl.scrollHeight
+      }
+    })
+
+    observer.observe(listEl)
+    if (contentEl) {
+      observer.observe(contentEl)
+    }
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [conversation?._id])
 
   // Carga inicial al cambiar de conversacion
   useEffect(() => {
@@ -363,7 +389,7 @@ export default function ConversationView({
   }, [conversation?._id, setUnreadMessagesCount, setUnreadCount, onConversationRead])
 
   // Posiciona en el ultimo mensaje al abrir un chat y acompaña mensajes nuevos si el usuario esta cerca del final
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (loading) return
 
     const newestId = messages.length > 0 ? messages[messages.length - 1]._id : null
@@ -482,10 +508,6 @@ export default function ConversationView({
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
         pollLatest()
-      } else {
-        clearActiveConversation().catch(() => {
-          // Silencioso
-        })
       }
     }
 
@@ -498,14 +520,59 @@ export default function ConversationView({
     }
   }, [conversation?._id, currentUser?._id, setUnreadMessagesCount, setUnreadCount, onConversationRead])
 
-  // Limpia la conversacion activa al cerrar el chat o navegar a otra seccion
+  // Presencia activa por sesion: registro inmediato al entrar, heartbeat periodico y limpieza al salir/ocultar
   useEffect(() => {
-    return () => {
-      clearActiveConversation().catch(() => {
+    const conversationId = conversation?._id
+    if (!conversationId) return
+
+    const sendHeartbeat = () => {
+      if (document.visibilityState !== 'visible') return
+      setActiveConversation(conversationId).catch(() => {
         // Silencioso
       })
     }
-  }, [])
+
+    const sendClear = () => {
+      clearActiveConversation({ conversation_id: conversationId, keepalive: true }).catch(() => {
+        // Silencioso
+      })
+    }
+
+    sendHeartbeat()
+    const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        sendHeartbeat()
+      } else {
+        sendClear()
+      }
+    }
+
+    const handleFocusOrShow = () => {
+      if (document.visibilityState === 'visible') {
+        sendHeartbeat()
+      }
+    }
+
+    const handlePageHide = () => {
+      sendClear()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocusOrShow)
+    window.addEventListener('pageshow', handleFocusOrShow)
+    window.addEventListener('pagehide', handlePageHide)
+
+    return () => {
+      clearInterval(heartbeatInterval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocusOrShow)
+      window.removeEventListener('pageshow', handleFocusOrShow)
+      window.removeEventListener('pagehide', handlePageHide)
+      sendClear()
+    }
+  }, [conversation?._id])
 
   async function handleLoadPrevious() {
     const conversationId = conversation?._id
@@ -779,6 +846,7 @@ export default function ConversationView({
       </header>
 
       <div ref={listRef} className='chat-view__messages' onScroll={handleScroll}>
+        <div ref={messagesContentRef} className='chat-view__messages-inner'>
         {hasMore && (
           <button
             type='button'
@@ -981,6 +1049,7 @@ export default function ConversationView({
               </div>
             )
           })}
+        </div>
       </div>
 
       {error && (
