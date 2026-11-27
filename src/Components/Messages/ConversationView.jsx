@@ -136,6 +136,8 @@ export default function ConversationView({
   const activeConversationIdRef = useRef(conversation?._id || null)
   const pendingInitialScrollRef = useRef(true)
   const lastMessageIdRef = useRef(null)
+  const isNearBottomRef = useRef(true)
+  const forceScrollBottomRef = useRef(false)
 
   const [messages, setMessages] = useState([])
   const [oldestLoadedPage, setOldestLoadedPage] = useState(1)
@@ -269,9 +271,12 @@ export default function ConversationView({
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
-      if (listRef.current) {
-        listRef.current.scrollTop = listRef.current.scrollHeight
-      }
+      requestAnimationFrame(() => {
+        if (listRef.current) {
+          listRef.current.scrollTop = listRef.current.scrollHeight
+          isNearBottomRef.current = true
+        }
+      })
     })
   }, [])
 
@@ -282,6 +287,8 @@ export default function ConversationView({
     pollingInFlightRef.current = false
     pendingInitialScrollRef.current = true
     lastMessageIdRef.current = null
+    isNearBottomRef.current = true
+    forceScrollBottomRef.current = false
 
     if (!conversationId) return
 
@@ -370,14 +377,17 @@ export default function ConversationView({
 
     if (newestId && newestId !== lastMessageIdRef.current) {
       lastMessageIdRef.current = newestId
-      const container = listRef.current
-      if (container) {
-        const distanceFromBottom =
-          container.scrollHeight - container.scrollTop - container.clientHeight
-        if (distanceFromBottom < 140) {
-          scrollToBottom()
-        }
+      if (forceScrollBottomRef.current) {
+        forceScrollBottomRef.current = false
+        scrollToBottom()
+        return
       }
+      if (isNearBottomRef.current) {
+        scrollToBottom()
+      }
+    } else if (forceScrollBottomRef.current) {
+      forceScrollBottomRef.current = false
+      scrollToBottom()
     }
   }, [loading, messages, scrollToBottom])
 
@@ -533,7 +543,11 @@ export default function ConversationView({
   }
 
   function handleScroll(event) {
-    if (event.currentTarget.scrollTop < 40 && hasMore && !loadingMore) {
+    const el = event.currentTarget
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    isNearBottomRef.current = distanceFromBottom < 160
+
+    if (el.scrollTop < 40 && hasMore && !loadingMore) {
       handleLoadPrevious()
     }
   }
@@ -674,8 +688,8 @@ export default function ConversationView({
       setText('')
       setReplyingTo(null)
       if (created) {
+        forceScrollBottomRef.current = true
         setMessages((prev) => mergeMessagesUnique(prev, [created]))
-        scrollToBottom()
         if (onConversationActivity) {
           onConversationActivity(conversation._id, trimmed)
         }
