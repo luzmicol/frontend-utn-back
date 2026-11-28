@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff, Send } from 'lucide-react'
+import { Pencil, Trash2, Users, Check, X, MessageCircle, Repeat2, ImagePlus, ImageOff, Send, MoreHorizontal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { usePostViewer } from '../../context/PostViewerContext'
 import { updatePost, deletePost } from '../../services/postService'
@@ -59,7 +59,12 @@ export default function PostCard({
   const { user } = useAuth()
   const postViewer = usePostViewer()
   const isAuthor = Boolean(user?._id && post.fk_id_usuario?._id === user._id)
+  const isAdmin = Boolean(user?.rol === 'admin' || user?.role === 'admin' || user?.is_admin)
+  const canManagePost = isAuthor || isAdmin
 
+  const [openMenuPostId, setOpenMenuPostId] = useState(null)
+  const menuOpen = openMenuPostId === post._id
+  const menuRef = useRef(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(post.contenido || '')
   const editTextareaRef = useRef(null)
@@ -73,6 +78,29 @@ export default function PostCard({
       if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
     }
   }, [editPreviewUrl])
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    function handlePointerDown(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuPostId(null)
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        setOpenMenuPostId(null)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
   const [showComments, setShowComments] = useState(defaultShowComments)
   const [showShareModal, setShowShareModal] = useState(false)
   const [isExpanded, setIsExpanded] = useState(defaultShowComments)
@@ -106,7 +134,7 @@ export default function PostCard({
     if (window.getSelection && window.getSelection().toString().trim()) return
     if (
       event.target?.closest?.(
-        'a, button, input, textarea, select, [role="button"], .comment-section, .post-card__edit-form'
+        'a, button, input, textarea, select, [role="button"], [role="menu"], .comment-section, .post-card__edit-form, .post-card__menu-wrap'
       )
     ) {
       return
@@ -275,35 +303,55 @@ export default function PostCard({
           </div>
         </div>
 
-        {isAuthor && !isEditing && !confirmDelete && (
-          <div className='post-card__actions'>
+        {canManagePost && !isEditing && !confirmDelete && (
+          <div className='post-card__menu-wrap' ref={menuRef}>
             <button
               type='button'
-              className='post-card__icon-btn'
-              onClick={() => {
-                setEditContent(post.contenido || '')
-                setEditImageFile(null)
-                if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
-                setEditPreviewUrl('')
-                setRemoveImagePending(false)
-                setActionError(null)
-                setIsEditing(true)
-              }}
-              aria-label='Editar publicacion'
+              className={`post-card__menu-trigger${menuOpen ? ' post-card__menu-trigger--open' : ''}`}
+              onClick={() => setOpenMenuPostId((prev) => (prev === post._id ? null : post._id))}
+              aria-label='Opciones de la publicación'
+              aria-haspopup='menu'
+              aria-expanded={menuOpen}
             >
-              <Pencil size={16} />
+              <MoreHorizontal size={18} strokeWidth={2} />
             </button>
-            <button
-              type='button'
-              className='post-card__icon-btn post-card__icon-btn--danger'
-              onClick={() => {
-                setActionError(null)
-                setConfirmDelete(true)
-              }}
-              aria-label='Eliminar publicacion'
-            >
-              <Trash2 size={16} />
-            </button>
+
+            {menuOpen && (
+              <div className='post-card__menu' role='menu' aria-label='Acciones de la publicación'>
+                <button
+                  type='button'
+                  role='menuitem'
+                  className='post-card__menu-item'
+                  onClick={() => {
+                    setOpenMenuPostId(null)
+                    setEditContent(post.contenido || '')
+                    setEditImageFile(null)
+                    if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl)
+                    setEditPreviewUrl('')
+                    setRemoveImagePending(false)
+                    setActionError(null)
+                    setIsEditing(true)
+                  }}
+                >
+                  <Pencil size={15} strokeWidth={2} />
+                  <span>Editar publicación</span>
+                </button>
+                <div className='post-card__menu-divider' role='separator' />
+                <button
+                  type='button'
+                  role='menuitem'
+                  className='post-card__menu-item post-card__menu-item--danger'
+                  onClick={() => {
+                    setOpenMenuPostId(null)
+                    setActionError(null)
+                    setConfirmDelete(true)
+                  }}
+                >
+                  <Trash2 size={15} strokeWidth={2} />
+                  <span>Eliminar publicación</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </header>

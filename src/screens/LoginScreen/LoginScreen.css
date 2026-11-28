@@ -1,0 +1,134 @@
+.login-screen {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  background-color: var(--bg, #000000);
+}
+
+.login-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.login-intro--leaving {
+  opacity: 0;
+}
+
+.login-intro__mark {
+  position: relative;
+  width: 96px;
+  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: loginMarkEnter 0.56s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.login-intro__glow {
+  position: absolute;
+  inset: -18px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.34) 0%,
+    rgba(139, 92, 246, 0.08) 48%,
+    transparent 72%
+  );
+  filter: blur(10px);
+  animation: loginGlowPulse 0.72s ease-out forwards;
+}
+
+.login-intro__svg {
+  position: relative;
+  width: 84px;
+  height: 44px;
+  overflow: visible;
+}
+
+.login-intro__path {
+  fill: none;
+  stroke: url(#loop-intro-gradient);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: loginInfinityDraw 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.login-screen__content {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.login-screen__content--hidden {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes loginMarkEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes loginInfinityDraw {
+  0% {
+    stroke-dashoffset: 220;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes loginGlowPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-intro,
+  .login-intro__mark,
+  .login-intro__glow,
+  .login-intro__path,
+  .login-screen__content {
+    animation: none;
+    transition: none;
+  }
+
+  .login-intro__path {
+    stroke-dashoffset: 0;
+  }
+
+  .login-screen__content--hidden {
+    opacity: 1;
+    transform: none;
+  }
+}

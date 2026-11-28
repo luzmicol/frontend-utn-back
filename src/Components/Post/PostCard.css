@@ -55,35 +55,109 @@
   color: var(--text-muted);
 }
 
-.post-card__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.post-card__menu-wrap {
+  position: relative;
   flex-shrink: 0;
 }
 
-.post-card__icon-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.post-card__menu-trigger {
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background-color: transparent;
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.post-card__icon-btn:hover {
+.post-card__menu-trigger:hover,
+.post-card__menu-trigger--open {
   background-color: var(--surface-elevated);
+  border-color: var(--border);
   color: var(--text);
 }
 
-.post-card__icon-btn--danger:hover {
+.post-card__menu-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.post-card__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  min-width: 184px;
+  max-width: calc(100vw - 32px);
+  padding: 5px;
+  background-color: var(--surface-elevated, #1c1c1e);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.36);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: postMenuFadeIn 0.14s ease-out;
+}
+
+.post-card__menu-item {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  padding: 9px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.14s ease, color 0.14s ease;
+}
+
+.post-card__menu-item:hover,
+.post-card__menu-item:focus-visible {
+  background-color: var(--surface);
+  outline: none;
+}
+
+.post-card__menu-item--danger {
   color: var(--error);
-  border-color: var(--error-border);
+}
+
+.post-card__menu-item--danger:hover,
+.post-card__menu-item--danger:focus-visible {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.post-card__menu-divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: 2px 6px;
+}
+
+@keyframes postMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card__menu {
+    animation: none;
+  }
 }
 
 .post-card__community {
