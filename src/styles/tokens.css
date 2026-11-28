@@ -124,9 +124,7 @@
   color: var(--on-primary);
 }
 
-:root[data-theme='light'] .sidebar,
-:root[data-theme='light'] .mobile-header,
-:root[data-theme='light'] .mobile-nav {
+:root[data-theme='light'] .sidebar {
   background-color: var(--sidebar-bg);
 }
 

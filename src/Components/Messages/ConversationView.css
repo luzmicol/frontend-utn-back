@@ -153,6 +153,10 @@
   border-color: var(--primary);
 }
 
+:root[data-theme='light'] .chat-bubble--mine .chat-bubble__time {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 .chat-bubble__text {
   margin: 0;
   font-size: 0.9rem;
