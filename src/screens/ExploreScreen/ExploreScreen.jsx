@@ -27,7 +27,7 @@ const PEOPLE_PAGE_LIMIT = 15
 const TRENDING_PAGE_LIMIT = 15
 const FOR_YOU_PEOPLE_LIMIT = 4
 const FOR_YOU_COMMUNITIES_LIMIT = 3
-const FOR_YOU_POSTS_LIMIT = 5
+const FOR_YOU_POSTS_LIMIT = 15
 
 const SWIPE_MIN_X = 60
 const SWIPE_MAX_Y = 80
@@ -57,6 +57,9 @@ export default function ExploreScreen() {
   const [forYouPeople, setForYouPeople] = useState([])
   const [forYouCommunities, setForYouCommunities] = useState([])
   const [forYouPosts, setForYouPosts] = useState([])
+  const [forYouPostsPage, setForYouPostsPage] = useState(1)
+  const [forYouPostsHasMore, setForYouPostsHasMore] = useState(false)
+  const [forYouPostsLoadingMore, setForYouPostsLoadingMore] = useState(false)
   const [forYouLoading, setForYouLoading] = useState(true)
   const [forYouError, setForYouError] = useState(null)
   const forYouLoadedRef = useRef(false)
@@ -196,7 +199,7 @@ export default function ExploreScreen() {
           getUsers({ page: 1, limit: 10 }),
           getCommunities(),
           getMyCommunities(),
-          getForYouPosts({ limit: FOR_YOU_POSTS_LIMIT })
+          getForYouPosts({ page: 1, limit: FOR_YOU_POSTS_LIMIT })
         ])
 
         if (!isMounted) return
@@ -219,6 +222,8 @@ export default function ExploreScreen() {
         setForYouPeople(fallbackUsers)
         setForYouCommunities(suggestedComms)
         setForYouPosts(forYouPostsRes.data?.posts ?? [])
+        setForYouPostsPage(1)
+        setForYouPostsHasMore(Boolean(forYouPostsRes.data?.pagination?.has_more))
 
         // Aprovechamos los datos de comunidades ya descargados
         setCommunities(allComms)
@@ -421,6 +426,21 @@ export default function ExploreScreen() {
       if (currentUserId) {
         invalidateCache(`suggestions:following:${currentUserId}`)
       }
+      if (nextFollowing) {
+        setForYouPosts((prev) =>
+          prev.filter((p) => String(p.fk_id_usuario?._id || p.fk_id_usuario) !== id)
+        )
+      } else {
+        getForYouPosts({ page: 1, limit: FOR_YOU_POSTS_LIMIT })
+          .then((res) => {
+            setForYouPosts(res.data?.posts ?? [])
+            setForYouPostsPage(1)
+            setForYouPostsHasMore(Boolean(res.data?.pagination?.has_more))
+          })
+          .catch(() => {
+            // Silencioso
+          })
+      }
     } catch {
       // Mantiene estado anterior si falla
     } finally {
@@ -429,6 +449,23 @@ export default function ExploreScreen() {
         next.delete(id)
         return next
       })
+    }
+  }
+
+  async function handleLoadMoreForYouPosts() {
+    if (forYouPostsLoadingMore || !forYouPostsHasMore) return
+    const nextPage = forYouPostsPage + 1
+    try {
+      setForYouPostsLoadingMore(true)
+      const res = await getForYouPosts({ page: nextPage, limit: FOR_YOU_POSTS_LIMIT })
+      const incoming = res.data?.posts ?? []
+      setForYouPosts((prev) => mergeUniqueById(prev, incoming))
+      setForYouPostsPage(nextPage)
+      setForYouPostsHasMore(Boolean(res.data?.pagination?.has_more))
+    } catch (err) {
+      setForYouError(err.message || 'No se pudieron cargar más publicaciones.')
+    } finally {
+      setForYouPostsLoadingMore(false)
     }
   }
 
@@ -773,6 +810,16 @@ export default function ExploreScreen() {
                           />
                         ))}
                       </div>
+                      {forYouPostsHasMore && (
+                        <button
+                          type='button'
+                          className='explore-load-more'
+                          onClick={handleLoadMoreForYouPosts}
+                          disabled={forYouPostsLoadingMore}
+                        >
+                          {forYouPostsLoadingMore ? 'Cargando...' : 'Cargar más publicaciones'}
+                        </button>
+                      )}
                     </section>
                   )}
                 </>
