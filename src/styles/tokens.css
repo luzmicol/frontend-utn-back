@@ -17,7 +17,30 @@
   /* Texto y bordes */
   --text: #f5f5f7;
   --text-muted: #8e8e93;
-  --border: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.1);
+
+  /* Glassmorphism OLED */
+  --glass-bg: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.068) 0%,
+    rgba(255, 255, 255, 0.024) 100%
+  );
+  --glass-bg-hover: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.036) 100%
+  );
+  --glass-bg-elevated: linear-gradient(
+    155deg,
+    rgba(28, 28, 34, 0.8) 0%,
+    rgba(16, 16, 20, 0.74) 100%
+  );
+  --glass-bg-fallback: #141418;
+  --glass-bar-bg: rgba(12, 12, 16, 0.66);
+  --glass-border: rgba(255, 255, 255, 0.11);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --glass-input-bg: rgba(0, 0, 0, 0.34);
 
   /* Mensajes del servidor */
   --error: #f87171;
@@ -63,6 +86,17 @@
   --text: #272838;
   --text-muted: #6E7185;
   --border: #E0E3EE;
+
+  /* En modo claro se conservan superficies limpias y luminosas */
+  --glass-bg: #FCFCFE;
+  --glass-bg-hover: #F7F8FC;
+  --glass-bg-elevated: #FCFCFE;
+  --glass-bg-fallback: #FCFCFE;
+  --glass-bar-bg: rgba(243, 244, 250, 0.86);
+  --glass-border: #E0E3EE;
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 2px 10px rgba(39, 40, 56, 0.05), 0 1px 2px rgba(39, 40, 56, 0.03);
+  --glass-input-bg: #F0F2F8;
 
   --error: #dc2626;
   --error-bg: rgba(220, 38, 38, 0.08);
