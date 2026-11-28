@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck, RefreshCw, Trash2 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
 import {
   deleteAllNotifications,
@@ -57,6 +58,7 @@ const NOTIFICATIONS_CACHE_KEY = 'notifications:list'
 
 export default function NotificationsScreen() {
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const { unreadCount, setUnreadCount, decrementUnread } = useNotifications()
   const autoMarkedRef = useRef(false)
   const initialUnreadCountRef = useRef(unreadCount)
@@ -337,6 +339,14 @@ export default function NotificationsScreen() {
           <ul className='notifications-list'>
             {notifications.map((notif) => {
               const actor = notif.fk_id_emisor
+              const actorId =
+                actor && typeof actor === 'object' ? actor._id : actor || null
+              const actorProfilePath = actorId
+                ? currentUser?._id && String(actorId) === String(currentUser._id)
+                  ? '/profile'
+                  : `/users/${actorId}`
+                : null
+              const actorName = actor?.nombre || 'Usuario'
               const actionText = TYPE_TEXT[notif.tipo] || 'interactuo contigo'
 
               return (
@@ -347,23 +357,54 @@ export default function NotificationsScreen() {
                   role='button'
                   tabIndex={0}
                   onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault()
                       handleOpenNotification(notif)
                     }
                   }}
                 >
-                  <Avatar
-                    name={actor?.nombre || 'Usuario'}
-                    avatarUrl={actor?.avatar_url}
-                    size='sm'
-                  />
+                  {actorProfilePath ? (
+                    <Link
+                      to={actorProfilePath}
+                      className='notification-item__avatar-link'
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Ver perfil de ${actorName}`}
+                    >
+                      <Avatar
+                        name={actorName}
+                        avatarUrl={actor?.avatar_url}
+                        size='sm'
+                      />
+                    </Link>
+                  ) : (
+                    <Avatar
+                      name={actorName}
+                      avatarUrl={actor?.avatar_url}
+                      size='sm'
+                    />
+                  )}
 
                   <div className='notification-item__body'>
                     <p className='notification-item__text'>
-                      <strong>{actor?.nombre || 'Usuario'}</strong>
-                      {actor?.username && (
-                        <span className='notification-item__username'> @{actor.username}</span>
+                      {actorProfilePath ? (
+                        <Link
+                          to={actorProfilePath}
+                          className='notification-item__actor-link'
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <strong>{actorName}</strong>
+                          {actor?.username && (
+                            <span className='notification-item__username'> @{actor.username}</span>
+                          )}
+                        </Link>
+                      ) : (
+                        <>
+                          <strong>{actorName}</strong>
+                          {actor?.username && (
+                            <span className='notification-item__username'> @{actor.username}</span>
+                          )}
+                        </>
                       )}{' '}
                       {actionText}
                     </p>
