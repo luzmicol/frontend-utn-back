@@ -6,23 +6,31 @@
   flex-wrap: wrap;
 }
 
+.notifications-header .loop-page__title {
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+}
+
 .notifications-header__read-all {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background-color: var(--surface);
+  border: 1px solid var(--glass-border, var(--border));
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: var(--primary-soft);
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .notifications-header__read-all:hover:not(:disabled) {
-  background-color: var(--surface-elevated);
-  border-color: var(--primary);
+  background: var(--glass-bg-hover, var(--surface-elevated));
+  border-color: rgba(167, 139, 250, 0.4);
 }
 
 .notifications-header__read-all:disabled {
@@ -57,28 +65,51 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-highlight, none), var(--glass-shadow, none);
+  overflow: hidden;
 }
 
 .notification-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  padding: 13px 15px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.15s ease;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
 }
 
 .notification-item:hover {
-  background-color: var(--surface-elevated);
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .notification-item--unread {
-  border-color: var(--primary);
+  background-color: rgba(139, 92, 246, 0.09);
+}
+
+.notification-item--unread:hover {
+  background-color: rgba(139, 92, 246, 0.14);
+}
+
+:root[data-theme='light'] .notification-item:hover {
   background-color: var(--surface-elevated);
+}
+
+:root[data-theme='light'] .notification-item--unread {
+  background-color: var(--primary-halo);
 }
 
 .notification-item__body {
@@ -148,6 +179,7 @@
   height: 8px;
   border-radius: 50%;
   background-color: var(--primary);
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.65);
 }
 
 .notification-item__delete {
@@ -170,19 +202,23 @@
 
 .notifications-load-more {
   align-self: center;
-  padding: 9px 18px;
+  padding: 9px 20px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background-color: var(--surface);
+  border: 1px solid var(--glass-border, var(--border));
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--glass-highlight, none);
   color: var(--text);
   font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .notifications-load-more:hover:not(:disabled) {
-  background-color: var(--surface-elevated);
-  border-color: var(--primary);
+  background: var(--glass-bg-hover, var(--surface-elevated));
+  border-color: rgba(167, 139, 250, 0.4);
 }
 
 .notifications-header__actions {
@@ -215,6 +251,8 @@
   position: fixed;
   inset: 0;
   background-color: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -225,13 +263,25 @@
 .notifications-modal {
   width: 100%;
   max-width: 420px;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg-elevated, var(--surface));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid var(--glass-border, var(--border));
   border-radius: var(--radius-card);
+  box-shadow: var(--glass-highlight, none), 0 18px 44px rgba(0, 0, 0, 0.55);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .notifications-list,
+  .notifications-load-more,
+  .notifications-header__read-all,
+  .notifications-modal {
+    background: var(--glass-bg-fallback, var(--surface));
+  }
 }
 
 .notifications-modal__title {

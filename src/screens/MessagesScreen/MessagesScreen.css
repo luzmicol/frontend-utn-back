@@ -16,9 +16,12 @@
 }
 
 .messages-inbox {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid var(--glass-border, var(--border));
   border-radius: 0;
+  box-shadow: var(--glass-highlight, none), var(--glass-shadow, none);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -46,8 +49,9 @@
 
 .messages-inbox__title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 
@@ -66,14 +70,15 @@
 
 .messages-search__input {
   width: 100%;
-  background-color: var(--surface-elevated);
+  background-color: var(--glass-input-bg, var(--surface-elevated));
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: 12px;
   padding: 9px 10px 9px 34px;
   font-family: inherit;
   font-size: 16px; /* evita zoom automatico en iOS */
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .messages-search__input:focus {
@@ -164,11 +169,20 @@
 }
 
 .messages-list__item:hover {
-  background-color: var(--surface-elevated);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .messages-list__item--active {
+  background-color: rgba(139, 92, 246, 0.16);
+  border-color: rgba(139, 92, 246, 0.34);
+}
+
+:root[data-theme='light'] .messages-list__item:hover {
   background-color: var(--surface-elevated);
+}
+
+:root[data-theme='light'] .messages-list__item--active {
+  background-color: var(--primary-halo);
   border-color: var(--primary);
 }
 
@@ -231,9 +245,12 @@
 
 .messages-placeholder {
   height: 100%;
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid var(--glass-border, var(--border));
   border-radius: var(--radius-card);
+  box-shadow: var(--glass-highlight, none), var(--glass-shadow, none);
   color: var(--text-muted);
   display: flex;
   flex-direction: column;
@@ -243,6 +260,13 @@
   padding: 24px;
   text-align: center;
   font-size: 0.9rem;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .messages-inbox,
+  .messages-placeholder {
+    background: var(--glass-bg-fallback, var(--surface));
+  }
 }
 
 @media (min-width: 900px) {

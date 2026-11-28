@@ -1,11 +1,20 @@
 .profile-hero {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid var(--glass-border, var(--border));
   border-radius: var(--radius-card);
-  padding: 20px;
+  box-shadow: var(--glass-highlight, none), var(--glass-shadow, none);
+  padding: 22px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (max-width: 767px) {
+  .profile-hero {
+    padding: 16px;
+  }
 }
 
 .profile-hero__top {
@@ -52,8 +61,9 @@
 
 .profile-hero__name {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text);
   overflow-wrap: anywhere;
 }
@@ -81,10 +91,12 @@
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background-color: var(--primary);
-  color: var(--text);
+  color: var(--on-primary, #ffffff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 6px 18px rgba(139, 92, 246, 0.26);
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .profile-follow-btn:hover:not(:disabled) {
@@ -92,13 +104,14 @@
 }
 
 .profile-follow-btn--following {
-  background-color: transparent;
-  border-color: var(--border);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-border, var(--border));
   color: var(--text);
+  box-shadow: none;
 }
 
 .profile-follow-btn--following:hover:not(:disabled) {
-  background-color: var(--surface-elevated);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .profile-follow-btn:disabled {
@@ -112,22 +125,29 @@
   gap: 7px;
   padding: 8px 16px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background-color: var(--surface-elevated);
+  border: 1px solid var(--glass-border, var(--border));
+  background-color: rgba(255, 255, 255, 0.06);
   color: var(--text);
   font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .profile-edit-btn:hover {
-  border-color: var(--primary);
+  border-color: rgba(167, 139, 250, 0.4);
+  background-color: rgba(255, 255, 255, 0.1);
   color: var(--primary-soft);
 }
 
-.profile-edit-form {
+:root[data-theme='light'] .profile-follow-btn--following,
+:root[data-theme='light'] .profile-edit-btn {
   background-color: var(--surface-elevated);
-  border: 1px solid var(--border);
+}
+
+.profile-edit-form {
+  background: var(--glass-bg-elevated, var(--surface-elevated));
+  border: 1px solid var(--glass-border, var(--border));
   border-radius: 14px;
   padding: 16px;
   display: flex;
@@ -221,8 +241,8 @@
 
 .profile-hero__bio {
   margin: 4px 0 2px;
-  font-size: 0.92rem;
-  line-height: 1.45;
+  font-size: 0.94rem;
+  line-height: 1.52;
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
@@ -344,9 +364,16 @@
 .profile-metrics {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   flex-wrap: wrap;
-  padding-top: 4px;
+  padding: 10px 14px;
+  background-color: rgba(0, 0, 0, 0.24);
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: 12px;
+}
+
+:root[data-theme='light'] .profile-metrics {
+  background-color: var(--surface-elevated);
 }
 
 .profile-metric {
@@ -357,8 +384,9 @@
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-family: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 .profile-metric strong {
@@ -386,8 +414,14 @@
   display: flex;
   align-items: stretch;
   gap: 4px;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
+  padding: 4px;
+  background-color: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: 12px;
+}
+
+:root[data-theme='light'] .profile-tabs {
+  background-color: var(--surface-elevated);
 }
 
 .profile-tab {
@@ -396,37 +430,44 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 10px 12px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 10px 10px 0 0;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
   background-color: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .profile-tab:hover {
-  background-color: var(--surface-elevated);
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
 
 .profile-tab--active {
   color: var(--primary-soft);
-  border-bottom-color: var(--primary);
-  background-color: var(--surface-elevated);
+  border-color: rgba(139, 92, 246, 0.34);
+  background-color: rgba(139, 92, 246, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+:root[data-theme='light'] .profile-tab--active {
+  background-color: var(--primary-halo);
+  border-color: rgba(139, 104, 240, 0.28);
+  box-shadow: 0 2px 6px rgba(39, 40, 56, 0.06);
 }
 
 @media (max-width: 480px) {
   .profile-metrics {
     gap: 14px;
+    padding: 9px 12px;
   }
 
   .profile-tab {
-    padding: 9px 6px;
+    padding: 8px 6px;
     font-size: 0.8rem;
     gap: 5px;
   }
@@ -438,13 +479,32 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  background: var(--glass-bg, var(--surface));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-highlight, none), var(--glass-shadow, none);
+  overflow: hidden;
 }
 
 .profile-user-item {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.profile-user-item:last-child {
+  border-bottom: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .profile-hero,
+  .profile-user-list {
+    background: var(--glass-bg-fallback, var(--surface));
+  }
 }
 
 .profile-user-link {
