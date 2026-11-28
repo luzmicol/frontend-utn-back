@@ -2,10 +2,17 @@
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: 16px;
+  padding: 18px 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+@media (max-width: 767px) {
+  .post-card {
+    padding: 14px 14px 12px;
+    border-radius: 14px;
+  }
 }
 
 .post-card__header {
@@ -182,8 +189,9 @@
 
 .post-card__content {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: 0.96rem;
+  line-height: 1.58;
+  letter-spacing: -0.005em;
   color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -318,8 +326,8 @@
 .post-card__interactions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 6px;
+  gap: 6px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -328,8 +336,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background-color: transparent;
   color: var(--text-muted);
@@ -346,7 +354,7 @@
 
 .post-card__action-pill--liked {
   color: var(--primary-soft);
-  border-color: var(--primary);
+  border-color: rgba(139, 92, 246, 0.32);
   background-color: var(--primary-halo);
 }
 
@@ -377,10 +385,10 @@
 }
 
 .post-card__image-wrap {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--border);
-  background-color: var(--surface-elevated);
+  background-color: var(--bg);
 }
 
 .post-card--clickable {

@@ -9,8 +9,8 @@
 @media (min-width: 1200px) {
   .feed-layout {
     display: grid;
-    grid-template-columns: minmax(0, 680px) 280px;
-    gap: 24px;
+    grid-template-columns: minmax(0, 640px) 280px;
+    gap: 28px;
     align-items: start;
   }
 }
